@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -47,11 +48,11 @@ export function SidebarNav() {
         // if (item.roles && user && !item.roles.includes(user.role)) {
         //   return null;
         // }
-        const isActive = pathname === item.href || (pathname.startsWith(item.href) && item.href !== "/dashboard");
+        const isActive = pathname === item.href || (pathname.startsWith(item.href) && item.href !== "/dashboard" && item.href !== "/");
         
         return (
           <SidebarMenuItem key={item.href}>
-            <Link href={item.href} passHref legacyBehavior>
+            <Link href={item.href}>
               <SidebarMenuButton
                 asChild={false} // Ensure it's a button for proper styling and interaction
                 isActive={isActive}
