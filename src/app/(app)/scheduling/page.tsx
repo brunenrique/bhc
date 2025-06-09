@@ -1,6 +1,6 @@
 "use client";
-import { SessionCalendar } from "@/components/features/scheduling/SessionCalendar";
-import { SessionFormDialog } from "@/components/features/scheduling/SessionFormDialog";
+import { SessionCalendar } from "@/components/scheduling/SessionCalendar";
+import { SessionFormDialog } from "@/components/scheduling/SessionFormDialog";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import { useState } from "react";

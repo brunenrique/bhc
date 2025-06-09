@@ -1,6 +1,6 @@
 "use client";
-import { AssessmentCreator } from "@/components/features/assessments/AssessmentCreator";
-import { AssessmentResultsTable } from "@/components/features/assessments/AssessmentResultsTable";
+import { AssessmentCreator } from "@/components/assessments/AssessmentCreator";
+import { AssessmentResultsTable } from "@/components/assessments/AssessmentResultsTable";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";

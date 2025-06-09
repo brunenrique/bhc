@@ -1,5 +1,6 @@
 import { ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
+import { cn } from "@/lib/utils";
 
 interface LogoProps {
   size?: number;
@@ -15,6 +16,3 @@ export function Logo({ size = 24, className, showText = true }: LogoProps) {
     </Link>
   );
 }
-
-// Helper for cn if not globally available, or import from "@/lib/utils"
-const cn = (...classes: (string | undefined | null | false)[]) => classes.filter(Boolean).join(' ');

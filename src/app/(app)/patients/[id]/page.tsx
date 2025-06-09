@@ -6,13 +6,14 @@ import type { Patient, Session } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Edit, Mail, Phone, CalendarDays, FileText, PlusCircle, Trash2 } from 'lucide-react';
-import { PatientFormDialog } from '@/components/features/patients/PatientFormDialog';
-import { SessionFormDialog } from '@/components/features/scheduling/SessionFormDialog';
+import { PatientFormDialog } from '@/components/patients/PatientFormDialog';
+import { SessionFormDialog } from '@/components/scheduling/SessionFormDialog';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 // Mock data fetching function
 const fetchPatientDetails = async (id: string): Promise<Patient | null> => {

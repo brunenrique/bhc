@@ -1,5 +1,5 @@
 "use client";
-import { DocumentManager } from "@/components/features/documents/DocumentManager";
+import { DocumentManager } from "@/components/documents/DocumentManager";
 import type { DocumentResource } from "@/types";
 import { useState } from "react";
 

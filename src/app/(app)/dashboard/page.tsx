@@ -5,15 +5,15 @@ import { useAuth } from '@/hooks/useAuth';
 import { BarChart3, PieChart, Users, CalendarCheck, AlertTriangle } from 'lucide-react';
 
 // Dynamically import chart components
-const WeeklySessionsChart = dynamic(() => import('@/components/features/dashboard/WeeklySessionsChart').then(mod => mod.WeeklySessionsChart), { 
+const WeeklySessionsChart = dynamic(() => import('@/components/dashboard/WeeklySessionsChart').then(mod => mod.WeeklySessionsChart), { 
   ssr: false,
   loading: () => <div className="h-64 flex items-center justify-center"><p>Carregando gráfico...</p></div> 
 });
-const OccupancyRateChart = dynamic(() => import('@/components/features/dashboard/OccupancyRateChart').then(mod => mod.OccupancyRateChart), { 
+const OccupancyRateChart = dynamic(() => import('@/components/dashboard/OccupancyRateChart').then(mod => mod.OccupancyRateChart), { 
   ssr: false,
   loading: () => <div className="h-64 flex items-center justify-center"><p>Carregando gráfico...</p></div> 
 });
-const CommonIssuesChart = dynamic(() => import('@/components/features/dashboard/CommonIssuesChart').then(mod => mod.CommonIssuesChart), { 
+const CommonIssuesChart = dynamic(() => import('@/components/dashboard/CommonIssuesChart').then(mod => mod.CommonIssuesChart), { 
   ssr: false,
   loading: () => <div className="h-64 flex items-center justify-center"><p>Carregando gráfico...</p></div> 
 });

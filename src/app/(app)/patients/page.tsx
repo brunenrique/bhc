@@ -1,6 +1,6 @@
 "use client";
-import { PatientListTable } from "@/components/features/patients/PatientListTable";
-import { PatientFormDialog } from "@/components/features/patients/PatientFormDialog";
+import { PatientListTable } from "@/components/patients/PatientListTable";
+import { PatientFormDialog } from "@/components/patients/PatientFormDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PlusCircle, Search } from "lucide-react";
