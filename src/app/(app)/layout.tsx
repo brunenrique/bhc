@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect } from 'react';
@@ -18,6 +19,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Moon, Sun } from 'lucide-react'; // For theme toggle example
 import { useTheme } from 'next-themes'; // Assuming next-themes is or will be installed
+import { FloatingChatButton } from '@/components/chat/FloatingChatButton';
 
 // Install next-themes: npm install next-themes
 // And configure it in a ThemeProvider in the root layout or here if preferred.
@@ -96,6 +98,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </SidebarInset>
+      <FloatingChatButton />
     </SidebarProvider>
   );
 }
