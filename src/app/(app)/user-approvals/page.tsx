@@ -6,23 +6,41 @@ import { Badge } from "@/components/ui/badge";
 import { UserCheck, Users, CheckCircle, ShieldQuestion } from "lucide-react";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useEffect, useState } from "react";
+import { collection, doc, getDocs, query, updateDoc, where } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
-// Mock data - replace with actual data fetching from Firestore
-const mockPendingUsers = [
-  { id: "usr1", name: "Dr. Eleanor Vance", email: "eleanor.vance@example.com", role: "Psychologist", dateRegistered: "2024-07-20", status: "Pendente" },
-  { id: "usr2", name: "Samuel Green", email: "sam.green@example.com", role: "Secretary", dateRegistered: "2024-07-19", status: "Pendente" },
-  { id: "usr3", name: "Dr. Arthur Finch", email: "arthur.finch@example.com", role: "Psychologist", dateRegistered: "2024-07-18", status: "Pendente" },
-];
+interface PendingUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  dateRegistered: string;
+  status: string;
+}
 
 export default function UserApprovalsPage() {
-  // TODO: Fetch pending users from Firestore where isApproved === false
-  // TODO: Implement handleApproveUser function to update Firestore
+  const [pendingUsers, setPendingUsers] = useState<PendingUser[]>([]);
 
-  const handleApproveUser = (userId: string) => {
-    console.log(`Aprovando usuário ${userId}...`);
-    // Update Firestore: set isApproved = true for this userId
-    // Re-fetch or update local state
+  useEffect(() => {
+    async function fetchPendingUsers() {
+      const q = query(collection(db, "users"), where("isApproved", "==", false));
+      const snapshot = await getDocs(q);
+      const users: PendingUser[] = snapshot.docs.map(docSnap => ({
+        id: docSnap.id,
+        ...(docSnap.data() as Omit<PendingUser, "id" | "status">),
+        status: "Pendente",
+      }));
+      setPendingUsers(users);
+    }
+    fetchPendingUsers().catch(err => console.error(err));
+  }, []);
+
+  const handleApproveUser = async (userId: string) => {
+    await updateDoc(doc(db, "users", userId), { isApproved: true });
+    setPendingUsers(prev => prev.filter(u => u.id !== userId));
   };
+
 
   const getRoleBadge = (role: string): "secondary" | "outline" | "default" => {
     if (role === "Psychologist") return "secondary";
@@ -53,7 +71,7 @@ export default function UserApprovalsPage() {
           <CardDescription>Revise e aprove novos usuários solicitando acesso ao PsiGuard.</CardDescription>
         </CardHeader>
         <CardContent>
-          {mockPendingUsers.length > 0 ? (
+          {pendingUsers.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -66,7 +84,7 @@ export default function UserApprovalsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {mockPendingUsers.map(user => (
+                {pendingUsers.map(user => (
                   <TableRow key={user.id}>
                     <TableCell className="font-medium">{user.name}</TableCell>
                     <TableCell>{user.email}</TableCell>
