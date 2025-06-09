@@ -17,22 +17,13 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Button } from '@/components/ui/button';
-import { Moon, Sun } from 'lucide-react'; // For theme toggle example
-import { useTheme } from 'next-themes'; // Assuming next-themes is or will be installed
+import { Moon, Sun } from 'lucide-react'; 
+import { useTheme } from 'next-themes'; 
 import { FloatingChatButton } from '@/components/chat/FloatingChatButton';
 
-// Install next-themes: npm install next-themes
-// And configure it in a ThemeProvider in the root layout or here if preferred.
-// For this prototype, a simple toggle button is added to the sidebar footer.
 
 function ThemeToggle() {
-  // This is a conceptual ThemeToggle. 
-  // For it to work, you need to install `next-themes` and wrap your RootLayout with <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-  const { setTheme, theme } = useTheme ? useTheme() : { setTheme: () => {}, theme: 'light' }; // Mock if useTheme is not available
-
-  if (!useTheme) {
-    return null; // Don't render if next-themes is not set up
-  }
+  const { setTheme, theme } = useTheme();
 
   return (
     <Button
@@ -79,9 +70,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <SidebarContent className="p-2">
           <SidebarNav />
         </SidebarContent>
-        <SidebarFooter className="p-2 border-t border-sidebar-border items-center">
-          {/* Example of Theme Toggle - requires next-themes setup */}
-          {/* <ThemeToggle /> */} 
+        <SidebarFooter className="p-2 border-t border-sidebar-border flex items-center justify-center"> {/* Flex added for centering */}
+          <ThemeToggle /> 
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
