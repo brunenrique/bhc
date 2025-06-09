@@ -1,0 +1,33 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Default deny all access unless explicitly allowed
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+
+    // Example: Allow authenticated users to upload to a 'user_uploads/{userId}' path
+    // and read their own files.
+    match /user_uploads/{userId}/{allPaths=**} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Example: Allow users to upload profile pictures to 'profile_pictures/{userId}'
+    // Ensure file size and type validation if needed.
+    match /profile_pictures/{userId}/{fileName} {
+      allow read: if true; // Profile pictures are often public
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Example: Allow public read for general resources like shared documents if any
+    match /public_documents/{allPaths=**} {
+        allow read: if true;
+        allow write: if request.auth != null; // Or restrict to specific roles like admin
+    }
+
+    // Note: For production, these rules should be more granular.
+    // Consider file size limits, content type validation, etc.
+  }
+}

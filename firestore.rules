@@ -1,0 +1,42 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny all access unless explicitly allowed
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Allow users to read and write their own data
+    match /users/{userId}/{documents=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Allow authenticated users to manage patient records
+    // Consider refining based on roles (e.g., psychologist, admin)
+    match /patients/{patientId}/{documents=**} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Allow authenticated users to manage sessions
+    match /sessions/{sessionId}/{documents=**} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Allow authenticated users to manage assessments
+    match /assessments/{assessmentId}/{documents=**} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Allow authenticated users to manage documents
+    // This is a generic rule, you might want to make it more specific
+    match /documents/{documentId}/{documents=**} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Note: For production, these rules should be more granular and restrictive.
+    // Example: Only a psychologist associated with a patient can read/write patient data.
+    // Example: Admins might have broader access for management.
+  }
+}
