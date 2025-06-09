@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import type { Patient, Session } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,9 +39,9 @@ const fetchPatientSessions = async (patientId: string): Promise<Session[]> => {
   console.log(`Fetching sessions for patient id: ${patientId}`);
   await new Promise(resolve => setTimeout(resolve, 300));
   return [
-    { id: 's1', patientId, psychologistId: 'psy1', startTime: new Date(Date.now() - 1000*60*60*24*7).toISOString(), endTime: new Date(Date.now() - 1000*60*60*24*7 + 1000*60*60).toISOString(), status: 'completed', notes: 'Sessão produtiva, paciente demonstrou progresso.'},
-    { id: 's2', patientId, psychologistId: 'psy1', startTime: new Date(Date.now() - 1000*60*60*24*2).toISOString(), endTime: new Date(Date.now() - 1000*60*60*24*2 + 1000*60*60).toISOString(), status: 'scheduled', notes: 'Foco em técnicas de relaxamento.'},
-  ];
+    { id: 's1', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo", startTime: new Date(Date.now() - 1000*60*60*24*7).toISOString(), endTime: new Date(Date.now() - 1000*60*60*24*7 + 1000*60*60).toISOString(), status: 'completed', notes: 'Sessão produtiva, paciente demonstrou progresso.'},
+    { id: 's2', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo", startTime: new Date(Date.now() - 1000*60*60*24*2).toISOString(), endTime: new Date(Date.now() - 1000*60*60*24*2 + 1000*60*60).toISOString(), status: 'scheduled', notes: 'Foco em técnicas de relaxamento.'},
+  ].sort((a,b) => parseISO(b.startTime).getTime() - parseISO(a.startTime).getTime());
 }
 
 
@@ -71,10 +71,46 @@ export default function PatientDetailPage() {
       }).catch(error => {
         console.error("Failed to fetch patient details or sessions:", error);
         setIsLoading(false);
-        // Optionally redirect or show error message
       });
     }
   }, [patientId]);
+
+  const handleEditSession = useCallback((session: Session) => {
+    setEditingSession(session);
+    setIsSessionFormOpen(true);
+  }, []);
+  
+  const handleNewSession = useCallback(() => {
+    setEditingSession(null); 
+    setIsSessionFormOpen(true);
+  }, []);
+
+  const handleSavePatient = useCallback((updatedData: Partial<Patient>) => {
+    setPatient(prev => prev ? { ...prev, ...updatedData } : null);
+    setIsPatientFormOpen(false);
+  }, []);
+
+  const handleSaveSession = useCallback((sessionData: Partial<Session>) => {
+    console.log("Saving session for patient:", patientId, sessionData);
+    // Update or add session locally
+    if (editingSession && sessionData.id) {
+      setSessions(prev => prev.map(s => s.id === sessionData.id ? {...s, ...sessionData} as Session : s)
+                             .sort((a,b) => parseISO(b.startTime).getTime() - parseISO(a.startTime).getTime()));
+    } else {
+      const newSession = { 
+          ...sessionData, 
+          id: `s-${Date.now()}`, 
+          patientId: patientId,
+          // Mock patient/psychologist names if IDs are present
+          patientName: patient?.name,
+          psychologistName: sessionData.psychologistId === 'psy1' ? 'Dr. Exemplo' : 'Outro Psicólogo',
+       } as Session;
+      setSessions(prev => [newSession, ...prev].sort((a,b) => parseISO(b.startTime).getTime() - parseISO(a.startTime).getTime()));
+    }
+    setIsSessionFormOpen(false);
+    // fetchPatientSessions(patientId).then(setSessions); // Option to refetch
+  }, [patientId, editingSession, patient?.name]);
+
 
   if (isLoading) {
     return <div className="flex justify-center items-center h-64"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div>;
@@ -87,16 +123,6 @@ export default function PatientDetailPage() {
         <Button onClick={() => router.push('/patients')}>Voltar para lista de pacientes</Button>
       </div>
     );
-  }
-  
-  const handleEditSession = (session: Session) => {
-    setEditingSession(session);
-    setIsSessionFormOpen(true);
-  }
-  
-  const handleNewSession = () => {
-    setEditingSession(null); // Clear any previously editing session
-    setIsSessionFormOpen(true);
   }
 
   return (
@@ -152,25 +178,27 @@ export default function PatientDetailPage() {
         </CardHeader>
         <CardContent>
             {sessions.length > 0 ? (
-                <ul className="space-y-3">
-                    {sessions.map(s => (
-                        <li key={s.id} className="p-3 border rounded-lg hover:bg-muted/30 transition-colors">
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <p className="font-semibold text-sm">Data: {format(parseISO(s.startTime), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
-                                    <p className="text-xs text-muted-foreground">Com: {s.psychologistName || 'Psicólogo não informado'}</p>
-                                    <Badge variant={s.status === 'completed' ? 'secondary' : 'default'} className="mt-1 text-xs capitalize">
-                                        {s.status === 'completed' ? 'Concluída' : s.status === 'scheduled' ? 'Agendada' : s.status}
-                                    </Badge>
-                                    {s.notes && <p className="text-xs text-muted-foreground mt-1 italic">Nota: {s.notes.substring(0,50)}...</p>}
+                <ScrollArea className="h-72 pr-3">
+                    <ul className="space-y-3">
+                        {sessions.map(s => (
+                            <li key={s.id} className="p-3 border rounded-lg hover:bg-muted/30 transition-colors">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <p className="font-semibold text-sm">Data: {format(parseISO(s.startTime), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+                                        <p className="text-xs text-muted-foreground">Com: {s.psychologistName || 'Psicólogo não informado'}</p>
+                                        <Badge variant={s.status === 'completed' ? 'secondary' : s.status === 'scheduled' ? 'default' : 'outline'} className="mt-1 text-xs capitalize">
+                                            {s.status === 'completed' ? 'Concluída' : s.status === 'scheduled' ? 'Agendada' : s.status}
+                                        </Badge>
+                                        {s.notes && <p className="text-xs text-muted-foreground mt-1 italic">Nota: {s.notes.substring(0,50)}...</p>}
+                                    </div>
+                                    <Button variant="ghost" size="sm" onClick={() => handleEditSession(s)}>
+                                        <Edit className="w-4 h-4 mr-1" /> Editar
+                                    </Button>
                                 </div>
-                                <Button variant="ghost" size="sm" onClick={() => handleEditSession(s)}>
-                                    <Edit className="w-4 h-4 mr-1" /> Editar
-                                </Button>
-                            </div>
-                        </li>
-                    ))}
-                </ul>
+                            </li>
+                        ))}
+                    </ul>
+                </ScrollArea>
             ) : (
                 <p className="text-muted-foreground">Nenhuma sessão registrada para este paciente.</p>
             )}
@@ -181,25 +209,14 @@ export default function PatientDetailPage() {
         isOpen={isPatientFormOpen} 
         onOpenChange={setIsPatientFormOpen}
         patient={patient}
-        onSave={(updatedData) => {
-          // Update patient data locally or refetch
-          setPatient(prev => prev ? { ...prev, ...updatedData } : null);
-          setIsPatientFormOpen(false);
-        }}
+        onSave={handleSavePatient}
       />
       
       <SessionFormDialog
         isOpen={isSessionFormOpen}
         onOpenChange={setIsSessionFormOpen}
-        session={editingSession} // Pass the session being edited, or null for new
-        // Ensure patientId is pre-filled if it's a new session for this patient
-        onSave={(sessionData) => {
-          console.log("Saving session for patient:", patientId, sessionData);
-          // Add logic to save/update session (e.g., call API, update Zustand store)
-          // For prototype, just close and log. Then refetch sessions.
-          setIsSessionFormOpen(false);
-          fetchPatientSessions(patientId).then(setSessions); // Refetch sessions after save
-        }}
+        session={editingSession}
+        onSave={handleSaveSession}
       />
 
     </div>

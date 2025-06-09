@@ -4,40 +4,53 @@ import { PatientFormDialog } from "@/components/patients/PatientFormDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PlusCircle, Search } from "lucide-react";
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import type { Patient } from "@/types";
 
 const mockPatients: Patient[] = [
-  { id: '1', name: 'Ana Beatriz Silva', email: 'ana.silva@example.com', phone: '(11) 98765-4321', dateOfBirth: '1990-05-15', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  { id: '2', name: 'Bruno Almeida Costa', email: 'bruno.costa@example.com', phone: '(21) 91234-5678', dateOfBirth: '1985-11-20', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+  { id: '1', name: 'Ana Beatriz Silva', email: 'ana.silva@example.com', phone: '(11) 98765-4321', dateOfBirth: '1990-05-15', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(), updatedAt: new Date().toISOString() },
+  { id: '2', name: 'Bruno Almeida Costa', email: 'bruno.costa@example.com', phone: '(21) 91234-5678', dateOfBirth: '1985-11-20', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(), updatedAt: new Date().toISOString() },
   { id: '3', name: 'Carla Dias Oliveira', email: 'carla.oliveira@example.com', phone: '(31) 95555-5555', dateOfBirth: '2000-02-10', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
 ];
 
 export default function PatientsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [patients, setPatients] = useState<Patient[]>(mockPatients);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const handleNewPatient = () => {
+  const handleNewPatient = useCallback(() => {
     setSelectedPatient(null);
     setIsFormOpen(true);
-  };
+  }, []);
 
-  const handleEditPatient = (patient: Patient) => {
+  const handleEditPatient = useCallback((patient: Patient) => {
     setSelectedPatient(patient);
     setIsFormOpen(true);
-  }
+  }, []);
 
-  const handleDeletePatient = (patientId: string) => {
+  const handleDeletePatient = useCallback((patientId: string) => {
     // Add delete logic: call API, update state
     console.log("Deleting patient:", patientId);
-    // For prototype, filter out from mock data if you manage state here
-  }
+    setPatients(prev => prev.filter(p => p.id !== patientId));
+  }, []);
 
-  const filteredPatients = mockPatients.filter(p => 
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (p.email && p.email.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const handleSavePatient = useCallback((patientData: Partial<Patient>) => {
+    console.log("Saving patient:", patientData);
+    if (selectedPatient && patientData.id) { // Editing existing
+      setPatients(prev => prev.map(p => p.id === patientData.id ? {...p, ...patientData} as Patient : p));
+    } else { // Creating new
+      const newPatient = { ...patientData, id: `mock-${Date.now()}`, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } as Patient;
+      setPatients(prev => [newPatient, ...prev]);
+    }
+    setIsFormOpen(false);
+  }, [selectedPatient]);
+
+  const filteredPatients = useMemo(() => 
+    patients.filter(p => 
+      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (p.email && p.email.toLowerCase().includes(searchTerm.toLowerCase()))
+    ), [patients, searchTerm]);
 
   return (
     <div className="space-y-6">
@@ -74,11 +87,7 @@ export default function PatientsPage() {
         isOpen={isFormOpen}
         onOpenChange={setIsFormOpen}
         patient={selectedPatient}
-        onSave={(patientData) => {
-          console.log("Saving patient:", patientData);
-          // Add logic to save/update patient
-          setIsFormOpen(false);
-        }}
+        onSave={handleSavePatient}
       />
     </div>
   );

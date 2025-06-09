@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Assessment } from "@/types";
 import {ClipboardEdit, ListChecks} from "lucide-react";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 
 const mockAssessments: Assessment[] = [
   { id: 'assess1', title: 'Escala Beck de Ansiedade', patientId: 'p1', patientName: 'Ana Silva', status: 'completed', formLink: 'mock-link-123', results: { score: 25, level: 'Moderado' }, createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString() },
@@ -19,18 +19,16 @@ export default function AssessmentsPage() {
   const [assessments, setAssessments] = useState<Assessment[]>(mockAssessments);
   const [editingAssessment, setEditingAssessment] = useState<Assessment | null>(null);
 
-  const handleCreateOrUpdateAssessment = (data: Partial<Assessment>) => {
+  const handleCreateOrUpdateAssessment = useCallback((data: Partial<Assessment>) => {
     if(editingAssessment) {
-      // Update logic
       setAssessments(prev => prev.map(a => a.id === editingAssessment.id ? {...a, ...data, patientName: data.patientId === 'p1' ? 'Ana Silva' : 'Bruno Costa'} as Assessment : a));
       console.log("Updating assessment:", data);
     } else {
-      // Create logic
       const newAssessment: Assessment = {
         id: `assess${Date.now()}`,
         title: data.title || 'Nova Avaliação',
         patientId: data.patientId || '',
-        patientName: data.patientId === 'p1' ? 'Ana Silva' : 'Bruno Costa', // Mock name based on ID
+        patientName: data.patientId === 'p1' ? 'Ana Silva' : data.patientId === 'p2' ? 'Bruno Costa' : 'Outro Paciente', 
         status: 'pending',
         createdAt: new Date().toISOString(),
         ...data,
@@ -38,19 +36,21 @@ export default function AssessmentsPage() {
       setAssessments(prev => [newAssessment, ...prev]);
       console.log("Creating assessment:", newAssessment);
     }
-    setEditingAssessment(null); // Reset editing state
-  };
+    setEditingAssessment(null);
+  }, [editingAssessment]);
 
-  const handleEditAssessment = (assessment: Assessment) => {
+  const handleEditAssessment = useCallback((assessment: Assessment) => {
     setEditingAssessment(assessment);
-    // Potentially switch to creator tab or open a dialog
-    // For simplicity, AssessmentCreator will now handle an optional 'assessment' prop
-  }
+  }, []);
   
-  const handleDeleteAssessment = (assessmentId: string) => {
+  const handleDeleteAssessment = useCallback((assessmentId: string) => {
     setAssessments(prev => prev.filter(a => a.id !== assessmentId));
     console.log("Deleting assessment:", assessmentId);
-  }
+  }, []);
+
+  const handleCancelEdit = useCallback(() => {
+    setEditingAssessment(null);
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -93,7 +93,7 @@ export default function AssessmentsPage() {
               <AssessmentCreator 
                 onSave={handleCreateOrUpdateAssessment} 
                 existingAssessment={editingAssessment}
-                onCancel={() => setEditingAssessment(null)}
+                onCancel={handleCancelEdit}
               />
             </CardContent>
           </Card>

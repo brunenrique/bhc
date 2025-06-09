@@ -1,12 +1,12 @@
 "use client";
 
+import React, { useRef, useState, ChangeEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { DocumentResource } from "@/types";
-import { UploadCloud, FileText, FileSpreadsheet, FileImage, FileArchive, Download, Trash2, MoreHorizontal, Search } from "lucide-react";
-import { useRef, useState, ChangeEvent } from "react";
+import { UploadCloud, FileText, FileArchive, Download, Trash2, MoreHorizontal, Search } from "lucide-react";
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -16,12 +16,14 @@ interface DocumentManagerProps {
   documents: DocumentResource[];
   onUpload: (file: File) => void;
   onDelete: (documentId: string) => void;
+  searchTerm: string;
+  onSearchTermChange: (term: string) => void;
 }
 
 const getFileIcon = (type: DocumentResource['type']) => {
   switch (type) {
     case 'pdf': return <FileText className="h-5 w-5 text-red-500" />;
-    case 'doc': return <FileText className="h-5 w-5 text-blue-500" />;
+    case 'doc': case 'docx': return <FileText className="h-5 w-5 text-blue-500" />;
     // Add more cases for xls, ppt, img etc.
     default: return <FileArchive className="h-5 w-5 text-gray-500" />;
   }
@@ -37,20 +39,18 @@ const formatFileSize = (bytes: number | undefined): string => {
 };
 
 
-export function DocumentManager({ documents, onUpload, onDelete }: DocumentManagerProps) {
+export const DocumentManager = React.memo(function DocumentManager({ documents, onUpload, onDelete, searchTerm, onSearchTermChange }: DocumentManagerProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [searchTerm, setSearchTerm] = useState('');
 
   const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       onUpload(file);
+      if(fileInputRef.current) { // Reset file input to allow uploading the same file again if needed
+        fileInputRef.current.value = "";
+      }
     }
   };
-
-  const filteredDocuments = documents.filter(doc => 
-    doc.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   return (
     <Card className="shadow-lg">
@@ -67,7 +67,7 @@ export function DocumentManager({ documents, onUpload, onDelete }: DocumentManag
               placeholder="Buscar documento..." 
               className="pl-8 w-full"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => onSearchTermChange(e.target.value)}
             />
           </div>
           <Button onClick={() => fileInputRef.current?.click()} className="whitespace-nowrap">
@@ -77,7 +77,7 @@ export function DocumentManager({ documents, onUpload, onDelete }: DocumentManag
         </div>
       </CardHeader>
       <CardContent>
-        {filteredDocuments.length > 0 ? (
+        {documents.length > 0 ? (
           <div className="rounded-md border overflow-x-auto">
             <Table>
               <TableHeader>
@@ -91,7 +91,7 @@ export function DocumentManager({ documents, onUpload, onDelete }: DocumentManag
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredDocuments.map((doc) => (
+                {documents.map((doc) => (
                   <TableRow key={doc.id} className="hover:bg-muted/50 transition-colors">
                     <TableCell className="hidden sm:table-cell">{getFileIcon(doc.type)}</TableCell>
                     <TableCell className="font-medium max-w-[200px] sm:max-w-xs md:max-w-sm truncate" title={doc.name}>
@@ -135,11 +135,19 @@ export function DocumentManager({ documents, onUpload, onDelete }: DocumentManag
           </div>
         )}
       </CardContent>
-      {filteredDocuments.length > 0 && (
+      {documents.length > 0 && (
         <CardFooter className="text-sm text-muted-foreground">
-          Mostrando {filteredDocuments.length} de {documents.length} documentos.
+          Mostrando {documents.length} de {documents.filter(doc => doc.name.toLowerCase().includes(searchTerm.toLowerCase())).length} documentos (Total: {mockDocuments.length} antes do filtro aplicado no pai).
         </CardFooter>
       )}
     </Card>
   );
-}
+});
+DocumentManager.displayName = "DocumentManager";
+
+// Mock data to simulate total count before parent filter (if DocumentManager had internal filtering)
+// This is just for the CardFooter example, in real app this total would come from parent or store.
+const mockDocuments = [
+  { id: 'doc1', name: 'Formulário de Consentimento.pdf', type: 'pdf', url: '#', uploadedAt: new Date(Date.now() - 1000*60*60*24*5).toISOString(), size: 120 * 1024 },
+  { id: 'doc2', name: 'Termos de Serviço Psicologia.docx', type: 'doc', url: '#', uploadedAt: new Date(Date.now() - 1000*60*60*24*10).toISOString(), size: 85 * 1024 },
+];

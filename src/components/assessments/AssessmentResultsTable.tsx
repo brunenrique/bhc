@@ -1,5 +1,5 @@
 "use client";
-
+import React from "react";
 import {
   Table,
   TableBody,
@@ -29,7 +29,7 @@ const statusMap: Record<Assessment["status"], { label: string; icon: React.Eleme
 };
 
 
-export function AssessmentResultsTable({ assessments, onEdit, onDelete }: AssessmentResultsTableProps) {
+export const AssessmentResultsTable = React.memo(function AssessmentResultsTable({ assessments, onEdit, onDelete }: AssessmentResultsTableProps) {
   if (assessments.length === 0) {
     return <p className="text-muted-foreground text-center py-8">Nenhuma avaliação encontrada.</p>;
   }
@@ -104,4 +104,5 @@ export function AssessmentResultsTable({ assessments, onEdit, onDelete }: Assess
       </Table>
     </div>
   );
-}
+});
+AssessmentResultsTable.displayName = "AssessmentResultsTable";

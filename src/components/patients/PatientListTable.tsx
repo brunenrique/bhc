@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import {
   Table,
   TableBody,
@@ -9,7 +10,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { Patient } from "@/types";
 import { MoreHorizontal, Edit, Trash2, Eye } from "lucide-react";
@@ -22,7 +22,7 @@ interface PatientListTableProps {
   onDeletePatient: (patientId: string) => void;
 }
 
-export function PatientListTable({ patients, onEditPatient, onDeletePatient }: PatientListTableProps) {
+export const PatientListTable = React.memo(function PatientListTable({ patients, onEditPatient, onDeletePatient }: PatientListTableProps) {
   const router = useRouter();
 
   if (patients.length === 0) {
@@ -51,7 +51,7 @@ export function PatientListTable({ patients, onEditPatient, onDeletePatient }: P
               <TableCell className="hidden md:table-cell">{patient.email || "-"}</TableCell>
               <TableCell className="hidden lg:table-cell">{patient.phone || "-"}</TableCell>
               <TableCell className="hidden lg:table-cell">
-                {format(parseISO(patient.createdAt), "dd/MM/yyyy")}
+                {patient.createdAt ? format(parseISO(patient.createdAt), "dd/MM/yyyy") : "-"}
               </TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>
@@ -82,4 +82,5 @@ export function PatientListTable({ patients, onEditPatient, onDeletePatient }: P
       </Table>
     </div>
   );
-}
+});
+PatientListTable.displayName = "PatientListTable";

@@ -13,13 +13,13 @@ export interface Patient {
   name: string;
   email?: string;
   phone?: string;
-  dateOfBirth?: string;
+  dateOfBirth?: string; // ISO Date string (YYYY-MM-DD)
   address?: string;
   // Encrypted notes would be handled server-side or with a library
   // For UI purposes, we might just have a string field
   sessionNotes?: string; 
-  createdAt: string;
-  updatedAt: string;
+  createdAt: string; // ISO Date string
+  updatedAt: string; // ISO Date string
 }
 
 export interface Session {
@@ -43,14 +43,14 @@ export interface Assessment {
   formLink?: string; // Tokenized link
   status: "pending" | "sent" | "completed";
   results?: Record<string, any>; // Structure of results can vary
-  createdAt: string;
+  createdAt: string; // ISO Date string
 }
 
 export interface DocumentResource {
   id: string;
   name: string;
-  type: "pdf" | "doc" | "txt" | "other"; // Simplified
+  type: "pdf" | "doc" | "docx" | "txt" | "png" | "jpg" | "jpeg" | "other"; // Expanded
   url: string; // Link to the stored file
-  uploadedAt: string;
+  uploadedAt: string; // ISO Date string
   size?: number; // in bytes
 }

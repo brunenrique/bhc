@@ -3,33 +3,51 @@ import { SessionCalendar } from "@/components/scheduling/SessionCalendar";
 import { SessionFormDialog } from "@/components/scheduling/SessionFormDialog";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import type { Session } from "@/types";
+
+const initialMockSessions: Session[] = [
+  { id: '1', patientId: 'p1', patientName: 'Ana Silva', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo', startTime: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString(), endTime: new Date(new Date(new Date().setDate(new Date().getDate() + 1)).setHours(new Date().getHours() + 1)).toISOString(), status: 'scheduled' },
+  { id: '2', patientId: 'p2', patientName: 'Bruno Costa', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo', startTime: new Date(new Date().setDate(new Date().getDate() + 2)).toISOString(), endTime: new Date(new Date(new Date().setDate(new Date().getDate() + 2)).setHours(new Date().getHours() + 1)).toISOString(), status: 'completed' },
+  { id: '3', patientId: 'p1', patientName: 'Ana Silva', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo', startTime: new Date(new Date().setHours(new Date().getHours() - 2)).toISOString(), endTime: new Date(new Date().setHours(new Date().getHours() - 1)).toISOString(), status: 'scheduled' },
+];
 
 export default function SchedulingPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [sessions, setSessions] = useState<Session[]>(initialMockSessions);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [currentDate, setCurrentDate] = useState<Date | undefined>(new Date());
 
-  const handleNewSession = () => {
+  const handleNewSession = useCallback(() => {
     setSelectedSession(null);
     setIsFormOpen(true);
-  };
+  }, []);
 
-  const handleEditSession = (session: Session) => {
+  const handleEditSession = useCallback((session: Session) => {
     setSelectedSession(session);
     setIsFormOpen(true);
-  }
+  }, []);
 
-  const handleDateChange = (date?: Date) => {
+  const handleDateChange = useCallback((date?: Date) => {
     setCurrentDate(date);
-    // Potentially fetch sessions for the new date/month
-  };
+  }, []);
 
-  const mockSessions: Session[] = [
-    { id: '1', patientId: 'p1', patientName: 'Ana Silva', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo', startTime: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString(), endTime: new Date(new Date(new Date().setDate(new Date().getDate() + 1)).setHours(new Date().getHours() + 1)).toISOString(), status: 'scheduled' },
-    { id: '2', patientId: 'p2', patientName: 'Bruno Costa', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo', startTime: new Date(new Date().setDate(new Date().getDate() + 2)).toISOString(), endTime: new Date(new Date(new Date().setDate(new Date().getDate() + 2)).setHours(new Date().getHours() + 1)).toISOString(), status: 'completed' },
-  ];
+  const handleSaveSession = useCallback((sessionData: Partial<Session>) => {
+    console.log("Saving session:", sessionData);
+    if (selectedSession && sessionData.id) { // Editing existing
+      setSessions(prev => prev.map(s => s.id === sessionData.id ? {...s, ...sessionData } as Session : s));
+    } else { // Creating new
+      const newSession = { 
+        ...sessionData, 
+        id: `sess-${Date.now()}`, 
+        // Mock patient/psychologist names if IDs are present
+        patientName: sessionData.patientId === 'p1' ? 'Ana Silva' : sessionData.patientId === 'p2' ? 'Bruno Costa' : 'Novo Paciente',
+        psychologistName: sessionData.psychologistId === 'psy1' ? 'Dr. Exemplo' : 'Outro Psicólogo',
+      } as Session;
+      setSessions(prev => [newSession, ...prev]);
+    }
+    setIsFormOpen(false);
+  }, [selectedSession]);
   
   return (
     <div className="space-y-6">
@@ -45,7 +63,7 @@ export default function SchedulingPage() {
       </p>
       
       <SessionCalendar 
-        sessions={mockSessions} 
+        sessions={sessions} 
         onDateChange={handleDateChange}
         onSelectSession={handleEditSession}
         currentCalendarDate={currentDate}
@@ -55,12 +73,7 @@ export default function SchedulingPage() {
         isOpen={isFormOpen}
         onOpenChange={setIsFormOpen}
         session={selectedSession}
-        onSave={(sessionData) => {
-          console.log("Saving session:", sessionData);
-          // Add logic to save/update session (e.g., call API, update Zustand store)
-          // For prototype, just close and log.
-          setIsFormOpen(false);
-        }}
+        onSave={handleSaveSession}
       />
     </div>
   );

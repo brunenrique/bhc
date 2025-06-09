@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useState, useMemo } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import type { Session } from "@/types";
@@ -7,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Edit2, User, Clock } from "lucide-react";
-import { useState, useMemo } from "react";
 import { format, isSameDay, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -18,7 +18,7 @@ interface SessionCalendarProps {
   currentCalendarDate?: Date;
 }
 
-export function SessionCalendar({ sessions, onDateChange, onSelectSession, currentCalendarDate }: SessionCalendarProps) {
+export const SessionCalendar = React.memo(function SessionCalendar({ sessions, onDateChange, onSelectSession, currentCalendarDate }: SessionCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(currentCalendarDate || new Date());
 
   const handleDateSelect = (date?: Date) => {
@@ -28,7 +28,8 @@ export function SessionCalendar({ sessions, onDateChange, onSelectSession, curre
 
   const sessionsForSelectedDate = useMemo(() => {
     if (!selectedDate) return [];
-    return sessions.filter(session => isSameDay(parseISO(session.startTime), selectedDate));
+    return sessions.filter(session => isSameDay(parseISO(session.startTime), selectedDate))
+                   .sort((a,b) => parseISO(a.startTime).getTime() - parseISO(b.startTime).getTime());
   }, [sessions, selectedDate]);
 
   const dayHasEvents = (date: Date) => {
@@ -98,7 +99,7 @@ export function SessionCalendar({ sessions, onDateChange, onSelectSession, curre
                       </Button>
                     </div>
                      <Badge 
-                        variant={session.status === 'scheduled' ? 'default' : session.status === 'completed' ? 'secondary' : 'destructive'} 
+                        variant={session.status === 'scheduled' ? 'default' : session.status === 'completed' ? 'secondary' : session.status === 'cancelled' ? 'outline' : 'destructive'} 
                         className="mt-1.5 text-xs capitalize"
                       >
                         {session.status === 'scheduled' ? 'Agendada' : session.status === 'completed' ? 'Concluída' : session.status === 'cancelled' ? 'Cancelada' : 'Não Compareceu'}
@@ -114,4 +115,6 @@ export function SessionCalendar({ sessions, onDateChange, onSelectSession, curre
       </CardContent>
     </Card>
   );
-}
+});
+
+SessionCalendar.displayName = "SessionCalendar";
