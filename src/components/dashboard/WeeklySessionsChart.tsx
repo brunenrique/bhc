@@ -1,9 +1,8 @@
+
 "use client"
 
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from "recharts"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { ChartTooltipContent } from "@/components/ui/chart" // Assuming ChartTooltipContent is part of your shadcn/ui setup
-
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend } from "recharts"
+import { ChartContainer, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
 
 const data = [
   { day: "Seg", sessions: Math.floor(Math.random() * 20) + 5 },
@@ -14,10 +13,17 @@ const data = [
   { day: "Sáb", sessions: Math.floor(Math.random() * 10) },
 ];
 
+const chartConfig = {
+  sessions: {
+    label: "Sessões",
+    color: "hsl(var(--primary))",
+  },
+} satisfies ChartConfig;
+
 export function WeeklySessionsChart() {
   return (
     <div className="h-[350px] w-full">
-      <ResponsiveContainer width="100%" height="100%">
+      <ChartContainer config={chartConfig} className="h-full w-full">
         <BarChart data={data} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           <XAxis 
@@ -39,9 +45,9 @@ export function WeeklySessionsChart() {
             content={<ChartTooltipContent />} 
           />
           <Legend wrapperStyle={{fontSize: '0.8rem'}} />
-          <Bar dataKey="sessions" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Sessões" />
+          <Bar dataKey="sessions" fill="var(--color-sessions)" radius={[4, 4, 0, 0]} name="Sessões" />
         </BarChart>
-      </ResponsiveContainer>
+      </ChartContainer>
     </div>
   );
 }
