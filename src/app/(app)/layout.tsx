@@ -80,8 +80,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <div className="md:hidden">
             <SidebarTrigger />
           </div>
-          <div className="flex-1 md:ml-auto md:w-auto md:flex-none">
-            {/* Search or other header elements can go here */}
+          {/* Alterado para ser apenas um espaçador flexível */}
+          <div className="flex-1">
+            {/* Search or other header elements can go here in the future */}
           </div>
           <UserNav />
         </header>
