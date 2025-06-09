@@ -1,6 +1,8 @@
+
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import {
   Table,
   TableBody,
@@ -45,7 +47,9 @@ export const PatientListTable = React.memo(function PatientListTable({ patients,
           {patients.map((patient) => (
             <TableRow key={patient.id} className="hover:bg-muted/50 transition-colors">
               <TableCell>
-                <div className="font-medium">{patient.name}</div>
+                <Link href={`/patients/${patient.id}`} className="font-medium text-primary hover:underline">
+                  {patient.name}
+                </Link>
                 <div className="text-xs text-muted-foreground md:hidden">{patient.email}</div>
               </TableCell>
               <TableCell className="hidden md:table-cell">{patient.email || "-"}</TableCell>
