@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Moon, Sun } from 'lucide-react'; 
 import { useTheme } from 'next-themes'; 
 import { FloatingChatButton } from '@/components/chat/FloatingChatButton';
+import { SimulatedNotificationManager } from '@/components/notifications/SimulatedNotificationManager';
 
 
 function ThemeToggle() {
@@ -89,6 +90,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </main>
       </SidebarInset>
       <FloatingChatButton />
+      <SimulatedNotificationManager />
     </SidebarProvider>
   );
 }
