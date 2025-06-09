@@ -12,7 +12,7 @@ import { SessionFormDialog } from '@/components/scheduling/SessionFormDialog';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, addDays, addWeeks, addMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -37,6 +37,7 @@ const fetchPatientDetails = async (id: string): Promise<Patient | null> => {
 const fetchPatientSessions = async (patientId: string): Promise<Session[]> => {
   console.log(`Fetching sessions for patient id: ${patientId}`);
   await new Promise(resolve => setTimeout(resolve, 300));
+  // Ensure mock sessions are sorted by start time, most recent first
   return [
     { id: 's1', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo", startTime: new Date(Date.now() - 1000*60*60*24*7).toISOString(), endTime: new Date(Date.now() - 1000*60*60*24*7 + 1000*60*60).toISOString(), status: 'completed', notes: 'Sessão produtiva, paciente demonstrou progresso.', recurring: 'weekly'},
     { id: 's2', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo", startTime: new Date(Date.now() - 1000*60*60*24*2).toISOString(), endTime: new Date(Date.now() - 1000*60*60*24*2 + 1000*60*60).toISOString(), status: 'scheduled', notes: 'Foco em técnicas de relaxamento.', recurring: 'none'},
@@ -47,6 +48,7 @@ const recurrenceLabels: Record<string, string> = {
   daily: "Diária",
   weekly: "Semanal",
   monthly: "Mensal",
+  none: "Não se repete"
 };
 
 export default function PatientDetailPage() {
@@ -69,7 +71,7 @@ export default function PatientDetailPage() {
         fetchPatientSessions(patientId)
       ]).then(([patientData, sessionsData]) => {
         setPatient(patientData);
-        setSessions(sessionsData);
+        setSessions(sessionsData.sort((a,b) => parseISO(b.startTime).getTime() - parseISO(a.startTime).getTime()));
         setIsLoading(false);
       }).catch(error => {
         console.error("Failed to fetch patient details or sessions:", error);
@@ -95,19 +97,62 @@ export default function PatientDetailPage() {
 
   const handleSaveSession = useCallback((sessionData: Partial<Session>) => {
     if (editingSession && sessionData.id) {
-      setSessions(prev => prev.map(s => s.id === sessionData.id ? {...s, ...sessionData} as Session : s)
-                             .sort((a,b) => parseISO(b.startTime).getTime() - parseISO(a.startTime).getTime()));
+      // Editing existing session - only updates the specific instance for now
+      setSessions(prev => 
+        prev.map(s => (s.id === sessionData.id ? { ...s, ...sessionData } as Session : s))
+            .sort((a, b) => parseISO(b.startTime).getTime() - parseISO(a.startTime).getTime())
+      );
     } else {
-      const newSession = { 
-          ...sessionData, 
-          id: `s-${Date.now()}`, 
-          patientId: patientId,
-          patientName: patient?.name,
-          psychologistName: sessionData.psychologistId === 'psy1' ? 'Dr. Exemplo' : 'Outro Psicólogo',
-       } as Session;
-      setSessions(prev => [newSession, ...prev].sort((a,b) => parseISO(b.startTime).getTime() - parseISO(a.startTime).getTime()));
+      // Creating new session
+      const mainNewSession = { 
+        ...sessionData, 
+        id: `s-${Date.now()}`, 
+        patientId: patientId, // patientId from route params
+        patientName: patient?.name, // patient name from current patient state
+        psychologistName: sessionData.psychologistId === 'psy1' ? 'Dr. Exemplo' : 'Outro Psicólogo',
+      } as Session;
+
+      const sessionsToAdd = [mainNewSession];
+
+      // Generate recurring sessions if applicable for the new session
+      if (mainNewSession.recurring && mainNewSession.recurring !== 'none' && mainNewSession.startTime) {
+        const baseStartTime = parseISO(mainNewSession.startTime);
+        const baseEndTime = mainNewSession.endTime ? parseISO(mainNewSession.endTime) : new Date(baseStartTime.getTime() + 60 * 60 * 1000);
+        const duration = baseEndTime.getTime() - baseStartTime.getTime();
+        let occurrencesToCreate = 4;
+
+        if (mainNewSession.recurring === 'daily') {
+          occurrencesToCreate = 6;
+        }
+
+        for (let i = 1; i <= occurrencesToCreate; i++) {
+          let nextStartTime: Date;
+          if (mainNewSession.recurring === 'daily') {
+            nextStartTime = addDays(baseStartTime, i);
+          } else if (mainNewSession.recurring === 'weekly') {
+            nextStartTime = addWeeks(baseStartTime, i);
+          } else if (mainNewSession.recurring === 'monthly') {
+            nextStartTime = addMonths(baseStartTime, i);
+          } else {
+            break; 
+          }
+          const nextEndTime = new Date(nextStartTime.getTime() + duration);
+          
+          sessionsToAdd.push({
+            ...mainNewSession,
+            id: `s-${Date.now()}-recur-${i}`,
+            startTime: nextStartTime.toISOString(),
+            endTime: nextEndTime.toISOString(),
+            status: 'scheduled',
+            notes: mainNewSession.notes ? `${mainNewSession.notes} (Recorrência ${i})` : `Sessão recorrente ${i}`,
+            recurring: 'none', 
+          });
+        }
+      }
+      setSessions(prev => [...prev, ...sessionsToAdd].sort((a, b) => parseISO(b.startTime).getTime() - parseISO(a.startTime).getTime()));
     }
     setIsSessionFormOpen(false);
+    setEditingSession(null);
   }, [patientId, editingSession, patient?.name]);
 
 
@@ -221,6 +266,10 @@ export default function PatientDetailPage() {
         onOpenChange={setIsSessionFormOpen}
         session={editingSession}
         onSave={handleSaveSession}
+        // Pass patientId and patientName if creating a new session from this context
+        // This is useful if SessionFormDialog needs to associate with the current patient automatically
+        // For now, patientId is derived inside handleSaveSession or passed with existingSession
+        // Consider making patientId an explicit prop for SessionFormDialog if needed for new sessions created here
       />
 
     </div>
