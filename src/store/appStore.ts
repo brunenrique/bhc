@@ -1,24 +1,69 @@
-// import { create } from 'zustand';
 
-// This is a placeholder for a Zustand store.
-// You would define your state and actions here.
+import { create } from 'zustand';
+import type { User } from '@/types'; // Assuming Message type will be defined in types
 
-// Example structure:
-// interface AppState {
-//   isChatOpen: boolean;
-//   activeChatUserId: string | null;
-//   toggleChat: () => void;
-//   openChatWithUser: (userId: string) => void;
-// }
+// Define Message type based on ChatWindow component
+interface Message {
+  id: string;
+  sender: string; // 'me' or user ID/name
+  avatar?: string;
+  text: string;
+  timestamp: Date;
+}
 
-// export const useAppStore = create<AppState>((set) => ({
-//   isChatOpen: false,
-//   activeChatUserId: null,
-//   toggleChat: () => set((state) => ({ isChatOpen: !state.isChatOpen })),
-//   openChatWithUser: (userId) => set({ activeChatUserId: userId, isChatOpen: true }),
-// }));
+interface ChatState {
+  isChatWindowOpen: boolean;
+  activeChatId: string | null; // For potential future multi-chat support
+  messagesByChatId: Record<string, Message[]>;
+  toggleChatWindow: () => void;
+  openChatWindow: (chatId: string) => void;
+  closeChatWindow: () => void;
+  addMessage: (chatId: string, message: Message) => void;
+  loadInitialMessages: (chatId: string, initialMessages: Message[]) => void;
+}
 
 // For the prototype, direct state in components or Jotai atoms might be used initially.
 // The prompt mentions Zustand for chat, so this file is a placeholder for that eventual implementation.
 
-export {}; // To make this a module
+export const useAppStore = create<ChatState>((set, get) => ({
+  isChatWindowOpen: false,
+  activeChatId: null,
+  messagesByChatId: {},
+  
+  toggleChatWindow: () => set((state) => ({ isChatWindowOpen: !state.isChatWindowOpen, activeChatId: !state.isChatWindowOpen ? 'geral' : null })),
+  
+  openChatWindow: (chatId: string) => set({ isChatWindowOpen: true, activeChatId: chatId }),
+  
+  closeChatWindow: () => set({ isChatWindowOpen: false, activeChatId: null }),
+  
+  addMessage: (chatId: string, message: Message) => {
+    const currentMessages = get().messagesByChatId[chatId] || [];
+    set((state) => ({
+      messagesByChatId: {
+        ...state.messagesByChatId,
+        [chatId]: [...currentMessages, message],
+      },
+    }));
+  },
+
+  loadInitialMessages: (chatId: string, initialMessages: Message[]) => {
+     set((state) => ({
+      messagesByChatId: {
+        ...state.messagesByChatId,
+        [chatId]: initialMessages,
+      },
+    }));
+  }
+}));
+
+// Auth state (example, might be in a separate store or context in a larger app)
+// This part can be removed if auth is handled purely by useAuth hook with localStorage
+interface AuthState {
+  currentUser: User | null;
+  setCurrentUser: (user: User | null) => void;
+}
+
+// export const useAuthStore = create<AuthState>((set) => ({
+//   currentUser: null,
+//   setCurrentUser: (user) => set({ currentUser: user }),
+// }));

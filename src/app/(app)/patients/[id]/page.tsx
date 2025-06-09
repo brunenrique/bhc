@@ -1,11 +1,12 @@
+
 "use client";
 
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
-import type { Patient, Session } from '@/types';
+import type { Session, Patient } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Edit, Mail, Phone, CalendarDays, FileText, PlusCircle, Trash2 } from 'lucide-react';
+import { ArrowLeft, Edit, Mail, Phone, CalendarDays, FileText, PlusCircle, Repeat } from 'lucide-react';
 import { PatientFormDialog } from '@/components/patients/PatientFormDialog';
 import { SessionFormDialog } from '@/components/scheduling/SessionFormDialog';
 import { Separator } from '@/components/ui/separator';
@@ -15,10 +16,8 @@ import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-// Mock data fetching function
 const fetchPatientDetails = async (id: string): Promise<Patient | null> => {
   console.log(`Fetching patient with id: ${id}`);
-  // Simulate API call
   await new Promise(resolve => setTimeout(resolve, 500));
   const mockPatient: Patient = {
     id,
@@ -28,7 +27,7 @@ const fetchPatientDetails = async (id: string): Promise<Patient | null> => {
     dateOfBirth: id === '1' ? '1990-05-15' : id === '2' ? '1985-11-20' : '1995-01-01',
     address: 'Rua Fictícia, 123, Bairro Imaginário, Cidade Exemplo - UF',
     sessionNotes: `Paciente apresenta quadro de ansiedade generalizada, com picos de estresse relacionados ao trabalho. \n\nRecomendações: Técnicas de respiração, mindfulness e reavaliação de prioridades. \n\nPróxima sessão focará em estratégias de coping.`,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(), // 30 days ago
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(), 
     updatedAt: new Date().toISOString(),
   };
   if (id === 'notfound') return null;
@@ -39,11 +38,16 @@ const fetchPatientSessions = async (patientId: string): Promise<Session[]> => {
   console.log(`Fetching sessions for patient id: ${patientId}`);
   await new Promise(resolve => setTimeout(resolve, 300));
   return [
-    { id: 's1', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo", startTime: new Date(Date.now() - 1000*60*60*24*7).toISOString(), endTime: new Date(Date.now() - 1000*60*60*24*7 + 1000*60*60).toISOString(), status: 'completed', notes: 'Sessão produtiva, paciente demonstrou progresso.'},
-    { id: 's2', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo", startTime: new Date(Date.now() - 1000*60*60*24*2).toISOString(), endTime: new Date(Date.now() - 1000*60*60*24*2 + 1000*60*60).toISOString(), status: 'scheduled', notes: 'Foco em técnicas de relaxamento.'},
+    { id: 's1', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo", startTime: new Date(Date.now() - 1000*60*60*24*7).toISOString(), endTime: new Date(Date.now() - 1000*60*60*24*7 + 1000*60*60).toISOString(), status: 'completed', notes: 'Sessão produtiva, paciente demonstrou progresso.', recurring: 'weekly'},
+    { id: 's2', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo", startTime: new Date(Date.now() - 1000*60*60*24*2).toISOString(), endTime: new Date(Date.now() - 1000*60*60*24*2 + 1000*60*60).toISOString(), status: 'scheduled', notes: 'Foco em técnicas de relaxamento.', recurring: 'none'},
   ].sort((a,b) => parseISO(b.startTime).getTime() - parseISO(a.startTime).getTime());
 }
 
+const recurrenceLabels: Record<string, string> = {
+  daily: "Diária",
+  weekly: "Semanal",
+  monthly: "Mensal",
+};
 
 export default function PatientDetailPage() {
   const router = useRouter();
@@ -56,7 +60,6 @@ export default function PatientDetailPage() {
   const [isPatientFormOpen, setIsPatientFormOpen] = useState(false);
   const [isSessionFormOpen, setIsSessionFormOpen] = useState(false);
   const [editingSession, setEditingSession] = useState<Session | null>(null);
-
 
   useEffect(() => {
     if (patientId) {
@@ -91,8 +94,6 @@ export default function PatientDetailPage() {
   }, []);
 
   const handleSaveSession = useCallback((sessionData: Partial<Session>) => {
-    console.log("Saving session for patient:", patientId, sessionData);
-    // Update or add session locally
     if (editingSession && sessionData.id) {
       setSessions(prev => prev.map(s => s.id === sessionData.id ? {...s, ...sessionData} as Session : s)
                              .sort((a,b) => parseISO(b.startTime).getTime() - parseISO(a.startTime).getTime()));
@@ -101,14 +102,12 @@ export default function PatientDetailPage() {
           ...sessionData, 
           id: `s-${Date.now()}`, 
           patientId: patientId,
-          // Mock patient/psychologist names if IDs are present
           patientName: patient?.name,
           psychologistName: sessionData.psychologistId === 'psy1' ? 'Dr. Exemplo' : 'Outro Psicólogo',
        } as Session;
       setSessions(prev => [newSession, ...prev].sort((a,b) => parseISO(b.startTime).getTime() - parseISO(a.startTime).getTime()));
     }
     setIsSessionFormOpen(false);
-    // fetchPatientSessions(patientId).then(setSessions); // Option to refetch
   }, [patientId, editingSession, patient?.name]);
 
 
@@ -186,6 +185,11 @@ export default function PatientDetailPage() {
                                     <div>
                                         <p className="font-semibold text-sm">Data: {format(parseISO(s.startTime), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
                                         <p className="text-xs text-muted-foreground">Com: {s.psychologistName || 'Psicólogo não informado'}</p>
+                                        {s.recurring && s.recurring !== "none" && (
+                                          <p className="text-xs text-muted-foreground flex items-center mt-0.5">
+                                            <Repeat className="w-3 h-3 mr-1 text-blue-500" /> Recorrência: {recurrenceLabels[s.recurring] || s.recurring}
+                                          </p>
+                                        )}
                                         <Badge variant={s.status === 'completed' ? 'secondary' : s.status === 'scheduled' ? 'default' : 'outline'} className="mt-1 text-xs capitalize">
                                             {s.status === 'completed' ? 'Concluída' : s.status === 'scheduled' ? 'Agendada' : s.status}
                                         </Badge>

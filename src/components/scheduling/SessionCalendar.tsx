@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo } from "react";
@@ -7,7 +8,7 @@ import type { Session } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-import { Edit2, User, Clock } from "lucide-react";
+import { Edit2, User, Clock, Repeat } from "lucide-react";
 import { format, isSameDay, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -17,6 +18,12 @@ interface SessionCalendarProps {
   onSelectSession: (session: Session) => void;
   currentCalendarDate?: Date;
 }
+
+const recurrenceLabels: Record<string, string> = {
+  daily: "Diária",
+  weekly: "Semanal",
+  monthly: "Mensal",
+};
 
 export const SessionCalendar = React.memo(function SessionCalendar({ sessions, onDateChange, onSelectSession, currentCalendarDate }: SessionCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(currentCalendarDate || new Date());
@@ -92,6 +99,11 @@ export const SessionCalendar = React.memo(function SessionCalendar({ sessions, o
                         <p className="text-xs text-muted-foreground">
                           Com: {session.psychologistName || 'Psicólogo não informado'}
                         </p>
+                        {session.recurring && session.recurring !== "none" && (
+                          <p className="text-xs text-muted-foreground flex items-center mt-0.5">
+                            <Repeat className="w-3 h-3 mr-1 text-blue-500" /> Recorrência: {recurrenceLabels[session.recurring] || session.recurring}
+                          </p>
+                        )}
                       </div>
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onSelectSession(session)}>
                         <Edit2 className="w-4 h-4" />

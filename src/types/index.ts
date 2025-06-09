@@ -1,3 +1,4 @@
+
 export type UserRole = "admin" | "psychologist" | "secretary";
 
 export interface User {
@@ -22,6 +23,8 @@ export interface Patient {
   updatedAt: string; // ISO Date string
 }
 
+export type SessionRecurrence = "none" | "daily" | "weekly" | "monthly";
+
 export interface Session {
   id: string;
   patientId: string;
@@ -31,7 +34,7 @@ export interface Session {
   startTime: string; // ISO Date string
   endTime: string; // ISO Date string
   status: "scheduled" | "completed" | "cancelled" | "no-show";
-  recurring?: "daily" | "weekly" | "monthly" | null;
+  recurring?: SessionRecurrence | null;
   notes?: string; // Potentially encrypted
 }
 

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -15,9 +16,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import type { Session } from "@/types";
+import type { Session, SessionRecurrence } from "@/types";
 import { useEffect, useState } from "react";
-import { CalendarIcon, Loader2 } from "lucide-react";
+import { CalendarIcon, Loader2, Repeat } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from 'date-fns/locale';
 
@@ -35,6 +36,7 @@ const initialFormState: Partial<Session> = {
   endTime: new Date(new Date().setHours(new Date().getHours() + 1)).toISOString(),
   status: "scheduled",
   notes: "",
+  recurring: "none",
 };
 
 export function SessionFormDialog({ isOpen, onOpenChange, session, onSave }: SessionFormDialogProps) {
@@ -48,6 +50,7 @@ export function SessionFormDialog({ isOpen, onOpenChange, session, onSave }: Ses
         ...session,
         startTime: session.startTime || initialFormState.startTime,
         endTime: session.endTime || initialFormState.endTime,
+        recurring: session.recurring || "none",
       });
       setSelectedDate(session.startTime ? parseISO(session.startTime) : new Date());
     } else {
@@ -59,7 +62,6 @@ export function SessionFormDialog({ isOpen, onOpenChange, session, onSave }: Ses
   const handleDateChange = (date?: Date) => {
     if (date) {
       setSelectedDate(date);
-      // Update startTime and endTime based on selectedDate and current time inputs
       const currentStartTime = formData.startTime ? parseISO(formData.startTime) : new Date();
       const newStartTime = new Date(date);
       newStartTime.setHours(currentStartTime.getHours(), currentStartTime.getMinutes());
@@ -77,7 +79,7 @@ export function SessionFormDialog({ isOpen, onOpenChange, session, onSave }: Ses
     const baseDate = field === 'startTime' ? formData.startTime : formData.endTime;
     const dateToUpdate = baseDate ? parseISO(baseDate) : new Date();
     
-    if (selectedDate) { // Prioritize selectedDate from calendar
+    if (selectedDate) {
       dateToUpdate.setFullYear(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
     }
     
@@ -88,16 +90,20 @@ export function SessionFormDialog({ isOpen, onOpenChange, session, onSave }: Ses
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
     onSave(formData);
     setIsLoading(false);
-    onOpenChange(false); // Close dialog on save
+    onOpenChange(false);
   };
   
-  // Mock data for selects
   const mockPatients = [{id: 'p1', name: 'Ana Silva'}, {id: 'p2', name: 'Bruno Costa'}];
   const mockPsychologists = [{id: 'psy1', name: 'Dr. Exemplo Silva'}, {id: 'psy2', name: 'Dra. Modelo Souza'}];
+  const recurrenceOptions: { value: SessionRecurrence, label: string }[] = [
+    { value: "none", label: "Não se repete" },
+    { value: "daily", label: "Diariamente" },
+    { value: "weekly", label: "Semanalmente" },
+    { value: "monthly", label: "Mensalmente" },
+  ];
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -178,6 +184,24 @@ export function SessionFormDialog({ isOpen, onOpenChange, session, onSave }: Ses
                 onChange={(e) => handleTimeChange('endTime', e.target.value)}
               />
             </div>
+          </div>
+
+          <div>
+            <Label htmlFor="recurring">Recorrência</Label>
+            <Select 
+              value={formData.recurring || "none"}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, recurring: value as SessionRecurrence }))}
+            >
+              <SelectTrigger id="recurring">
+                <Repeat className="mr-2 h-4 w-4" />
+                <SelectValue placeholder="Definir recorrência" />
+              </SelectTrigger>
+              <SelectContent>
+                {recurrenceOptions.map(opt => (
+                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div>
