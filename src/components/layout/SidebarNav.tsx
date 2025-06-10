@@ -15,7 +15,6 @@ import {
   Users,
   ClipboardList,
   FileText,
-  Brain, 
   Settings,
   AreaChart, 
   MessageSquare, // Ícone para WhatsApp
@@ -36,7 +35,7 @@ const navItems: NavItem[] = [
   { href: "/patients", label: "Pacientes", icon: Users },
   { href: "/assessments", label: "Avaliações", icon: ClipboardList },
   { href: "/documents", label: "Documentos", icon: FileText },
-  { href: "/ai-insights", label: "Insights IA", icon: Brain },
+  // { href: "/ai-insights", label: "Insights IA", icon: Brain }, // Removed AI Insights link
   { href: "/whatsapp-reminders", label: "Lembretes WhatsApp", icon: MessageSquare },
   { href: "/admin/metrics", label: "Métricas Admin", icon: AreaChart, roles: ['admin'] }, 
   { href: "/settings", label: "Configurações", icon: Settings },
