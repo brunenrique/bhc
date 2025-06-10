@@ -20,7 +20,7 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 // IMPORTANT: User must replace this with their deployed Google Apps Script Web App URL
-const GOOGLE_APPS_SCRIPT_WEB_APP_URL = process.env.NEXT_PUBLIC_PRONTUARIO_GENERATOR_URL || 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE';
+const GOOGLE_APPS_SCRIPT_WEB_APP_URL = process.env.NEXT_PUBLIC_PRONTUARIO_GENERATOR_URL || 'https://script.google.com/macros/s/AKfycbw8u9_mc2L5jATbWAZ4Tk4n8r5skw9BzeWFM7ZI19HWAx7kQWxzfZoEbFRJVrYeAWXFzw/exec';
 
 interface GenerateProntuarioDialogProps {
   isOpen: boolean;
@@ -53,10 +53,12 @@ export function GenerateProntuarioDialog({ isOpen, onOpenChange, patient, curren
       toast({ title: "Erro", description: "Dados do paciente ou do psicólogo não encontrados.", variant: "destructive" });
       return;
     }
-    if (GOOGLE_APPS_SCRIPT_WEB_APP_URL === 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE') {
-        toast({ title: "Configuração Necessária", description: "A URL do Web App do Google Apps Script precisa ser configurada.", variant: "destructive", duration: 7000 });
-        return;
+    if (GOOGLE_APPS_SCRIPT_WEB_APP_URL === 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE' || GOOGLE_APPS_SCRIPT_WEB_APP_URL === 'https://script.google.com/macros/s/YOUR_DEPLOYED_SCRIPT_ID/exec') {
+        toast({ title: "Configuração Necessária", description: "A URL do Web App do Google Apps Script precisa ser configurada corretamente.", variant: "destructive", duration: 7000 });
+        // If it's the very initial placeholder, still return.
+        if (GOOGLE_APPS_SCRIPT_WEB_APP_URL === 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE') return;
     }
+
 
     setIsLoading(true);
     setGeneratedDocUrl(null);
@@ -91,22 +93,20 @@ export function GenerateProntuarioDialog({ isOpen, onOpenChange, patient, curren
       data: {
         'Dia de Emissão': format(today, "d", {locale: ptBR}),
         'Mês de Emissão': format(today, "MMMM", {locale: ptBR}),
-        'Ano de Emissão': format(today, "yy", {locale: ptBR}), // "20[Ano de Emissão]" -> "24"
-        'Data do Atendimento': format(today, "dd/MM/yyyy", {locale: ptBR}), // Assuming current day for this session's record
+        'Ano de Emissão': format(today, "yy", {locale: ptBR}),
+        'Data do Atendimento': format(today, "dd/MM/yyyy", {locale: ptBR}),
       }
     };
 
     try {
       const response = await fetch(GOOGLE_APPS_SCRIPT_WEB_APP_URL, {
         method: 'POST',
-        mode: 'cors', // Required for cross-origin requests to Apps Script Web App
+        mode: 'cors', 
         cache: 'no-cache',
         headers: {
-           // 'Content-Type': 'application/json', // Apps Script doPost for text content often doesn't need this, handles plain text.
-                                               // But sending JSON string, so this is more correct for e.postData.contents
-           'Content-Type': 'text/plain;charset=utf-8', // As per typical Apps Script examples for JSON.parse(e.postData.contents)
+           'Content-Type': 'text/plain;charset=utf-8', 
         },
-        body: JSON.stringify(payload) // Send the whole payload as a JSON string
+        body: JSON.stringify(payload) 
       });
 
       const result = await response.json();
@@ -114,7 +114,6 @@ export function GenerateProntuarioDialog({ isOpen, onOpenChange, patient, curren
       if (result.status === 'success' && result.url) {
         setGeneratedDocUrl(result.url);
         toast({ title: "Sucesso!", description: "Prontuário gerado no Google Docs.", className: "bg-primary text-primary-foreground" });
-        // onOpenChange(false); // Optionally close dialog on success
       } else {
         throw new Error(result.message || "Erro desconhecido ao gerar o documento.");
       }
@@ -129,7 +128,7 @@ export function GenerateProntuarioDialog({ isOpen, onOpenChange, patient, curren
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
         if (!open) {
-            setDynamicData(initialDynamicData); // Reset form on close
+            setDynamicData(initialDynamicData); 
             setGeneratedDocUrl(null);
             setError(null);
         }
@@ -212,3 +211,4 @@ export function GenerateProntuarioDialog({ isOpen, onOpenChange, patient, curren
     </Dialog>
   );
 }
+
