@@ -53,14 +53,27 @@ export interface Assessment {
   createdAt: string; // ISO Date string
 }
 
+export type DocumentSignatureStatus = 'none' | 'pending_govbr_signature' | 'signed' | 'verification_failed';
+
+export interface DocumentSignatureDetails {
+  hash?: string; // SHA-256 hash of the original document
+  signerInfo?: string; // e.g., CPF do assinante (mock)
+  signedAt?: string; // ISO Date string of when it was marked as signed
+  verificationCode?: string; // Mock verification code
+  signedDocumentLink?: string; // Link to the (mock) uploaded signed document
+  p7sFile?: string; // Name of the .p7s file (mock)
+}
+
 export interface DocumentResource {
   id: string;
   name: string;
   type: "pdf" | "doc" | "docx" | "txt" | "png" | "jpg" | "jpeg" | "other"; // Expanded
-  url: string; // Link to the stored file
+  url: string; // Link to the stored file (original, unsigned)
   uploadedAt: string; // ISO Date string
   size?: number; // in bytes
   category?: string;
+  signatureStatus?: DocumentSignatureStatus;
+  signatureDetails?: DocumentSignatureDetails;
 }
 
 export interface ChatMessage { // Renamed from Message to avoid conflict if Message is used elsewhere

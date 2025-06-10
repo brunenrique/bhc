@@ -1,17 +1,18 @@
 
 "use client";
 import { DocumentManager } from "@/features/documents/components/DocumentManager";
-import type { DocumentResource } from "@/types";
+import type { DocumentResource, DocumentSignatureDetails } from "@/types";
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { cacheService } from "@/services/cacheService";
+import { useToast } from "@/hooks/use-toast"; // Import useToast
 
 const mockDocumentsData: DocumentResource[] = [
-  { id: 'doc1', name: 'Formulário de Consentimento.pdf', type: 'pdf', url: '#', uploadedAt: new Date(Date.now() - 1000*60*60*24*5).toISOString(), size: 120 * 1024, category: 'Formulários Clínicos' },
-  { id: 'doc2', name: 'Termos de Serviço Psicologia.docx', type: 'docx', url: '#', uploadedAt: new Date(Date.now() - 1000*60*60*24*10).toISOString(), size: 85 * 1024, category: 'Documentos Legais' },
-  { id: 'doc3', name: 'Guia de Relaxamento.pdf', type: 'pdf', url: '#', uploadedAt: new Date(Date.now() - 1000*60*60*24*2).toISOString(), size: 250 * 1024, category: 'Recursos para Pacientes' },
-  { id: 'doc4', name: 'Anotações Importantes.txt', type: 'txt', url: '#', uploadedAt: new Date(Date.now() - 1000*60*60*24*1).toISOString(), size: 5 * 1024, category: 'Notas Internas' },
-  { id: 'doc5', name: 'Planilha de Acompanhamento.pdf', type: 'pdf', url: '#', uploadedAt: new Date(Date.now() - 1000*60*60*24*3).toISOString(), size: 150 * 1024, category: 'Recursos para Pacientes' },
+  { id: 'doc1', name: 'Formulário de Consentimento.pdf', type: 'pdf', url: '#', uploadedAt: new Date(Date.now() - 1000*60*60*24*5).toISOString(), size: 120 * 1024, category: 'Formulários Clínicos', signatureStatus: 'none' },
+  { id: 'doc2', name: 'Termos de Serviço Psicologia.docx', type: 'docx', url: '#', uploadedAt: new Date(Date.now() - 1000*60*60*24*10).toISOString(), size: 85 * 1024, category: 'Documentos Legais', signatureStatus: 'none' },
+  { id: 'doc3', name: 'Guia de Relaxamento.pdf', type: 'pdf', url: '#', uploadedAt: new Date(Date.now() - 1000*60*60*24*2).toISOString(), size: 250 * 1024, category: 'Recursos para Pacientes', signatureStatus: 'signed', signatureDetails: { hash: 'mockhash123', signerInfo: 'CPF 123.456.789-00 (Mock)', signedAt: new Date(Date.now() - 1000*60*60*24*1).toISOString(), verificationCode: 'VERIFY-ABC-123', signedDocumentLink: '#' } },
+  { id: 'doc4', name: 'Anotações Importantes.txt', type: 'txt', url: '#', uploadedAt: new Date(Date.now() - 1000*60*60*24*1).toISOString(), size: 5 * 1024, category: 'Notas Internas', signatureStatus: 'none' },
+  { id: 'doc5', name: 'Planilha de Acompanhamento.pdf', type: 'pdf', url: '#', uploadedAt: new Date(Date.now() - 1000*60*60*24*3).toISOString(), size: 150 * 1024, category: 'Recursos para Pacientes', signatureStatus: 'pending_govbr_signature', signatureDetails: { hash: 'mockhash456' } },
 ];
 
 
@@ -19,6 +20,7 @@ export default function DocumentsPage() {
   const [documents, setDocuments] = useState<DocumentResource[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     let isMounted = true;
@@ -37,17 +39,22 @@ export default function DocumentsPage() {
       await new Promise(resolve => setTimeout(resolve, 300)); 
       
       if (isMounted) {
-        setDocuments(mockDocumentsData); 
-        try {
-          await cacheService.documents.setList(mockDocumentsData);
-        } catch (error) {
-          // console.warn("Error saving documents to cache:", error);
+        // If no cached data, or cached data is empty, use mock.
+        // Otherwise, assume cache is king for this demo unless explicitly refreshed.
+        if (!documents.length) {
+            setDocuments(mockDocumentsData); 
+            try {
+              await cacheService.documents.setList(mockDocumentsData);
+            } catch (error) {
+              // console.warn("Error saving initial documents to cache:", error);
+            }
         }
         setIsLoading(false);
       }
     };
     loadDocuments();
     return () => { isMounted = false; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
 
@@ -60,17 +67,80 @@ export default function DocumentsPage() {
       uploadedAt: new Date().toISOString(),
       size: file.size,
       category: "Uploads Recentes", 
+      signatureStatus: 'none',
     };
     const updatedDocuments = [newDoc, ...documents];
     setDocuments(updatedDocuments);
     await cacheService.documents.setList(updatedDocuments);
-  }, [documents]);
+    toast({ title: "Documento Carregado", description: `${file.name} foi adicionado.`});
+  }, [documents, toast]);
 
   const handleDeleteDocument = useCallback(async (docId: string) => {
+    const docToDelete = documents.find(d => d.id === docId);
     const updatedDocuments = documents.filter(d => d.id !== docId);
     setDocuments(updatedDocuments);
     await cacheService.documents.setList(updatedDocuments);
-  }, [documents]);
+    toast({ title: "Documento Excluído", description: `${docToDelete?.name || 'O documento'} foi removido.`, variant: "destructive" });
+  }, [documents, toast]);
+
+  const handleInitiateGovBRSignature = useCallback(async (docId: string) => {
+    const docToSign = documents.find(d => d.id === docId);
+    if (!docToSign) return;
+
+    // Simulate hash generation
+    const mockHash = `sha256-${Math.random().toString(36).substring(2, 15)}`;
+    
+    const updatedDocuments = documents.map(doc => 
+      doc.id === docId 
+        ? { ...doc, signatureStatus: 'pending_govbr_signature', signatureDetails: { ...doc.signatureDetails, hash: mockHash } } as DocumentResource
+        : doc
+    );
+    setDocuments(updatedDocuments);
+    await cacheService.documents.setList(updatedDocuments);
+    toast({
+      title: "Assinatura GOV.BR Iniciada (Simulado)",
+      description: `Documento '${docToSign.name}' preparado. Por favor, 'vá ao portal GOV.BR' para assinar e depois faça o upload do arquivo .p7s ou PDF assinado. Hash (simulado): ${mockHash}`,
+      duration: 9000,
+    });
+  }, [documents, toast]);
+
+  const handleUploadSignedGovBRDocument = useCallback(async (docId: string, signedFile: File) => {
+    const docToUpdate = documents.find(d => d.id === docId);
+    if (!docToUpdate) return;
+
+    // Simulate validation
+    const isValidExtension = signedFile.name.endsWith('.p7s') || signedFile.name.endsWith('.pdf');
+    if (!isValidExtension) {
+      const updatedDocsError = documents.map(doc => 
+        doc.id === docId 
+          ? { ...doc, signatureStatus: 'verification_failed' } as DocumentResource
+          : doc
+      );
+      setDocuments(updatedDocsError);
+      await cacheService.documents.setList(updatedDocsError);
+      toast({ title: "Falha na Verificação", description: "Arquivo de assinatura inválido. Use .p7s ou .pdf.", variant: "destructive" });
+      return;
+    }
+
+    const signatureDetails: DocumentSignatureDetails = {
+      ...docToUpdate.signatureDetails,
+      signerInfo: `CPF ${Math.floor(100 + Math.random() * 900)}.${Math.floor(100 + Math.random() * 900)}.${Math.floor(100 + Math.random() * 900)}-${Math.floor(10 + Math.random() * 90)} (Mock)`,
+      signedAt: new Date().toISOString(),
+      verificationCode: `GOVBR-MOCK-${Date.now().toString().slice(-6)}`,
+      signedDocumentLink: URL.createObjectURL(signedFile), // Mock link to the "uploaded" signed file
+      p7sFile: signedFile.name.endsWith('.p7s') ? signedFile.name : undefined,
+    };
+    
+    const updatedDocuments = documents.map(doc => 
+      doc.id === docId 
+        ? { ...doc, signatureStatus: 'signed', signatureDetails } as DocumentResource
+        : doc
+    );
+    setDocuments(updatedDocuments);
+    await cacheService.documents.setList(updatedDocuments);
+    toast({ title: "Documento Assinado (Simulado)", description: `${docToUpdate.name} foi marcado como assinado e verificado.`, className: "bg-primary text-primary-foreground" });
+  }, [documents, toast]);
+
 
   const filteredDocuments = useMemo(() => 
     documents.filter(doc => 
@@ -84,7 +154,7 @@ export default function DocumentsPage() {
     <div className="space-y-6">
       <h1 className="text-3xl font-headline font-semibold">Documentos e Recursos</h1>
       <p className="text-muted-foreground font-body">
-        Faça upload, gerencie e organize documentos importantes e recursos para a clínica e pacientes.
+        Faça upload, gerencie, organize e simule assinaturas GOV.BR para documentos importantes.
       </p>
       
       {isLoading && documents.length === 0 ? (
@@ -98,6 +168,8 @@ export default function DocumentsPage() {
           onDelete={handleDeleteDocument}
           searchTerm={searchTerm}
           onSearchTermChange={setSearchTerm}
+          onInitiateGovBRSignature={handleInitiateGovBRSignature}
+          onUploadSignedGovBRDocument={handleUploadSignedGovBRDocument}
         />
       )}
     </div>
