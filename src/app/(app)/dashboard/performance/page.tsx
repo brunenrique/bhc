@@ -119,7 +119,7 @@ export default function PerformancePage() {
         className="shadow-lg"
       >
         {/* Placeholder for WaitingListFunnelChart - to be implemented later */}
-        <ChartPlaceholder message="Gráfico de Funil da Lista de Espera aparecerá aqui." icon="Funnel" />
+        <ChartPlaceholder message="Gráfico de Funil da Lista de Espera aparecerá aqui." icon="Filter" />
       </ChartContainer>
     </div>
   );

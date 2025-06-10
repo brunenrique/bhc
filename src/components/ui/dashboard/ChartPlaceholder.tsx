@@ -3,12 +3,12 @@
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { Activity, AlertTriangle, BarChart, PieChart, AreaChart, Info, LineChart, Funnel as FunnelIcon } from "lucide-react"; // Added FunnelIcon
+import { Activity, AlertTriangle, BarChart, PieChart, AreaChart, Info, LineChart, Filter } from "lucide-react"; // Changed FunnelIcon to Filter
 
 interface ChartPlaceholderProps {
   type?: "loading" | "error" | "no-data";
   message?: string;
-  icon?: "BarChart" | "PieChart" | "AreaChart" | "LineChart" | "Activity" | "Funnel" | "Info";
+  icon?: "BarChart" | "PieChart" | "AreaChart" | "LineChart" | "Activity" | "Filter" | "Info"; // Changed Funnel to Filter
   className?: string;
 }
 
@@ -18,7 +18,7 @@ const iconMap = {
   AreaChart: AreaChart,
   LineChart: LineChart,
   Activity: Activity,
-  Funnel: FunnelIcon,
+  Filter: Filter, // Changed FunnelIcon to Filter
   Info: Info,
 };
 

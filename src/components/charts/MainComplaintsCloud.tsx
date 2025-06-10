@@ -182,3 +182,4 @@ export function MainComplaintsCloud({ complaints, title = "Nuvem de Queixas Prin
     </div>
   );
 }
+
