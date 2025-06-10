@@ -104,10 +104,33 @@
   }
   body {
     @apply bg-background text-foreground;
-    /* Apply font-body by default if not overridden by specific elements */
     @apply font-body;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-headline;
   }
+
+  /* Tiptap ProseMirror editor basic styling */
+  .ProseMirror {
+    @apply min-h-full outline-none;
+  }
+
+  .ProseMirror p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    float: left;
+    color: hsl(var(--muted-foreground));
+    pointer-events: none;
+    height: 0;
+  }
+
+  /* Ensure prose styles apply within the editor */
+  .ProseMirror {
+    @apply prose prose-sm sm:prose lg:prose-lg xl:prose-xl dark:prose-invert max-w-none focus:outline-none;
+  }
+  .ProseMirror h1 { @apply text-3xl font-headline; }
+  .ProseMirror h2 { @apply text-2xl font-headline; }
+  .ProseMirror h3 { @apply text-xl font-headline; }
+  .ProseMirror h4 { @apply text-lg font-headline; }
+  .ProseMirror ul, .ProseMirror ol { @apply list-inside; }
+
 }

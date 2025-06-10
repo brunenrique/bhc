@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+// import { Textarea } from '@/components/ui/textarea'; // Replaced by RichTextEditor for display
+import { RichTextEditor } from '@/components/shared/RichTextEditor'; // For displaying notes
 import { ArrowLeft, Edit, Mail, Phone, CalendarDays, FileText, PlusCircle, Repeat, Eye, EyeOff, Lock, History, Info, BookMarked, Fingerprint, ShieldCheck, ShieldX, ShieldAlert, SendToBack, UploadCloud, ListChecks, BarChart3, FileSignature, CalendarCheck2, CalendarX2, UserCheck, UserX, AlertTriangle, CaseSensitive, Bot } from 'lucide-react';
 import { PatientFormDialog } from '@/features/patients/components/PatientFormDialog';
 import { SessionFormDialog } from '@/features/scheduling/components/SessionFormDialog';
@@ -73,7 +74,7 @@ const mockProntuarioAna: ProntuarioData = {
 };
 
 const mockProntuarioBruno: ProntuarioData = {
-  ...mockProntuarioAna,
+  ...mockProntuarioAna, // Base
   identificacao: {
     ...mockProntuarioAna.identificacao,
     nomeCompleto: 'Bruno Almeida Costa',
@@ -117,11 +118,11 @@ const fetchPatientDetailsMock = async (id: string): Promise<Patient | null> => {
   if (id === '1') { // Ana Silva
     specificData = {
       name: 'Ana Beatriz Silva',
-      sessionNotes: `Sessão de ${format(subDays(baseDate,1), "dd/MM")}: Paciente demonstrou melhora significativa na gestão de pensamentos automáticos. Praticou as técnicas de respiração e relatou diminuição da insônia. Próxima sessão focará em estratégias de manutenção e prevenção de recaídas.`,
+      sessionNotes: `<p>Sessão de <strong>${format(subDays(baseDate,1), "dd/MM")}</strong>: Paciente demonstrou melhora significativa na gestão de pensamentos automáticos.</p><p>Praticou as técnicas de respiração e relatou diminuição da insônia.</p><p><em>Próxima sessão focará em estratégias de manutenção e prevenção de recaídas.</em></p>`,
       previousSessionNotes: [
-        { content: `Sessão de ${format(subDays(baseDate,8), "dd/MM")}: Foco em reestruturação cognitiva de pensamentos automáticos negativos. Paciente identificou três padrões principais. Recomendações: Continuar o diário de pensamentos, praticar técnicas de respiração diafragmática duas vezes ao dia.`, timestamp: subDays(baseDate, 8).toISOString() },
-        { content: `Sessão de ${format(subDays(baseDate,15), "dd/MM")}: Paciente apresenta quadro de ansiedade generalizada, com picos de estresse relacionados ao trabalho. Demonstra boa adesão às técnicas propostas em sessões anteriores.`, timestamp: subDays(baseDate, 15).toISOString() },
-        { content: `Sessão de ${format(subDays(baseDate,22), "dd/MM")}: Anamnese e estabelecimento de contrato terapêutico. Queixa principal: ansiedade e insônia.`, timestamp: subDays(baseDate, 22).toISOString() }
+        { content: `<p>Sessão de ${format(subDays(baseDate,8), "dd/MM")}: Foco em reestruturação cognitiva de pensamentos automáticos negativos. Paciente identificou três padrões principais.</p><p>Recomendações: Continuar o diário de pensamentos, praticar técnicas de respiração diafragmática duas vezes ao dia.</p>`, timestamp: subDays(baseDate, 8).toISOString() },
+        { content: `<p>Sessão de ${format(subDays(baseDate,15), "dd/MM")}: Paciente apresenta quadro de ansiedade generalizada, com picos de estresse relacionados ao trabalho.</p><p>Demonstra boa adesão às técnicas propostas em sessões anteriores.</p>`, timestamp: subDays(baseDate, 15).toISOString() },
+        { content: `<p>Sessão de ${format(subDays(baseDate,22), "dd/MM")}: Anamnese e estabelecimento de contrato terapêutico. Queixa principal: ansiedade e insônia.</p>`, timestamp: subDays(baseDate, 22).toISOString() }
       ],
       prontuario: mockProntuarioAna,
       therapeuticPlan: {
@@ -136,15 +137,15 @@ const fetchPatientDetailsMock = async (id: string): Promise<Patient | null> => {
         ],
         lastUpdatedAt: subDays(baseDate, 2).toISOString(),
       },
-      caseStudyNotes: "Estudo de Caso - Ana Beatriz Silva:\n\nPaciente apresenta histórico de ansiedade desde a adolescência, exacerbado por pressões no ambiente de trabalho atual. Responde bem à psicoeducação e técnicas cognitivas, mas demonstra dificuldade em manter a prática de relaxamento de forma consistente.\n\nDesafios: \n- Baixa tolerância à frustração.\n- Dificuldade em delegar tarefas no trabalho.\n\nHipóteses diagnósticas (a confirmar):\n- Transtorno de Ansiedade Generalizada.\n- Possíveis traços de personalidade anancástica.\n\nPróximos passos:\n- Introduzir técnicas de mindfulness.\n- Explorar crenças centrais sobre autoexigência e perfeccionismo.\n- Trabalhar habilidades de comunicação assertiva e estabelecimento de limites."
+      caseStudyNotes: `<h1>Estudo de Caso - Ana Beatriz Silva</h1><p>Paciente apresenta histórico de <strong>ansiedade desde a adolescência</strong>, exacerbado por pressões no ambiente de trabalho atual. Responde bem à psicoeducação e técnicas cognitivas, mas demonstra dificuldade em manter a prática de relaxamento de forma consistente.</p><h2>Desafios:</h2><ul><li>Baixa tolerância à frustração.</li><li>Dificuldade em delegar tarefas no trabalho.</li></ul><h2>Hipóteses diagnósticas (a confirmar):</h2><ul><li>Transtorno de Ansiedade Generalizada.</li><li>Possíveis traços de personalidade anancástica.</li></ul><h2>Próximos passos:</h2><ol><li>Introduzir técnicas de mindfulness.</li><li>Explorar crenças centrais sobre autoexigência e perfeccionismo.</li><li>Trabalhar habilidades de comunicação assertiva e estabelecimento de limites.</li></ol>`
     };
   } else if (id === '2') { // Bruno Costa
     specificData = {
       name: 'Bruno Almeida Costa',
-      sessionNotes: `Sessão de ${format(subDays(baseDate,3), "dd/MM")}: Paciente relata dificuldades em manter a rotina de exercícios físicos, que é parte do plano de manejo do TEPT. Exploramos barreiras e ajustamos o plano. Apresentou bom insight sobre procrastinação e evitação.`,
+      sessionNotes: `<p>Sessão de ${format(subDays(baseDate,3), "dd/MM")}: Paciente relata dificuldades em manter a rotina de exercícios físicos, que é parte do plano de manejo do TEPT.</p><p>Exploramos barreiras e ajustamos o plano. Apresentou bom insight sobre procrastinação e evitação.</p>`,
       previousSessionNotes: [
-        { content: `Sessão de ${format(subDays(baseDate,10), "dd/MM")}: Trabalhando na exposição gradual a lembranças do evento traumático. Paciente demonstrou ansiedade, mas conseguiu permanecer na tarefa com apoio.`, timestamp: subDays(baseDate, 10).toISOString()},
-        { content: `Sessão de ${format(subDays(baseDate,17), "dd/MM")}: Foco em psicoeducação sobre TEPT e técnicas de regulação emocional.`, timestamp: subDays(baseDate, 17).toISOString()},
+        { content: `<p>Sessão de ${format(subDays(baseDate,10), "dd/MM")}: Trabalhando na exposição gradual a lembranças do evento traumático. Paciente demonstrou ansiedade, mas conseguiu permanecer na tarefa com apoio.</p>`, timestamp: subDays(baseDate, 10).toISOString()},
+        { content: `<p>Sessão de ${format(subDays(baseDate,17), "dd/MM")}: Foco em psicoeducação sobre TEPT e técnicas de regulação emocional.</p>`, timestamp: subDays(baseDate, 17).toISOString()},
       ],
       prontuario: mockProntuarioBruno,
       therapeuticPlan: {
@@ -158,14 +159,14 @@ const fetchPatientDetailsMock = async (id: string): Promise<Patient | null> => {
         ],
         lastUpdatedAt: subDays(baseDate, 3).toISOString(),
       },
-      caseStudyNotes: "Estudo de Caso - Bruno Almeida Costa:\n\nPaciente com diagnóstico de TEPT após acidente de trânsito há 8 meses. Apresenta sintomas clássicos de revivescência (flashbacks, pesadelos), evitação fóbica e hipervigilância. Boa rede de apoio familiar, mas com dificuldades de engajamento em atividades sociais que antes eram prazerosas.\n\nTratamento atual focado em Terapia de Exposição Prolongada e Reestruturação Cognitiva.\nObserva-se melhora na capacidade de falar sobre o trauma, mas ainda com considerável sofrimento emocional durante as exposições.\n\nQuestões a explorar:\n- Comorbidade com depressão leve a moderada.\n- Impacto dos sintomas no relacionamento conjugal.\n\nConsiderar encaminhamento para avaliação psiquiátrica se os sintomas de hipervigilância e insônia não melhorarem com as intervenções atuais."
+      caseStudyNotes: `<h1>Estudo de Caso - Bruno Almeida Costa</h1><p>Paciente com diagnóstico de <strong>TEPT</strong> após acidente de trânsito há 8 meses. Apresenta sintomas clássicos de revivescência (flashbacks, pesadelos), evitação fóbica e hipervigilância.</p><p>Boa rede de apoio familiar, mas com dificuldades de engajamento em atividades sociais que antes eram prazerosas.</p><h2>Tratamento atual:</h2><p>Focado em <em>Terapia de Exposição Prolongada</em> e <em>Reestruturação Cognitiva</em>. Observa-se melhora na capacidade de falar sobre o trauma, mas ainda com considerável sofrimento emocional durante as exposições.</p><h2>Questões a explorar:</h2><ul><li>Comorbidade com depressão leve a moderada.</li><li>Impacto dos sintomas no relacionamento conjugal.</li></ul><p>Considerar encaminhamento para avaliação psiquiátrica se os sintomas de hipervigilância e insônia não melhorarem com as intervenções atuais.</p>`
     };
   } else { // Generic patient for other IDs
      specificData = {
       name: `Paciente Exemplo ${id}`,
-      sessionNotes: `Sessão de ${format(subDays(baseDate,5), "dd/MM")}: Nenhuma anotação detalhada para este paciente mock.`,
+      sessionNotes: `<p>Sessão de ${format(subDays(baseDate,5), "dd/MM")}: Nenhuma anotação detalhada para este paciente mock.</p>`,
       prontuario: {...mockProntuarioAna, identificacao: {...mockProntuarioAna.identificacao, nomeCompleto: `Paciente Exemplo ${id}`}},
-      caseStudyNotes: "Nenhuma nota de estudo de caso para este paciente exemplo.",
+      caseStudyNotes: "<p>Nenhuma nota de estudo de caso para este paciente exemplo.</p>",
     };
   }
 
@@ -404,7 +405,7 @@ export default function PatientDetailPage() {
   const [editingSession, setEditingSession] = useState<Session | null>(null);
   const [areNotesVisible, setAreNotesVisible] = useState(false);
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'evolution' | 'prontuario' | 'pti' | 'scales' | 'analysis' | 'case_study'>('evolution');
+  const [activeTab, setActiveTab] = useState<'evolution' | 'prontuario' | 'case_study' | 'pti' | 'scales' | 'analysis'>('evolution');
   const [isProntuarioSigDetailsOpen, setIsProntuarioSigDetailsOpen] = useState(false);
 
 
@@ -428,7 +429,7 @@ export default function PatientDetailPage() {
           const cachedAllAssessments = await cacheService.assessments.getList();
           if(isMounted && cachedAllAssessments) {
             setPatientAssessments(cachedAllAssessments.filter(asm => asm.patientId === patientId && asm.status === 'completed'));
-          } else if (isMounted) { // If cache for assessments is empty, use allMockAssessments
+          } else if (isMounted) { 
              setPatientAssessments(allMockAssessments.filter(asm => asm.patientId === patientId && asm.status === 'completed'));
           }
 
@@ -436,11 +437,8 @@ export default function PatientDetailPage() {
           // console.warn(`Error loading patient data for ${patientId} from cache:`, error);
         }
 
-        // Simulate fetching data if not fully loaded from cache or to "refresh"
         fetchedPatientData = await fetchPatientDetailsMock(patientId);
         fetchedSessionsData = await fetchPatientSessionsMock(patientId);
-        // For assessments, always use the full mock list filtered by patientId for now,
-        // as the global assessments page manages its own cache, and here we need specific patient's completed ones.
         fetchedAssessmentsData = allMockAssessments.filter(asm => asm.patientId === patientId && asm.status === 'completed');
 
 
@@ -453,8 +451,6 @@ export default function PatientDetailPage() {
           await cacheService.patients.setSessions(patientId, fetchedSessionsData);
           
           setPatientAssessments(fetchedAssessmentsData);
-          // No need to cache allMockAssessments again here as assessments page handles its own cache
-
           setIsLoading(false);
         }
       };
@@ -527,9 +523,9 @@ export default function PatientDetailPage() {
     const newNotes = updatedData.sessionNotes;
     let previousNotes = patient.previousSessionNotes || [];
 
-    if (newNotes !== undefined && newNotes !== currentNotes && currentNotes.trim() !== "") {
+    if (newNotes !== undefined && newNotes !== currentNotes && (typeof currentNotes === 'string' && currentNotes.trim() !== "" && currentNotes.trim() !== "<p></p>")) {
       const newVersion: PatientNoteVersion = {
-        content: currentNotes,
+        content: currentNotes, // Store the HTML content
         timestamp: patient.updatedAt || new Date().toISOString(),
       };
       previousNotes = [newVersion, ...previousNotes].slice(0, 5); 
@@ -542,7 +538,6 @@ export default function PatientDetailPage() {
       updatedAt: new Date().toISOString() 
     };
     
-    // Update local state and cache
     setPatient(updatedPatient);
     await cacheService.patients.setDetail(patient.id, updatedPatient); 
     setIsPatientFormOpen(false);
@@ -728,7 +723,7 @@ export default function PatientDetailPage() {
               </div>
             </div>
 
-            {!areNotesVisible && (activeTab === 'evolution' || activeTab === 'prontuario' || activeTab === 'pti' || activeTab === 'scales' || activeTab === 'analysis' || activeTab === 'case_study') ? (
+            {!areNotesVisible && (activeTab === 'evolution' || activeTab === 'prontuario' || activeTab === 'case_study' || activeTab === 'pti' || activeTab === 'scales' || activeTab === 'analysis') ? (
               <Alert variant="default" className="bg-muted/40 border-primary/30 mt-2">
                 <Lock className="h-5 w-5 text-primary/80" />
                 <AlertTitle className="font-headline text-primary/90">Conteúdo Confidencial</AlertTitle>
@@ -740,9 +735,13 @@ export default function PatientDetailPage() {
               <>
                 <TabsContent value="evolution">
                   <h3 className="text-lg font-semibold font-headline mb-2">Evolução das Sessões</h3>
-                   <ScrollArea className="h-40 w-full rounded-md border p-3 bg-muted/20 shadow-inner">
-                       <pre className="whitespace-pre-wrap text-sm text-foreground font-body leading-relaxed">{patient.sessionNotes || "Nenhuma anotação registrada."}</pre>
-                   </ScrollArea>
+                  <RichTextEditor
+                      initialContent={patient.sessionNotes || "<p></p>"}
+                      onUpdate={() => {}} // Read-only, no update needed here
+                      editable={false}
+                      editorClassName="h-auto max-h-[600px] overflow-y-auto bg-transparent p-0 rounded-none"
+                      pageClassName="min-h-[200px] shadow-none border"
+                  />
                 </TabsContent>
                 <TabsContent value="prontuario">
                    <h3 className="text-lg font-semibold font-headline mb-2">Prontuário Psicológico</h3>
@@ -758,14 +757,16 @@ export default function PatientDetailPage() {
                     <Card>
                       <CardHeader>
                         <CardTitle className="font-headline flex items-center"><CaseSensitive className="mr-2 h-5 w-5 text-primary" />Notas do Estudo de Caso</CardTitle>
-                        <CardDescription>Espaço para anotações livres e aprofundadas sobre o caso. Edite através do botão "Editar Paciente" no topo.</CardDescription>
+                        <CardDescription>Anotações livres e aprofundadas sobre o caso. Edite através do botão "Editar Paciente" no topo.</CardDescription>
                       </CardHeader>
                       <CardContent>
-                        <ScrollArea className="h-60 w-full rounded-md border p-3 bg-muted/20 shadow-inner">
-                           <pre className="whitespace-pre-wrap text-sm text-foreground font-body leading-relaxed">
-                            {patient.caseStudyNotes || "Nenhuma nota de estudo de caso registrada."}
-                           </pre>
-                        </ScrollArea>
+                         <RichTextEditor
+                            initialContent={patient.caseStudyNotes || "<p></p>"}
+                            onUpdate={() => {}} // Read-only
+                            editable={false}
+                            editorClassName="h-auto max-h-[400px] overflow-y-auto bg-transparent p-0 rounded-none"
+                            pageClassName="min-h-[200px] shadow-none border"
+                          />
                       </CardContent>
                     </Card>
                     <Card>
@@ -917,7 +918,7 @@ export default function PatientDetailPage() {
                     <p className="text-xs text-muted-foreground mb-1">
                       Salvo em: {format(parseISO(noteVersion.timestamp), "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR })}
                     </p>
-                    <pre className="whitespace-pre-wrap text-sm font-body leading-relaxed">{noteVersion.content}</pre>
+                    <div className="prose prose-sm dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: noteVersion.content }} />
                   </li>
                 ))}
               </ul>
@@ -945,4 +946,3 @@ export default function PatientDetailPage() {
     </div>
   );
 }
-

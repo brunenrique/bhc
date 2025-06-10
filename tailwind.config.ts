@@ -6,6 +6,7 @@ export default {
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/features/**/*.{js,ts,jsx,tsx,mdx}', // Added features directory
   ],
   theme: {
     extend: {
@@ -93,7 +94,53 @@ export default {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
       },
+      typography: ({ theme }: { theme: Function }) => ({ // For Tailwind Typography plugin
+        DEFAULT: {
+          css: {
+            '--tw-prose-body': theme('colors.foreground / 1'),
+            '--tw-prose-headings': theme('colors.foreground / 1'),
+            '--tw-prose-lead': theme('colors.muted.foreground / 1'),
+            '--tw-prose-links': theme('colors.primary.DEFAULT / 1'),
+            '--tw-prose-bold': theme('colors.foreground / 1'),
+            '--tw-prose-counters': theme('colors.muted.foreground / 1'),
+            '--tw-prose-bullets': theme('colors.primary.DEFAULT / 1'),
+            '--tw-prose-hr': theme('colors.border / 1'),
+            '--tw-prose-quotes': theme('colors.foreground / 1'),
+            '--tw-prose-quote-borders': theme('colors.primary.DEFAULT / 1'),
+            '--tw-prose-captions': theme('colors.muted.foreground / 1'),
+            '--tw-prose-code': theme('colors.foreground / 1'),
+            '--tw-prose-pre-code': theme('colors.popover.foreground / 1'),
+            '--tw-prose-pre-bg': theme('colors.popover.DEFAULT / 1'),
+            '--tw-prose-th-borders': theme('colors.border / 1'),
+            '--tw-prose-td-borders': theme('colors.border / 1'),
+            '--tw-prose-invert-body': theme('colors.background / 1'),
+            '--tw-prose-invert-headings': theme('colors.background / 1'),
+            '--tw-prose-invert-lead': theme('colors.muted / 1'),
+            '--tw-prose-invert-links': theme('colors.primary.DEFAULT / 1'),
+            '--tw-prose-invert-bold': theme('colors.background / 1'),
+            '--tw-prose-invert-counters': theme('colors.muted / 1'),
+            '--tw-prose-invert-bullets': theme('colors.primary.DEFAULT / 1'),
+            '--tw-prose-invert-hr': theme('colors.border / 1'),
+            '--tw-prose-invert-quotes': theme('colors.background / 1'),
+            '--tw-prose-invert-quote-borders': theme('colors.primary.DEFAULT / 1'),
+            '--tw-prose-invert-captions': theme('colors.muted / 1'),
+            '--tw-prose-invert-code': theme('colors.background / 1'),
+            '--tw-prose-invert-pre-code': theme('colors.card.foreground / 1'),
+            '--tw-prose-invert-pre-bg': theme('colors.card.DEFAULT / 1'),
+            '--tw-prose-invert-th-borders': theme('colors.border / 1'),
+            '--tw-prose-invert-td-borders': theme('colors.border / 1'),
+            h1: { fontWeight: '600' },
+            h2: { fontWeight: '600' },
+            h3: { fontWeight: '600' },
+            h4: { fontWeight: '600' },
+            // Add any other specific prose overrides here
+          },
+        },
+      }),
     },
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [
+    require('tailwindcss-animate'),
+    require('@tailwindcss/typography'), // Added typography plugin
+  ],
 } satisfies Config;
