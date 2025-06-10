@@ -41,7 +41,7 @@ export default function WhatsAppRemindersPage() {
   const [allSessions, setAllSessions] = useState<Session[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedReminderItem, setSelectedReminderItem] = useState<ReminderItem | null>(null);
-  const [isDialogOpeng, setIsDialogOpen] = useState(false);
+  const [isWhatsAppReminderDialogOpen, setIsWhatsAppReminderDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [timeFilter, setTimeFilter] = useState<"all" | "24h" | "48h">("all");
 
@@ -61,14 +61,10 @@ export default function WhatsAppRemindersPage() {
 
       // Simulate fetching sessions
       const cachedSessions = await cacheService.sessions.getList();
-      // For WhatsApp reminders, we might want to combine with a general sessions list
-      // or fetch specifically "upcoming scheduled" sessions in a real app.
-      // Here, we use a mock list that includes various scenarios.
-      if (isMounted && cachedSessions && cachedSessions.length > 0) { // Simple check if cache is populated
+      if (isMounted && cachedSessions && cachedSessions.length > 0) {
          setAllSessions(cachedSessions.filter(s => s.status === 'scheduled' && isFuture(parseISO(s.startTime))));
       } else if (isMounted) {
         setAllSessions(mockSessionsData.filter(s => s.status === 'scheduled' && isFuture(parseISO(s.startTime))));
-        // No need to save mockSessionsData to general sessions cache here as it's specific for this page's demo
       }
       if(isMounted) setIsLoading(false);
     };
@@ -107,7 +103,7 @@ export default function WhatsAppRemindersPage() {
 
   const handleOpenDialog = useCallback((item: ReminderItem) => {
     setSelectedReminderItem(item);
-    setIsDialogOpen(true);
+    setIsWhatsAppReminderDialogOpen(true);
   }, []);
 
   return (
@@ -201,7 +197,6 @@ export default function WhatsAppRemindersPage() {
                   ))}
                 </TableBody>
               </Table>
-            </Table>
             </div>
           )}
         </CardContent>
@@ -209,11 +204,13 @@ export default function WhatsAppRemindersPage() {
 
       {selectedReminderItem && (
         <WhatsAppReminderDialog
-          isOpen={isDialogOpeng}
-          onOpenChange={setIsDialogOpen}
+          isOpen={isWhatsAppReminderDialogOpen}
+          onOpenChange={setIsWhatsAppReminderDialogOpen}
           reminderItem={selectedReminderItem}
         />
       )}
     </div>
   );
 }
+
+    

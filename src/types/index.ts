@@ -40,6 +40,7 @@ export interface Session {
   status: "scheduled" | "completed" | "cancelled" | "no-show";
   recurring?: SessionRecurrence | null;
   notes?: string; // Potentially encrypted
+  isPendingSync?: boolean; // For offline mode
 }
 
 export interface Assessment {
@@ -91,3 +92,4 @@ export interface Chat {
   participants?: string[]; // For private chats, user IDs
   avatarUrl?: string; // For direct chat with a user (e.g., the other user's avatar)
 }
+

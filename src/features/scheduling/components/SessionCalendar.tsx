@@ -8,9 +8,10 @@ import type { Session } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-import { Edit2, User, Clock, Repeat } from "lucide-react";
+import { Edit2, User, Clock, Repeat, CloudOff } from "lucide-react";
 import { format, isSameDay, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 interface SessionCalendarProps {
   sessions: Session[];
@@ -57,13 +58,20 @@ export const SessionCalendar = React.memo(function SessionCalendar({ sessions, o
             onSelect={handleDateSelect}
             className="rounded-md border"
             locale={ptBR}
-            modifiers={{ hasEvent: dayHasEvents }}
+            modifiers={{ 
+              hasEvent: dayHasEvents,
+              pendingSync: (date) => sessions.some(s => isSameDay(parseISO(s.startTime), date) && s.isPendingSync)
+            }}
             modifiersStyles={{
               hasEvent: { 
                 fontWeight: 'bold', 
                 textDecoration: 'underline',
                 textDecorationColor: 'hsl(var(--primary))',
                 textUnderlineOffset: '3px'
+              },
+              pendingSync: {
+                outline: '1px dashed hsl(var(--primary))',
+                outlineOffset: '2px',
               }
             }}
             footer={
@@ -87,7 +95,7 @@ export const SessionCalendar = React.memo(function SessionCalendar({ sessions, o
             <ScrollArea className="h-72 pr-3">
               <ul className="space-y-3">
                 {sessionsForSelectedDate.map(session => (
-                  <li key={session.id} className="p-3 border rounded-lg bg-card hover:bg-muted/50 transition-colors">
+                  <li key={session.id} className={cn("p-3 border rounded-lg bg-card hover:bg-muted/50 transition-colors", session.isPendingSync && "border-amber-400 border-dashed")}>
                     <div className="flex justify-between items-start">
                       <div>
                         <p className="font-semibold text-sm flex items-center">
@@ -111,10 +119,11 @@ export const SessionCalendar = React.memo(function SessionCalendar({ sessions, o
                       </Button>
                     </div>
                      <Badge 
-                        variant={session.status === 'scheduled' ? 'default' : session.status === 'completed' ? 'secondary' : session.status === 'cancelled' ? 'outline' : 'destructive'} 
-                        className="mt-1.5 text-xs capitalize"
+                        variant={session.isPendingSync ? 'outline' : (session.status === 'scheduled' ? 'default' : session.status === 'completed' ? 'secondary' : session.status === 'cancelled' ? 'outline' : 'destructive')} 
+                        className={cn("mt-1.5 text-xs capitalize", session.isPendingSync && "border-amber-500 text-amber-700 bg-amber-500/10")}
                       >
-                        {session.status === 'scheduled' ? 'Agendada' : session.status === 'completed' ? 'Concluída' : session.status === 'cancelled' ? 'Cancelada' : 'Não Compareceu'}
+                        {session.isPendingSync ? <CloudOff className="mr-1 h-3 w-3" /> : null}
+                        {session.isPendingSync ? 'Sinc. Pendente' : (session.status === 'scheduled' ? 'Agendada' : session.status === 'completed' ? 'Concluída' : session.status === 'cancelled' ? 'Cancelada' : 'Não Compareceu')}
                       </Badge>
                   </li>
                 ))}

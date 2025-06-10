@@ -12,6 +12,7 @@ export const CACHE_KEYS = {
   PATIENT_DETAIL: (id: string) => `patient_detail_${id}`,
   PATIENT_SESSIONS: (patientId: string) => `patient_sessions_${patientId}`,
   SESSIONS_LIST: 'sessions_list',
+  PENDING_SESSIONS_LIST: 'pending_sessions_list', // For sessions created/updated offline
   DOCUMENTS_LIST: 'documents_list',
   ASSESSMENTS_LIST: 'assessments_list',
   ADMIN_METRICS_SUMMARY: 'admin_metrics_summary',
@@ -23,7 +24,7 @@ async function getFromCache<T>(key: string): Promise<T | undefined> {
   try {
     return await get<T>(key, psiguardStore);
   } catch (error) {
-    console.warn(`Error reading from cache (key: ${key}):`, error);
+    // console.warn(`Error reading from cache (key: ${key}):`, error);
     return undefined;
   }
 }
@@ -33,7 +34,7 @@ async function setInCache<T>(key: string, value: T): Promise<void> {
   try {
     await set(key, value, psiguardStore);
   } catch (error) {
-    console.warn(`Error writing to cache (key: ${key}):`, error);
+    // console.warn(`Error writing to cache (key: ${key}):`, error);
   }
 }
 
@@ -42,7 +43,7 @@ async function deleteFromCache(key: string): Promise<void> {
   try {
     await del(key, psiguardStore);
   } catch (error) {
-    console.warn(`Error deleting from cache (key: ${key}):`, error);
+    // console.warn(`Error deleting from cache (key: ${key}):`, error);
   }
 }
 
@@ -50,43 +51,67 @@ async function clearCache(): Promise<void> {
   if (typeof window === 'undefined') return;
   try {
     await clear(psiguardStore);
-    console.log('PsiGuard cache cleared.');
+    // console.log('PsiGuard cache cleared.');
   } catch (error) {
-    console.warn('Error clearing cache:', error);
+    // console.warn('Error clearing cache:', error);
   }
 }
 
-// Specific cache functions (examples, expand as needed)
+// Specific cache functions
 
 // Patients
-export const getCachedPatientsList = () => getFromCache<Patient[]>(CACHE_KEYS.PATIENTS_LIST);
-export const setCachedPatientsList = (patients: Patient[]) => setInCache(CACHE_KEYS.PATIENTS_LIST, patients);
+const getCachedPatientsList = () => getFromCache<Patient[]>(CACHE_KEYS.PATIENTS_LIST);
+const setCachedPatientsList = (patients: Patient[]) => setInCache(CACHE_KEYS.PATIENTS_LIST, patients);
 
-export const getCachedPatientDetail = (id: string) => getFromCache<Patient>(CACHE_KEYS.PATIENT_DETAIL(id));
-export const setCachedPatientDetail = (id: string, patient: Patient) => setInCache(CACHE_KEYS.PATIENT_DETAIL(id), patient);
+const getCachedPatientDetail = (id: string) => getFromCache<Patient>(CACHE_KEYS.PATIENT_DETAIL(id));
+const setCachedPatientDetail = (id: string, patient: Patient) => setInCache(CACHE_KEYS.PATIENT_DETAIL(id), patient);
 
-export const getCachedPatientSessions = (patientId: string) => getFromCache<Session[]>(CACHE_KEYS.PATIENT_SESSIONS(patientId));
-export const setCachedPatientSessions = (patientId: string, sessions: Session[]) => setInCache(CACHE_KEYS.PATIENT_SESSIONS(patientId), sessions);
+const getCachedPatientSessions = (patientId: string) => getFromCache<Session[]>(CACHE_KEYS.PATIENT_SESSIONS(patientId));
+const setCachedPatientSessions = (patientId: string, sessions: Session[]) => setInCache(CACHE_KEYS.PATIENT_SESSIONS(patientId), sessions);
 
-// Sessions
-export const getCachedSessionsList = () => getFromCache<Session[]>(CACHE_KEYS.SESSIONS_LIST);
-export const setCachedSessionsList = (sessions: Session[]) => setInCache(CACHE_KEYS.SESSIONS_LIST, sessions);
+// Sessions (main list)
+const getCachedSessionsList = () => getFromCache<Session[]>(CACHE_KEYS.SESSIONS_LIST);
+const setCachedSessionsList = (sessions: Session[]) => setInCache(CACHE_KEYS.SESSIONS_LIST, sessions);
+
+// Pending Sessions (for offline sync)
+const getCachedPendingSessionsList = () => getFromCache<Session[]>(CACHE_KEYS.PENDING_SESSIONS_LIST);
+const setCachedPendingSessionsList = (sessions: Session[]) => setInCache(CACHE_KEYS.PENDING_SESSIONS_LIST, sessions);
+
+const addOrUpdatePendingSession = async (session: Session) => {
+  const pendingSessions = await getCachedPendingSessionsList() || [];
+  const existingIndex = pendingSessions.findIndex(s => s.id === session.id);
+  if (existingIndex > -1) {
+    pendingSessions[existingIndex] = session;
+  } else {
+    pendingSessions.push(session);
+  }
+  await setCachedPendingSessionsList(pendingSessions);
+};
+
+const removePendingSession = async (sessionId: string) => {
+  const pendingSessions = await getCachedPendingSessionsList() || [];
+  const updatedSessions = pendingSessions.filter(s => s.id !== sessionId);
+  await setCachedPendingSessionsList(updatedSessions);
+};
+
+const clearPendingSessionsList = () => setCachedPendingSessionsList([]);
+
 
 // Documents
-export const getCachedDocumentsList = () => getFromCache<DocumentResource[]>(CACHE_KEYS.DOCUMENTS_LIST);
-export const setCachedDocumentsList = (documents: DocumentResource[]) => setInCache(CACHE_KEYS.DOCUMENTS_LIST, documents);
+const getCachedDocumentsList = () => getFromCache<DocumentResource[]>(CACHE_KEYS.DOCUMENTS_LIST);
+const setCachedDocumentsList = (documents: DocumentResource[]) => setInCache(CACHE_KEYS.DOCUMENTS_LIST, documents);
 
 // Assessments
-export const getCachedAssessmentsList = () => getFromCache<Assessment[]>(CACHE_KEYS.ASSESSMENTS_LIST);
-export const setCachedAssessmentsList = (assessments: Assessment[]) => setInCache(CACHE_KEYS.ASSESSMENTS_LIST, assessments);
+const getCachedAssessmentsList = () => getFromCache<Assessment[]>(CACHE_KEYS.ASSESSMENTS_LIST);
+const setCachedAssessmentsList = (assessments: Assessment[]) => setInCache(CACHE_KEYS.ASSESSMENTS_LIST, assessments);
 
-// Admin Metrics (example for summary data)
+// Admin Metrics
 interface AdminMetricsSummary {
   totalPatients: number | null;
   avgTimeBetweenSessions: string | null;
 }
-export const getCachedAdminMetricsSummary = () => getFromCache<AdminMetricsSummary>(CACHE_KEYS.ADMIN_METRICS_SUMMARY);
-export const setCachedAdminMetricsSummary = (summary: AdminMetricsSummary) => setInCache(CACHE_KEYS.ADMIN_METRICS_SUMMARY, summary);
+const getCachedAdminMetricsSummary = () => getFromCache<AdminMetricsSummary>(CACHE_KEYS.ADMIN_METRICS_SUMMARY);
+const setCachedAdminMetricsSummary = (summary: AdminMetricsSummary) => setInCache(CACHE_KEYS.ADMIN_METRICS_SUMMARY, summary);
 
 
 export const cacheService = {
@@ -95,7 +120,6 @@ export const cacheService = {
   del: deleteFromCache,
   clearAll: clearCache,
   keys: CACHE_KEYS,
-  // Add specific getters/setters here for convenience if desired
   patients: {
     getList: getCachedPatientsList,
     setList: setCachedPatientsList,
@@ -107,6 +131,13 @@ export const cacheService = {
   sessions: {
     getList: getCachedSessionsList,
     setList: setCachedSessionsList,
+  },
+  pendingSessions: {
+    getList: getCachedPendingSessionsList,
+    setList: setCachedPendingSessionsList,
+    addOrUpdate: addOrUpdatePendingSession,
+    remove: removePendingSession,
+    clear: clearPendingSessionsList,
   },
   documents: {
     getList: getCachedDocumentsList,
