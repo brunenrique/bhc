@@ -111,7 +111,8 @@ export interface Patient {
   sessionNotes?: string; // To be renamed to "Evolução das Sessões" in UI
   previousSessionNotes?: PatientNoteVersion[];
   prontuario?: ProntuarioData;
-  therapeuticPlan?: TherapeuticPlan; // New field for PTI
+  therapeuticPlan?: TherapeuticPlan; 
+  caseStudyNotes?: string; // New field for Case Study notes
   createdAt: string; // ISO Date string
   updatedAt: string; // ISO Date string
 }

@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Edit, Mail, Phone, CalendarDays, FileText, PlusCircle, Repeat, Eye, EyeOff, Lock, History, Info, BookMarked, Fingerprint, ShieldCheck, ShieldX, ShieldAlert, SendToBack, UploadCloud, ListChecks, BarChart3, FileSignature, CalendarCheck2, CalendarX2, UserCheck, UserX, AlertTriangle } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { ArrowLeft, Edit, Mail, Phone, CalendarDays, FileText, PlusCircle, Repeat, Eye, EyeOff, Lock, History, Info, BookMarked, Fingerprint, ShieldCheck, ShieldX, ShieldAlert, SendToBack, UploadCloud, ListChecks, BarChart3, FileSignature, CalendarCheck2, CalendarX2, UserCheck, UserX, AlertTriangle, CaseSensitive, Bot } from 'lucide-react';
 import { PatientFormDialog } from '@/features/patients/components/PatientFormDialog';
 import { SessionFormDialog } from '@/features/scheduling/components/SessionFormDialog';
 import { Separator } from '@/components/ui/separator';
@@ -134,7 +135,8 @@ const fetchPatientDetailsMock = async (id: string): Promise<Patient | null> => {
           { id: 'g4_ana', description: 'Desenvolver e aplicar uma estratégia de comunicação assertiva no trabalho.', status: 'on_hold', createdAt: subDays(baseDate, 7).toISOString(), notes: 'Pausado para focar em reestruturação cognitiva primeiro.'},
         ],
         lastUpdatedAt: subDays(baseDate, 2).toISOString(),
-      }
+      },
+      caseStudyNotes: "Estudo de Caso - Ana Beatriz Silva:\n\nPaciente apresenta histórico de ansiedade desde a adolescência, exacerbado por pressões no ambiente de trabalho atual. Responde bem à psicoeducação e técnicas cognitivas, mas demonstra dificuldade em manter a prática de relaxamento de forma consistente.\n\nDesafios: \n- Baixa tolerância à frustração.\n- Dificuldade em delegar tarefas no trabalho.\n\nHipóteses diagnósticas (a confirmar):\n- Transtorno de Ansiedade Generalizada.\n- Possíveis traços de personalidade anancástica.\n\nPróximos passos:\n- Introduzir técnicas de mindfulness.\n- Explorar crenças centrais sobre autoexigência e perfeccionismo.\n- Trabalhar habilidades de comunicação assertiva e estabelecimento de limites."
     };
   } else if (id === '2') { // Bruno Costa
     specificData = {
@@ -155,13 +157,15 @@ const fetchPatientDetailsMock = async (id: string): Promise<Patient | null> => {
           { id: 'g3_bruno', description: 'Melhorar a qualidade do sono (pelo menos 6 horas contínuas).', status: 'on_hold', createdAt: subDays(baseDate, 21).toISOString(), notes: 'Aguardando melhora dos pesadelos.'},
         ],
         lastUpdatedAt: subDays(baseDate, 3).toISOString(),
-      }
+      },
+      caseStudyNotes: "Estudo de Caso - Bruno Almeida Costa:\n\nPaciente com diagnóstico de TEPT após acidente de trânsito há 8 meses. Apresenta sintomas clássicos de revivescência (flashbacks, pesadelos), evitação fóbica e hipervigilância. Boa rede de apoio familiar, mas com dificuldades de engajamento em atividades sociais que antes eram prazerosas.\n\nTratamento atual focado em Terapia de Exposição Prolongada e Reestruturação Cognitiva.\nObserva-se melhora na capacidade de falar sobre o trauma, mas ainda com considerável sofrimento emocional durante as exposições.\n\nQuestões a explorar:\n- Comorbidade com depressão leve a moderada.\n- Impacto dos sintomas no relacionamento conjugal.\n\nConsiderar encaminhamento para avaliação psiquiátrica se os sintomas de hipervigilância e insônia não melhorarem com as intervenções atuais."
     };
   } else { // Generic patient for other IDs
      specificData = {
       name: `Paciente Exemplo ${id}`,
       sessionNotes: `Sessão de ${format(subDays(baseDate,5), "dd/MM")}: Nenhuma anotação detalhada para este paciente mock.`,
       prontuario: {...mockProntuarioAna, identificacao: {...mockProntuarioAna.identificacao, nomeCompleto: `Paciente Exemplo ${id}`}},
+      caseStudyNotes: "Nenhuma nota de estudo de caso para este paciente exemplo.",
     };
   }
 
@@ -400,7 +404,7 @@ export default function PatientDetailPage() {
   const [editingSession, setEditingSession] = useState<Session | null>(null);
   const [areNotesVisible, setAreNotesVisible] = useState(false);
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'evolution' | 'prontuario' | 'pti' | 'scales' | 'analysis'>('evolution');
+  const [activeTab, setActiveTab] = useState<'evolution' | 'prontuario' | 'pti' | 'scales' | 'analysis' | 'case_study'>('evolution');
   const [isProntuarioSigDetailsOpen, setIsProntuarioSigDetailsOpen] = useState(false);
 
 
@@ -435,6 +439,8 @@ export default function PatientDetailPage() {
         // Simulate fetching data if not fully loaded from cache or to "refresh"
         fetchedPatientData = await fetchPatientDetailsMock(patientId);
         fetchedSessionsData = await fetchPatientSessionsMock(patientId);
+        // For assessments, always use the full mock list filtered by patientId for now,
+        // as the global assessments page manages its own cache, and here we need specific patient's completed ones.
         fetchedAssessmentsData = allMockAssessments.filter(asm => asm.patientId === patientId && asm.status === 'completed');
 
 
@@ -536,10 +542,12 @@ export default function PatientDetailPage() {
       updatedAt: new Date().toISOString() 
     };
     
+    // Update local state and cache
     setPatient(updatedPatient);
     await cacheService.patients.setDetail(patient.id, updatedPatient); 
     setIsPatientFormOpen(false);
-  }, [patient]);
+    toast({ title: "Dados do Paciente Salvos", description: "As informações do paciente foram atualizadas." });
+  }, [patient, toast]);
 
   const handleSaveSession = useCallback(async (sessionData: Partial<Session>) => {
     const psychologistNameMap: Record<string, string> = {
@@ -628,12 +636,12 @@ export default function PatientDetailPage() {
             </div>
           </div>
           <CardContent className="p-6 space-y-6">
-            <Skeleton className="h-8 w-1/3 mb-2" /> {/* For TabsList */}
+            <Skeleton className="h-8 w-full mb-2" /> {/* For TabsList with more tabs */}
             <Skeleton className="h-6 w-40 mb-2" />
             <Skeleton className="h-40 w-full" />
             <Separator />
             <Skeleton className="h-6 w-1/2 mb-2" />
-            <Skeleton className="h-64 w-full" /> {/* Placeholder for multiple sections */}
+            <Skeleton className="h-64 w-full" /> 
           </CardContent>
         </Card>
         <Card className="shadow-lg">
@@ -699,15 +707,16 @@ export default function PatientDetailPage() {
           
           <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full">
             <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
-              <TabsList className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-1 w-full md:w-auto">
+              <TabsList className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-6 gap-1 w-full md:w-auto">
                 <TabsTrigger value="evolution" className="font-headline text-xs px-2 py-1.5 h-auto whitespace-nowrap"><FileText className="w-3.5 h-3.5 mr-1.5"/>Evolução Sessões</TabsTrigger>
                 <TabsTrigger value="prontuario" className="font-headline text-xs px-2 py-1.5 h-auto whitespace-nowrap"><BookMarked className="w-3.5 h-3.5 mr-1.5"/>Prontuário</TabsTrigger>
+                <TabsTrigger value="case_study" className="font-headline text-xs px-2 py-1.5 h-auto whitespace-nowrap"><CaseSensitive className="w-3.5 h-3.5 mr-1.5"/>Estudo de Caso</TabsTrigger>
                 <TabsTrigger value="pti" className="font-headline text-xs px-2 py-1.5 h-auto whitespace-nowrap"><ListChecks className="w-3.5 h-3.5 mr-1.5"/>PTI</TabsTrigger>
                 <TabsTrigger value="scales" className="font-headline text-xs px-2 py-1.5 h-auto whitespace-nowrap"><FileSignature className="w-3.5 h-3.5 mr-1.5"/>Escalas</TabsTrigger>
                 <TabsTrigger value="analysis" className="font-headline text-xs px-2 py-1.5 h-auto whitespace-nowrap"><BarChart3 className="w-3.5 h-3.5 mr-1.5"/>Análise Gráfica</TabsTrigger>
               </TabsList>
               <div className="flex gap-2 ml-auto">
-                { (activeTab === 'evolution' || activeTab === 'prontuario' || activeTab === 'pti') && patient.previousSessionNotes && patient.previousSessionNotes.length > 0 && activeTab === 'evolution' && (
+                { (activeTab === 'evolution' || activeTab === 'prontuario' || activeTab === 'pti' || activeTab === 'case_study') && patient.previousSessionNotes && patient.previousSessionNotes.length > 0 && activeTab === 'evolution' && (
                     <Button variant="outline" size="sm" onClick={() => setIsHistoryDialogOpen(true)} disabled={!areNotesVisible}>
                         <History className="w-4 h-4 mr-2" /> Histórico
                     </Button>
@@ -719,7 +728,7 @@ export default function PatientDetailPage() {
               </div>
             </div>
 
-            {!areNotesVisible && (activeTab === 'evolution' || activeTab === 'prontuario' || activeTab === 'pti' || activeTab === 'scales' || activeTab === 'analysis') ? (
+            {!areNotesVisible && (activeTab === 'evolution' || activeTab === 'prontuario' || activeTab === 'pti' || activeTab === 'scales' || activeTab === 'analysis' || activeTab === 'case_study') ? (
               <Alert variant="default" className="bg-muted/40 border-primary/30 mt-2">
                 <Lock className="h-5 w-5 text-primary/80" />
                 <AlertTitle className="font-headline text-primary/90">Conteúdo Confidencial</AlertTitle>
@@ -743,6 +752,38 @@ export default function PatientDetailPage() {
                       onUploadSignedFile={handleUploadSignedProntuario}
                       onViewSignatureDetails={() => setIsProntuarioSigDetailsOpen(true)}
                     />
+                </TabsContent>
+                 <TabsContent value="case_study">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="font-headline flex items-center"><CaseSensitive className="mr-2 h-5 w-5 text-primary" />Notas do Estudo de Caso</CardTitle>
+                        <CardDescription>Espaço para anotações livres e aprofundadas sobre o caso. Edite através do botão "Editar Paciente" no topo.</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <ScrollArea className="h-60 w-full rounded-md border p-3 bg-muted/20 shadow-inner">
+                           <pre className="whitespace-pre-wrap text-sm text-foreground font-body leading-relaxed">
+                            {patient.caseStudyNotes || "Nenhuma nota de estudo de caso registrada."}
+                           </pre>
+                        </ScrollArea>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="font-headline flex items-center"><Bot className="mr-2 h-5 w-5 text-accent" />Assistente IA para Estudo de Caso</CardTitle>
+                         <CardDescription>Interaja com a IA para insights sobre este estudo de caso.</CardDescription>
+                      </CardHeader>
+                      <CardContent className="flex flex-col items-center justify-center h-60 text-center bg-muted/20 rounded-md border p-4">
+                        <Bot className="h-12 w-12 text-muted-foreground mb-3" />
+                        <p className="text-sm text-muted-foreground">
+                          Funcionalidade de chat com assistente IA para análise do estudo de caso será implementada futuramente.
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          (Ex: Obter sugestões, discutir hipóteses, etc.)
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </div>
                 </TabsContent>
                 <TabsContent value="pti">
                     <PatientTherapeuticPlan plan={patient.therapeuticPlan} />
@@ -810,7 +851,7 @@ export default function PatientDetailPage() {
           <Separator className="my-4"/>
           <h4 className="text-md font-semibold font-headline mb-2">Todas as Sessões</h4>
           {sessions.length > 0 ? (
-              <ScrollArea className="h-60 pr-3"> {/* Adjusted height */}
+              <ScrollArea className="h-60 pr-3"> 
                   <ul className="space-y-3">
                       {sessions.map(s => (
                           <li key={s.id} className="p-3 border rounded-lg hover:bg-muted/30 transition-colors">

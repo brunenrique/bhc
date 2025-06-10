@@ -31,6 +31,7 @@ const initialFormState: Partial<Patient> = {
   dateOfBirth: "",
   address: "",
   sessionNotes: "", 
+  caseStudyNotes: "", // Added caseStudyNotes
 };
 
 export function PatientFormDialog({ isOpen, onOpenChange, patient, onSave }: PatientFormDialogProps) {
@@ -39,7 +40,10 @@ export function PatientFormDialog({ isOpen, onOpenChange, patient, onSave }: Pat
 
   useEffect(() => {
     if (patient) {
-      setFormData(patient);
+      setFormData({
+        ...initialFormState, // Ensure all fields are at least initialized
+        ...patient,
+      });
     } else {
       setFormData(initialFormState);
     }
@@ -94,17 +98,30 @@ export function PatientFormDialog({ isOpen, onOpenChange, patient, onSave }: Pat
             <Input id="address" name="address" value={formData.address || ''} onChange={handleChange} />
           </div>
           <div>
-            <Label htmlFor="sessionNotes">Histórico / Anotações Confidenciais</Label>
+            <Label htmlFor="sessionNotes">Evolução das Sessões (Anotações Confidenciais)</Label>
             <Textarea 
               id="sessionNotes" 
               name="sessionNotes" 
-              placeholder="Anotações importantes sobre o paciente..." 
+              placeholder="Anotações importantes sobre a evolução do paciente nas sessões..." 
               value={formData.sessionNotes || ''} 
               onChange={handleChange}
               rows={4} 
             />
             <p className="text-xs text-muted-foreground mt-1">Estas notas serão armazenadas de forma segura (simulado).</p>
           </div>
+          <div>
+            <Label htmlFor="caseStudyNotes">Notas do Estudo de Caso</Label>
+            <Textarea 
+              id="caseStudyNotes" 
+              name="caseStudyNotes" 
+              placeholder="Anotações detalhadas e reflexões para o estudo de caso..." 
+              value={formData.caseStudyNotes || ''} 
+              onChange={handleChange}
+              rows={6} 
+            />
+            <p className="text-xs text-muted-foreground mt-1">Utilize este espaço para aprofundar a análise do caso.</p>
+          </div>
+
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
