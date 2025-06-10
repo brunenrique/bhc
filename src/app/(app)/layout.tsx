@@ -21,6 +21,7 @@ import { Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes'; 
 import { FloatingChatButton } from '@/components/chat/FloatingChatButton';
 import { SimulatedNotificationManager } from '@/components/notifications/SimulatedNotificationManager';
+import { OfflineIndicator } from '@/components/layout/OfflineIndicator';
 
 
 function ThemeToggle() {
@@ -63,6 +64,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   
   return (
     <SidebarProvider defaultOpen={true}>
+      <OfflineIndicator />
       <Sidebar collapsible="icon" variant="sidebar" side="left">
         <SidebarHeader className="p-4 border-b border-sidebar-border">
           <Logo showText={true} className="data-[state=collapsed]:hidden group-data-[collapsible=icon]:hidden" />
@@ -86,7 +88,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
           <UserNav />
         </header>
-        <main className="flex-1 p-4 md:p-6 lg:p-8">
+        <main className="flex-1 p-4 md:p-6 lg:p-8 pt-12 md:pt-6 lg:pt-8"> {/* Added padding-top to prevent overlap with offline indicator */}
           {children}
         </main>
       </SidebarInset>

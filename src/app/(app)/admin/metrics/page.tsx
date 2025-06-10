@@ -2,10 +2,10 @@
 "use client";
 import dynamic from 'next/dynamic';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAuth } from '@/hooks/useAuth'; // For potential role check in the future
-import { Users, CalendarClock, BarChartHorizontalBig, PieChart as PieChartIcon, AreaChart } from 'lucide-react';
+import { Users, CalendarClock, BarChartHorizontalBig, PieChart as PieChartIcon, AreaChart, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cacheService } from '@/services/cacheService';
 
 const SessionsCreatedPerWeekChart = dynamic(() => import('@/components/admin/metrics/SessionsCreatedPerWeekChart').then(mod => mod.SessionsCreatedPerWeekChart), {
   ssr: false,
@@ -21,35 +21,53 @@ interface AdminMetricsData {
   avgTimeBetweenSessions: string | null;
 }
 
+const mockAdminMetricsData: AdminMetricsData = {
+  totalPatients: Math.floor(Math.random() * 150) + 50, // e.g., 50-200
+  avgTimeBetweenSessions: `${(Math.random() * 10 + 5).toFixed(1)} dias`, // e.g., 5.0-15.0 dias
+};
+
 export default function AdminMetricsPage() {
-  const { user } = useAuth(); // For role display or future checks
   const [metricsData, setMetricsData] = useState<AdminMetricsData>({
     totalPatients: null,
     avgTimeBetweenSessions: null,
   });
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingSummary, setIsLoadingSummary] = useState(true);
 
   useEffect(() => {
-    // Simulate fetching data
-    setTimeout(() => {
-      setMetricsData({
-        totalPatients: Math.floor(Math.random() * 150) + 50, // e.g., 50-200
-        avgTimeBetweenSessions: `${(Math.random() * 10 + 5).toFixed(1)} dias`, // e.g., 5.0-15.0 dias
-      });
-      setIsLoading(false);
-    }, 1000);
-  }, []);
+    let isMounted = true;
+    const loadMetricsSummary = async () => {
+      setIsLoadingSummary(true);
+      try {
+        const cachedSummary = await cacheService.adminMetrics.getSummary();
+        if (isMounted && cachedSummary) {
+          setMetricsData(cachedSummary);
+        }
+      } catch (error) {
+        console.warn("Error loading admin metrics summary from cache:", error);
+      }
 
-  // Add a basic role check for display, in a real app this would be more robust
-  // if (user?.role !== 'admin') {
-  //   return (
-  //     <div className="flex flex-col items-center justify-center h-full">
-  //       <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
-  //       <h2 className="text-2xl font-semibold">Acesso Negado</h2>
-  //       <p className="text-muted-foreground">Você não tem permissão para acessar esta página.</p>
-  //     </div>
-  //   );
-  // }
+      // Simulate fetching fresh data
+      await new Promise(resolve => setTimeout(resolve, 1000)); 
+      
+      if (isMounted) {
+        // For this page, the mock data is generated once and then cached.
+        // If there's no cached data yet, we use the newly generated mock data.
+        // Otherwise, we assume the cached data is "fresh enough" for this demo.
+        if (!metricsData.totalPatients) { // Only set if not loaded from cache
+            setMetricsData(mockAdminMetricsData);
+        }
+        try {
+          await cacheService.adminMetrics.setSummary(metricsData.totalPatients ? metricsData : mockAdminMetricsData);
+        } catch (error) {
+          console.warn("Error saving admin metrics summary to cache:", error);
+        }
+        setIsLoadingSummary(false);
+      }
+    };
+
+    loadMetricsSummary();
+    return () => { isMounted = false; };
+  }, []); // metricsData removed from deps to avoid re-fetch loop with mock generation
 
   return (
     <div className="space-y-8">
@@ -68,7 +86,7 @@ export default function AdminMetricsPage() {
             <Users className="h-5 w-5 text-primary" />
           </CardHeader>
           <CardContent>
-            {isLoading ? <Skeleton className="h-8 w-1/2" /> : <div className="text-3xl font-bold font-headline">{metricsData.totalPatients}</div>}
+            {isLoadingSummary ? <Skeleton className="h-8 w-1/2" /> : <div className="text-3xl font-bold font-headline">{metricsData.totalPatients}</div>}
             <p className="text-xs text-muted-foreground">Pacientes cadastrados na plataforma.</p>
           </CardContent>
         </Card>
@@ -78,11 +96,10 @@ export default function AdminMetricsPage() {
             <CalendarClock className="h-5 w-5 text-accent" />
           </CardHeader>
           <CardContent>
-            {isLoading ? <Skeleton className="h-8 w-1/2" /> : <div className="text-3xl font-bold font-headline">{metricsData.avgTimeBetweenSessions}</div>}
+            {isLoadingSummary ? <Skeleton className="h-8 w-1/2" /> : <div className="text-3xl font-bold font-headline">{metricsData.avgTimeBetweenSessions}</div>}
             <p className="text-xs text-muted-foreground">Média por paciente ativo.</p>
           </CardContent>
         </Card>
-        {/* Add more simple stat cards here if needed */}
       </div>
       
       <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">

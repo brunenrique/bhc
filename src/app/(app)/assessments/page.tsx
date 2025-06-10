@@ -6,11 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Assessment } from "@/types";
-import {ClipboardEdit, ListChecks} from "lucide-react";
+import {ClipboardEdit, ListChecks, Loader2} from "lucide-react";
 import { useState, useCallback, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { cacheService } from "@/services/cacheService";
 
-const mockAssessments: Assessment[] = [
+const mockAssessmentsData: Assessment[] = [
   { id: 'assess1', title: 'Escala Beck de Ansiedade', patientId: 'p1', patientName: 'Ana Silva', status: 'completed', formLink: 'mock-link-123', results: { score: 25, level: 'Moderado', summary: 'Paciente reportou sintomas consistentes com ansiedade moderada, incluindo preocupação excessiva e tensão física.' }, createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString() },
   { id: 'assess2', title: 'Inventário de Depressão de Beck (BDI)', patientId: 'p2', patientName: 'Bruno Costa', status: 'sent', formLink: 'mock-link-456', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString() },
   { id: 'assess3', title: 'Questionário de Qualidade de Vida (WHOQOL-BREF)', patientId: 'p1', patientName: 'Ana Silva', status: 'pending', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString() },
@@ -18,54 +19,92 @@ const mockAssessments: Assessment[] = [
 
 
 export default function AssessmentsPage() {
-  const [assessments, setAssessments] = useState<Assessment[]>(mockAssessments);
+  const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [editingAssessment, setEditingAssessment] = useState<Assessment | null>(null);
   const [activeTab, setActiveTab] = useState("results");
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const keysToRemove: string[] = [];
-    const updatedAssessments = assessments.map(assessment => {
-      const completedKey = `assessment_completed_${assessment.id}`;
-      const storedResults = localStorage.getItem(completedKey);
-      if (storedResults) {
+    let isMounted = true;
+    const loadAssessments = async () => {
+      setIsLoading(true);
+      try {
+        const cachedData = await cacheService.assessments.getList();
+        if (isMounted && cachedData) {
+          setAssessments(cachedData);
+        }
+      } catch (error) {
+        console.warn("Error loading assessments from cache:", error);
+      }
+
+      // Simulate fetching fresh data
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      if (isMounted) {
+        setAssessments(mockAssessmentsData); 
         try {
-          const results = JSON.parse(storedResults);
-          keysToRemove.push(completedKey);
-          toast({
-            title: "Avaliação Concluída",
-            description: `A avaliação "${assessment.title}" para ${assessment.patientName} foi marcada como concluída.`,
-          });
-          return { ...assessment, status: 'completed', results } as Assessment;
-        } catch (e) {
-          console.error("Failed to parse results from localStorage", e);
-          // Optionally remove corrupted data
-          // localStorage.removeItem(completedKey); 
+          await cacheService.assessments.setList(mockAssessmentsData);
+        } catch (error) {
+          console.warn("Error saving assessments to cache:", error);
         }
       }
-      return assessment;
-    });
+      // Check for completed assessments from localStorage after initial load
+      const keysToRemove: string[] = [];
+      const updatedAssessmentsFromStorage = (isMounted && assessments.length > 0 ? assessments : mockAssessmentsData).map(assessment => {
+        const completedKey = `assessment_completed_${assessment.id}`;
+        if (typeof window !== 'undefined') {
+            const storedResults = localStorage.getItem(completedKey);
+            if (storedResults) {
+            try {
+                const results = JSON.parse(storedResults);
+                keysToRemove.push(completedKey);
+                if (isMounted) { // Only toast if component still mounted
+                    toast({
+                        title: "Avaliação Concluída",
+                        description: `A avaliação "${assessment.title}" para ${assessment.patientName} foi marcada como concluída.`,
+                    });
+                }
+                return { ...assessment, status: 'completed', results } as Assessment;
+            } catch (e) {
+                console.error("Failed to parse results from localStorage", e);
+            }
+            }
+        }
+        return assessment;
+      });
 
-    if (keysToRemove.length > 0) {
-      setAssessments(updatedAssessments);
-      keysToRemove.forEach(key => localStorage.removeItem(key));
-    }
+      if (isMounted) {
+        if (keysToRemove.length > 0) {
+            setAssessments(updatedAssessmentsFromStorage);
+            await cacheService.assessments.setList(updatedAssessmentsFromStorage); // Update cache
+            if (typeof window !== 'undefined') {
+                keysToRemove.forEach(key => localStorage.removeItem(key));
+            }
+        }
+        setIsLoading(false);
+      }
+    };
+    
+    loadAssessments();
+    return () => { isMounted = false; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Run once on mount to check for any pending completions
+  }, []); // Toast is a stable function from useToast
 
-  const handleCreateOrUpdateAssessment = useCallback((data: Partial<Assessment>) => {
+  const handleCreateOrUpdateAssessment = useCallback(async (data: Partial<Assessment>) => {
     const patientNameMap: Record<string, string> = {
       p1: 'Ana Silva',
       p2: 'Bruno Costa',
       p3: 'Carla Dias',
     };
+    let updatedAssessments;
 
     if(editingAssessment) {
-      setAssessments(prev => prev.map(a => a.id === editingAssessment.id ? {
+      updatedAssessments = assessments.map(a => a.id === editingAssessment.id ? {
         ...a, 
         ...data, 
         patientName: data.patientId ? patientNameMap[data.patientId] || 'Paciente Desconhecido' : a.patientName
-      } as Assessment : a));
+      } as Assessment : a);
       toast({ title: "Avaliação Atualizada", description: "Os detalhes da avaliação foram atualizados." });
     } else {
       const newAssessmentId = `assess${Date.now()}`;
@@ -79,26 +118,30 @@ export default function AssessmentsPage() {
         formLink: `/take-assessment?assessmentId=${newAssessmentId}&title=${encodeURIComponent(data.title || 'Nova Avaliação')}`,
         ...data,
       };
-      setAssessments(prev => [newAssessment, ...prev]);
+      updatedAssessments = [newAssessment, ...assessments];
       toast({ title: "Avaliação Criada", description: "Uma nova avaliação foi criada e está pendente." });
     }
+    setAssessments(updatedAssessments);
+    await cacheService.assessments.setList(updatedAssessments);
     setEditingAssessment(null);
-    setActiveTab("results"); // Switch to results tab after save
-  }, [editingAssessment, toast]);
+    setActiveTab("results"); 
+  }, [editingAssessment, toast, assessments]);
 
   const handleEditAssessment = useCallback((assessment: Assessment) => {
     setEditingAssessment(assessment);
-    setActiveTab("create"); // Switch to create/edit tab
+    setActiveTab("create"); 
   }, []);
   
-  const handleDeleteAssessment = useCallback((assessmentId: string) => {
-    setAssessments(prev => prev.filter(a => a.id !== assessmentId));
+  const handleDeleteAssessment = useCallback(async (assessmentId: string) => {
+    const updatedAssessments = assessments.filter(a => a.id !== assessmentId);
+    setAssessments(updatedAssessments);
+    await cacheService.assessments.setList(updatedAssessments);
     toast({ title: "Avaliação Excluída", description: "A avaliação foi removida.", variant: "destructive" });
-  }, [toast]);
+  }, [toast, assessments]);
 
   const handleCancelEdit = useCallback(() => {
     setEditingAssessment(null);
-    setActiveTab("results"); // Switch to results tab on cancel
+    setActiveTab("results"); 
   }, []);
 
   return (
@@ -121,11 +164,17 @@ export default function AssessmentsPage() {
               <CardDescription>Visualize o status e os resultados das avaliações dos pacientes.</CardDescription>
             </CardHeader>
             <CardContent>
-              <AssessmentResultsTable 
-                assessments={assessments} 
-                onEdit={handleEditAssessment} 
-                onDelete={handleDeleteAssessment}
-              />
+              {isLoading && assessments.length === 0 ? (
+                <div className="flex justify-center items-center h-64">
+                  <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                </div>
+               ) : (
+                <AssessmentResultsTable 
+                  assessments={assessments} 
+                  onEdit={handleEditAssessment} 
+                  onDelete={handleDeleteAssessment}
+                />
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -151,5 +200,3 @@ export default function AssessmentsPage() {
     </div>
   );
 }
-
-    

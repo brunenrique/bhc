@@ -4,9 +4,10 @@ import { PatientListTable } from "@/components/patients/PatientListTable";
 import { PatientFormDialog } from "@/components/patients/PatientFormDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PlusCircle, Search } from "lucide-react";
-import { useState, useCallback, useMemo } from "react";
+import { PlusCircle, Search, Loader2 } from "lucide-react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import type { Patient } from "@/types";
+import { cacheService } from '@/services/cacheService';
 
 const mockPatients: Patient[] = [
   { id: '1', name: 'Ana Beatriz Silva', email: 'ana.silva@example.com', phone: '(11) 98765-4321', dateOfBirth: '1990-05-15', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(), updatedAt: new Date().toISOString() },
@@ -16,9 +17,42 @@ const mockPatients: Patient[] = [
 
 export default function PatientsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [patients, setPatients] = useState<Patient[]>(mockPatients);
+  const [patients, setPatients] = useState<Patient[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadPatients = async () => {
+      setIsLoading(true);
+      try {
+        const cachedPatients = await cacheService.patients.getList();
+        if (isMounted && cachedPatients) {
+          setPatients(cachedPatients);
+        }
+      } catch (error) {
+        console.warn("Error loading patients from cache:", error);
+      }
+
+      // Simulate fetching fresh data
+      // In a real app, this would be an API call
+      await new Promise(resolve => setTimeout(resolve, 300)); // Simulate network delay
+      
+      if (isMounted) {
+        setPatients(mockPatients); // Set "fresh" mock data
+        try {
+          await cacheService.patients.setList(mockPatients);
+        } catch (error) {
+          console.warn("Error saving patients to cache:", error);
+        }
+        setIsLoading(false);
+      }
+    };
+
+    loadPatients();
+    return () => { isMounted = false; };
+  }, []);
 
   const handleNewPatient = useCallback(() => {
     setSelectedPatient(null);
@@ -30,25 +64,32 @@ export default function PatientsPage() {
     setIsFormOpen(true);
   }, []);
 
-  const handleDeletePatient = useCallback((patientId: string) => {
-    setPatients(prev => prev.filter(p => p.id !== patientId));
-  }, []);
+  const handleDeletePatient = useCallback(async (patientId: string) => {
+    const updatedPatients = patients.filter(p => p.id !== patientId);
+    setPatients(updatedPatients);
+    await cacheService.patients.setList(updatedPatients); // Update cache
+  }, [patients]);
 
-  const handleSavePatient = useCallback((patientData: Partial<Patient>) => {
+  const handleSavePatient = useCallback(async (patientData: Partial<Patient>) => {
+    let updatedPatients;
     if (selectedPatient && patientData.id) { // Editing existing
-      setPatients(prev => prev.map(p => p.id === patientData.id ? {...p, ...patientData} as Patient : p));
+      updatedPatients = patients.map(p => p.id === patientData.id ? {...p, ...patientData, updatedAt: new Date().toISOString()} as Patient : p);
     } else { // Creating new
       const newPatient = { ...patientData, id: `mock-${Date.now()}`, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } as Patient;
-      setPatients(prev => [newPatient, ...prev]);
+      updatedPatients = [newPatient, ...patients];
     }
+    setPatients(updatedPatients);
+    await cacheService.patients.setList(updatedPatients); // Update cache
     setIsFormOpen(false);
-  }, [selectedPatient]);
+  }, [selectedPatient, patients]);
 
   const filteredPatients = useMemo(() => 
     patients.filter(p => 
       p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (p.email && p.email.toLowerCase().includes(searchTerm.toLowerCase()))
-    ), [patients, searchTerm]);
+    ).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()), // Sort by newest first
+    [patients, searchTerm]
+  );
 
   return (
     <div className="space-y-6">
@@ -75,11 +116,17 @@ export default function PatientsPage() {
         Gerencie os registros dos seus pacientes. Adicione, edite ou visualize informações.
       </p>
       
-      <PatientListTable 
-        patients={filteredPatients} 
-        onEditPatient={handleEditPatient}
-        onDeletePatient={handleDeletePatient}
-      />
+      {isLoading && patients.length === 0 ? (
+        <div className="flex justify-center items-center h-64">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+      ) : (
+        <PatientListTable 
+          patients={filteredPatients} 
+          onEditPatient={handleEditPatient}
+          onDeletePatient={handleDeletePatient}
+        />
+      )}
 
       <PatientFormDialog
         isOpen={isFormOpen}
@@ -90,4 +137,3 @@ export default function PatientsPage() {
     </div>
   );
 }
-
