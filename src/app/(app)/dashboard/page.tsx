@@ -1,84 +1,83 @@
 
-"use client";
-import dynamic from 'next/dynamic';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAuth } from '@/hooks/useAuth';
-import { BarChart3, PieChart, Users, CalendarCheck, AlertTriangle } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { DashboardCard } from "@/components/ui/dashboard/DashboardCard";
+import { ChartContainer } from "@/components/ui/dashboard/ChartContainer";
+import { Users, UserCheck, CalendarCheck2, AlertTriangle, BarChart3, Activity } from "lucide-react"; // Added BarChart3 and Activity
 
-const WeeklySessionsChart = dynamic(() => import('@/features/dashboard/components/WeeklySessionsChart').then(mod => mod.WeeklySessionsChart), { 
-  ssr: false,
-  loading: () => <Skeleton className="h-[350px] w-full" />
-});
-const OccupancyRateChart = dynamic(() => import('@/features/dashboard/components/OccupancyRateChart').then(mod => mod.OccupancyRateChart), { 
-  ssr: false,
-  loading: () => <Skeleton className="h-[350px] w-full rounded-full" />
-});
-const CommonIssuesChart = dynamic(() => import('@/features/dashboard/components/CommonIssuesChart').then(mod => mod.CommonIssuesChart), { 
-  ssr: false,
-  loading: () => <Skeleton className="h-[350px] w-full" />
-});
+// This is now a Server Component, so no client-side hooks like useAuth or useState directly here.
+// Data fetching would typically happen here (e.g., from Firestore) or be passed as props.
+// For now, we'll use mock data.
 
+const mockOverviewData = {
+  activePatients: Math.floor(Math.random() * 150) + 50, // e.g., 50-200
+  activePsychologists: Math.floor(Math.random() * 10) + 3, // e.g., 3-13
+  sessionsThisMonth: Math.floor(Math.random() * 300) + 100, // e.g., 100-400
+  noShowRate: `${(Math.random() * 15 + 5).toFixed(1)}%`, // e.g., 5.0% - 20.0%
+};
 
-export default function DashboardPage() {
-  const { user } = useAuth();
-
-  const summaryStats = [
-    { title: "Pacientes Ativos", value: "78", icon: Users, color: "text-primary" },
-    { title: "Sessões Hoje", value: "12", icon: CalendarCheck, color: "text-green-500" },
-    { title: "Avaliações Pendentes", value: "5", icon: AlertTriangle, color: "text-yellow-500" },
-  ];
-
+export default function DashboardOverviewPage() {
   return (
     <div className="space-y-8">
-      <h1 className="text-3xl font-headline font-semibold">Dashboard</h1>
+      {/* The main title "Painel de Controle" is now in the layout, so we can have a more specific title here */}
+      <h1 className="text-3xl font-headline font-semibold">Visão Geral da Clínica</h1>
       <p className="text-muted-foreground font-body">
-        Bem-vindo(a) de volta, {user?.name || 'Usuário'}! Aqui está um resumo da sua clínica.
+        Um resumo das atividades e principais indicadores da clínica. (Dados de exemplo)
       </p>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {summaryStats.map((stat) => (
-          <Card key={stat.title} className="shadow-lg hover:shadow-xl transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium font-headline">{stat.title}</CardTitle>
-              <stat.icon className={`h-5 w-5 ${stat.color}`} />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold font-headline">{stat.value}</div>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <DashboardCard
+          title="Pacientes Ativos"
+          value={mockOverviewData.activePatients}
+          icon={<Users className="h-6 w-6 text-primary" />}
+          description="Total de pacientes com acompanhamento."
+          className="shadow-lg hover:shadow-xl transition-shadow"
+        />
+        <DashboardCard
+          title="Psicólogos Ativos"
+          value={mockOverviewData.activePsychologists}
+          icon={<UserCheck className="h-6 w-6 text-accent" />}
+          description="Profissionais realizando atendimentos."
+          className="shadow-lg hover:shadow-xl transition-shadow"
+        />
+        <DashboardCard
+          title="Sessões no Mês"
+          value={mockOverviewData.sessionsThisMonth}
+          icon={<CalendarCheck2 className="h-6 w-6 text-green-500" />}
+          description="Total de sessões realizadas este mês."
+          className="shadow-lg hover:shadow-xl transition-shadow"
+        />
+        <DashboardCard
+          title="Taxa de No-Show"
+          value={mockOverviewData.noShowRate}
+          icon={<AlertTriangle className="h-6 w-6 text-destructive" />}
+          description="Percentual de faltas em sessões agendadas."
+          className="shadow-lg hover:shadow-xl transition-shadow"
+        />
       </div>
       
       <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle className="font-headline flex items-center"><BarChart3 className="mr-2 h-5 w-5 text-primary" />Sessões Semanais</CardTitle>
-            <CardDescription>Visão geral das sessões realizadas na última semana.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <WeeklySessionsChart />
-          </CardContent>
-        </Card>
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle className="font-headline flex items-center"><PieChart className="mr-2 h-5 w-5 text-accent" />Taxa de Ocupação</CardTitle>
-            <CardDescription>Taxa de ocupação dos psicólogos.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <OccupancyRateChart />
-          </CardContent>
-        </Card>
+        <ChartContainer 
+          title="Status das Sessões no Mês" 
+          description="Distribuição das sessões por status no mês corrente."
+          className="shadow-lg"
+        >
+          <div className="h-[350px] flex items-center justify-center text-muted-foreground bg-muted/30 rounded-md">
+            <BarChart3 className="h-10 w-10 mr-2"/>
+            <p>Gráfico de status das sessões (Ex: Agendadas, Realizadas, Canceladas) aparecerá aqui.</p>
+          </div>
+        </ChartContainer>
+        
+        <ChartContainer 
+          title="Canais de Entrada de Pacientes"
+          description="Origem dos novos pacientes que chegam à clínica."
+          className="shadow-lg"
+        >
+          <div className="h-[350px] flex items-center justify-center text-muted-foreground bg-muted/30 rounded-md">
+            <Activity className="h-10 w-10 mr-2"/>
+            <p>Gráfico de canais de entrada (Ex: Indicação, Site, Convênio) aparecerá aqui.</p>
+          </div>
+        </ChartContainer>
       </div>
-      <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle className="font-headline">Problemas Prevalentes (Exemplo)</CardTitle>
-          <CardDescription>Insights sobre os temas mais comuns nas sessões.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <CommonIssuesChart />
-        </CardContent>
-      </Card>
     </div>
   );
 }
