@@ -22,7 +22,7 @@ export function SessionsPerPsychologistChart() {
 
   useEffect(() => {
     // Simulate data fetching/generation
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       const data = [
         { name: "Dr. Silva", sessions: Math.floor(Math.random() * 50) + 30, fill: "var(--color-Dr\\. Silva)" },
         { name: "Dra. Alves", sessions: Math.floor(Math.random() * 40) + 25, fill: "var(--color-Dra\\. Alves)" },
@@ -32,6 +32,7 @@ export function SessionsPerPsychologistChart() {
       setChartData(data);
       setIsLoading(false);
     }, 1200);
+    return () => clearTimeout(timer);
   }, []);
 
   if (isLoading) {

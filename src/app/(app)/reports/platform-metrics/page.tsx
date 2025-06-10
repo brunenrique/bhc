@@ -2,32 +2,32 @@
 "use client";
 import dynamic from 'next/dynamic';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, CalendarClock, BarChartHorizontalBig, PieChart as PieChartIcon, AreaChart, Loader2 } from 'lucide-react';
+import { Users, CalendarClock, BarChartHorizontalBig, PieChart as PieChartIcon, AreaChart } from 'lucide-react'; // Loader2 removed as loading handled by Skeleton
 import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cacheService } from '@/services/cacheService';
 
-const SessionsCreatedPerWeekChart = dynamic(() => import('@/features/admin/components/metrics/SessionsCreatedPerWeekChart').then(mod => mod.SessionsCreatedPerWeekChart), {
+const SessionsCreatedPerWeekChart = dynamic(() => import('@/features/reports/components/platform-metrics/SessionsCreatedPerWeekChart').then(mod => mod.SessionsCreatedPerWeekChart), {
   ssr: false,
   loading: () => <Skeleton className="h-[350px] w-full" />
 });
-const SessionsPerPsychologistChart = dynamic(() => import('@/features/admin/components/metrics/SessionsPerPsychologistChart').then(mod => mod.SessionsPerPsychologistChart), {
+const SessionsPerPsychologistChart = dynamic(() => import('@/features/reports/components/platform-metrics/SessionsPerPsychologistChart').then(mod => mod.SessionsPerPsychologistChart), {
   ssr: false,
   loading: () => <Skeleton className="h-[350px] w-full" />
 });
 
-interface AdminMetricsData {
+interface PlatformMetricsData {
   totalPatients: number | null;
   avgTimeBetweenSessions: string | null;
 }
 
-const mockAdminMetricsData: AdminMetricsData = {
-  totalPatients: Math.floor(Math.random() * 150) + 50, // e.g., 50-200
-  avgTimeBetweenSessions: `${(Math.random() * 10 + 5).toFixed(1)} dias`, // e.g., 5.0-15.0 dias
+const mockPlatformMetricsData: PlatformMetricsData = {
+  totalPatients: Math.floor(Math.random() * 150) + 50, 
+  avgTimeBetweenSessions: `${(Math.random() * 10 + 5).toFixed(1)} dias`, 
 };
 
-export default function AdminMetricsPage() {
-  const [metricsData, setMetricsData] = useState<AdminMetricsData>({
+export default function PlatformMetricsPage() {
+  const [metricsData, setMetricsData] = useState<PlatformMetricsData>({
     totalPatients: null,
     avgTimeBetweenSessions: null,
   });
@@ -38,28 +38,24 @@ export default function AdminMetricsPage() {
     const loadMetricsSummary = async () => {
       setIsLoadingSummary(true);
       try {
-        const cachedSummary = await cacheService.adminMetrics.getSummary();
+        const cachedSummary = await cacheService.adminMetrics.getSummary(); // Keep using adminMetrics cache key for now
         if (isMounted && cachedSummary) {
           setMetricsData(cachedSummary);
         }
       } catch (error) {
-        // console.warn("Error loading admin metrics summary from cache:", error);
+        // console.warn("Error loading platform metrics summary from cache:", error);
       }
 
-      // Simulate fetching fresh data
       await new Promise(resolve => setTimeout(resolve, 1000)); 
       
       if (isMounted) {
-        // For this page, the mock data is generated once and then cached.
-        // If there's no cached data yet, we use the newly generated mock data.
-        // Otherwise, we assume the cached data is "fresh enough" for this demo.
-        if (!metricsData.totalPatients) { // Only set if not loaded from cache
-            setMetricsData(mockAdminMetricsData);
+        if (!metricsData.totalPatients) { 
+            setMetricsData(mockPlatformMetricsData);
         }
         try {
-          await cacheService.adminMetrics.setSummary(metricsData.totalPatients ? metricsData : mockAdminMetricsData);
+          await cacheService.adminMetrics.setSummary(metricsData.totalPatients ? metricsData : mockPlatformMetricsData);
         } catch (error) {
-          // console.warn("Error saving admin metrics summary to cache:", error);
+          // console.warn("Error saving platform metrics summary to cache:", error);
         }
         setIsLoadingSummary(false);
       }
@@ -68,13 +64,13 @@ export default function AdminMetricsPage() {
     loadMetricsSummary();
     return () => { isMounted = false; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // metricsData removed from deps to avoid re-fetch loop with mock generation
+  }, []); 
 
   return (
     <div className="space-y-8">
       <div className="flex items-center gap-3">
         <AreaChart className="h-8 w-8 text-primary" />
-        <h1 className="text-3xl font-headline font-semibold">Métricas da Plataforma (Admin)</h1>
+        <h1 className="text-3xl font-headline font-semibold">Métricas da Plataforma</h1>
       </div>
       <p className="text-muted-foreground font-body">
         Visão geral do uso e desempenho da clínica. (Dados de exemplo)

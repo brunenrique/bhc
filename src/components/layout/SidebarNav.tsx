@@ -16,10 +16,10 @@ import {
   ClipboardList,
   FileText,
   Settings,
-  AreaChart, 
   MessageSquare,
   ListTodo, 
-  BookOpenText, // Added icon for User Guide
+  BookOpenText,
+  BarChart3, // Icon for Reports
   LucideIcon,
 } from "lucide-react";
 
@@ -39,8 +39,8 @@ const navItems: NavItem[] = [
   { href: "/assessments", label: "Avaliações", icon: ClipboardList },
   { href: "/documents", label: "Documentos", icon: FileText },
   { href: "/whatsapp-reminders", label: "Lembretes WhatsApp", icon: MessageSquare },
-  { href: "/admin/metrics", label: "Métricas Admin", icon: AreaChart, roles: ['admin'] }, 
-  { href: "/guide", label: "Guia de Uso", icon: BookOpenText }, // Added User Guide link
+  { href: "/reports", label: "Relatórios", icon: BarChart3 }, // New Reports link
+  { href: "/guide", label: "Guia de Uso", icon: BookOpenText },
   { href: "/settings", label: "Configurações", icon: Settings },
 ];
 
@@ -50,13 +50,14 @@ export function SidebarNav() {
   const checkIsActive = (itemHref: string, currentPath: string, isAnchor?: boolean) => {
     if (isAnchor) {
       const [basePath, anchor] = itemHref.split('#');
-      if (currentPath !== basePath) return false;
-      return typeof window !== 'undefined' && window.location.hash === `#${anchor}`;
+      if (currentPath !== basePath && !currentPath.startsWith(basePath + '/')) return false; // Allow active if on a subpath of the anchor's base
+      if (typeof window !== 'undefined' && window.location.hash === `#${anchor}` && currentPath === basePath) return true;
+      return false;
     }
-    return currentPath === itemHref || 
-           (currentPath.startsWith(itemHref + '/') && itemHref !== "/" );
+    // For non-anchor links, make it active if currentPath starts with itemHref
+    // (unless itemHref is just "/", then exact match)
+    return currentPath === itemHref || (itemHref !== "/" && currentPath.startsWith(itemHref + '/'));
   };
-
 
   return (
     <SidebarMenu>
@@ -71,18 +72,19 @@ export function SidebarNav() {
                 tooltip={item.label}
                 className={cn("w-full justify-start")}
                 onClick={
-                  item.anchor
+                  item.anchor && pathname === item.href.split('#')[0]
                     ? (e) => {
-                        const [basePath, anchorId] = item.href.split('#');
-                        if (pathname === basePath && anchorId) {
+                        const anchorId = item.href.split('#')[1];
+                        if (anchorId) {
                           const element = document.getElementById(anchorId);
                           if (element) {
                             e.preventDefault(); 
                             element.scrollIntoView({ behavior: "smooth" });
+                            // Optionally update URL hash without full page reload
                             if (window.history.pushState) {
-                                window.history.pushState(null, '', `#${anchorId}`);
+                                // window.history.pushState(null, '', `#${anchorId}`);
                             } else {
-                                window.location.hash = `#${anchorId}`;
+                                // window.location.hash = `#${anchorId}`;
                             }
                           }
                         }
@@ -100,4 +102,3 @@ export function SidebarNav() {
     </SidebarMenu>
   );
 }
-

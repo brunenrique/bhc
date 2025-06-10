@@ -13,6 +13,7 @@ import {
   ClipboardCheck,
   ListFilter,
   Files,
+  AreaChart, // For Platform Metrics
   LucideIcon
 } from "lucide-react";
 
@@ -22,22 +23,23 @@ interface NavItem {
   icon: LucideIcon;
 }
 
-const dashboardNavItems: NavItem[] = [
-  { href: "/dashboard", label: "Visão Geral", icon: LayoutGrid },
-  { href: "/dashboard/users", label: "Usuários", icon: Users2 },
-  { href: "/dashboard/patients-analytics", label: "Pacientes (Análise)", icon: Activity },
-  { href: "/dashboard/sessions-analytics", label: "Sessões (Análise)", icon: CalendarClock },
-  { href: "/dashboard/clinical-tracking", label: "Acomp. Clínico", icon: ClipboardCheck },
-  { href: "/dashboard/waiting-list-analytics", label: "Lista Espera (Análise)", icon: ListFilter },
-  { href: "/dashboard/documents-analytics", label: "Documentos (Análise)", icon: Files },
+const reportsNavItems: NavItem[] = [
+  { href: "/reports", label: "Visão Geral", icon: LayoutGrid },
+  { href: "/reports/platform-metrics", label: "Métricas Plataforma", icon: AreaChart },
+  { href: "/reports/users", label: "Usuários (Análise)", icon: Users2 },
+  { href: "/reports/patients-analytics", label: "Pacientes (Análise)", icon: Activity },
+  { href: "/reports/sessions-analytics", label: "Sessões (Análise)", icon: CalendarClock },
+  { href: "/reports/clinical-tracking", label: "Acomp. Clínico", icon: ClipboardCheck },
+  { href: "/reports/waiting-list-analytics", label: "Lista Espera (Análise)", icon: ListFilter },
+  { href: "/reports/documents-analytics", label: "Documentos (Análise)", icon: Files },
 ];
 
-export function DashboardSubNav() {
+export function ReportsSubNav() {
   const pathname = usePathname();
 
   return (
     <nav className="flex flex-col gap-2">
-      {dashboardNavItems.map((item) => (
+      {reportsNavItems.map((item) => (
         <Link key={item.href} href={item.href} passHref legacyBehavior>
           <Button
             variant={pathname === item.href ? "secondary" : "ghost"}

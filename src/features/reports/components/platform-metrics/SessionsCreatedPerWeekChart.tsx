@@ -19,7 +19,7 @@ export function SessionsCreatedPerWeekChart() {
 
   useEffect(() => {
     // Simulate data fetching/generation
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       const data = [
         { week: "Semana -4", sessions: Math.floor(Math.random() * 30) + 20 },
         { week: "Semana -3", sessions: Math.floor(Math.random() * 30) + 25 },
@@ -30,6 +30,7 @@ export function SessionsCreatedPerWeekChart() {
       setChartData(data);
       setIsLoading(false);
     }, 800);
+    return () => clearTimeout(timer);
   }, []);
 
   if (isLoading) {
