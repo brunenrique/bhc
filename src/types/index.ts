@@ -50,13 +50,11 @@ export interface ProntuarioEntradaUnidade {
 }
 
 
-// ProntuarioData holds static patient info for local template filling.
-// Session-specific parts are entered at generation time.
+// ProntuarioData holds static patient info for template filling.
 export interface ProntuarioData {
   identificacao?: ProntuarioIdentificacao;
   entradaUnidade?: ProntuarioEntradaUnidade; 
   localAssinatura?: string; 
-  // Signature fields removed as generation is now local text, not a signable external doc
 }
 
 export interface TherapeuticGoal {
@@ -84,11 +82,11 @@ export interface Patient {
   phone?: string;
   dateOfBirth?: string; 
   address?: string; 
-  sessionNotes?: string; 
+  sessionNotes?: string; // HTML content from RichTextEditor for "Evolução das Sessões"
   previousSessionNotes?: PatientNoteVersion[];
   prontuario?: ProntuarioData; 
   therapeuticPlan?: TherapeuticPlan; 
-  caseStudyNotes?: string; 
+  caseStudyNotes?: string; // HTML content from RichTextEditor for "Estudo de Caso"
   createdAt: string; 
   updatedAt: string; 
 }
@@ -162,10 +160,10 @@ export interface EvolutionDataPoint {
   instrumentName: string; 
 }
 
-// Data structure for LOCAL Prontuário generation
+// Data structure for Prontuário generation (to be sent to Apps Script or used locally)
 export interface ProntuarioGenerationDataDynamic {
   'Descrição da Demanda/Queixa': string;
-  'Descrição do Procedimento/Análise': string; 
+  'Descrição do Procedimento/Análise': string; // This will come from patient.sessionNotes
   'Descrição da Conclusão/Encaminhamento': string;
 }
 
@@ -201,7 +199,7 @@ export interface ProntuarioGenerationDataPaciente {
 }
 
 
-export interface ProntuarioAppsScriptPayload { // Renaming for clarity, though no longer for Apps Script
+export interface ProntuarioAppsScriptPayload { 
   paciente: ProntuarioGenerationDataPaciente;
   dinamico: ProntuarioGenerationDataDynamic;
   psicologo: ProntuarioGenerationDataPsicologo;

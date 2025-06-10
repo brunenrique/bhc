@@ -18,7 +18,7 @@ import { ptBR } from 'date-fns/locale';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter as UIDialogFooter } from "@/components/ui/dialog"; // Renamed DialogFooter to avoid conflict
 import { cacheService } from '@/services/cacheService';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
@@ -53,7 +53,6 @@ const mockProntuarioAna: ProntuarioData = {
     descricaoEntrada: 'Busca espontânea após recomendação de uma amiga. Relatou sentir-se ansiosa e com dificuldades para lidar com o estresse no trabalho.',
   },
   localAssinatura: 'Santana de Parnaíba', 
-  // signatureStatus: 'none', // Removido pois a assinatura agora é do documento gerado, não do dado em si.
 };
 
 const mockProntuarioBruno: ProntuarioData = {
@@ -78,8 +77,6 @@ const mockProntuarioBruno: ProntuarioData = {
     descricaoEntrada: 'Encaminhado pelo clínico geral devido a sintomas de estresse pós-traumático.',
   },
   localAssinatura: 'Santana de Parnaíba',
-  // signatureStatus: 'pending_govbr_signature', 
-  // signatureDetails: { hash: `sha256-bruno-${Math.random().toString(36).substring(2,15)}`}
 };
 
 
@@ -206,7 +203,7 @@ const ProntuarioDisplay: React.FC<{
   return (
     <div className="space-y-4">
        <Button onClick={onOpenGenerateDialog} variant="default" className="w-full sm:w-auto">
-        <FileTextIcon className="mr-2 h-4 w-4" /> Gerar Documento de Prontuário
+        <FileTextIcon className="mr-2 h-4 w-4" /> Gerar Documento de Prontuário (Google Docs)
       </Button>
       <Separator />
     <ScrollArea className="h-[450px] w-full rounded-md border p-4 bg-muted/20 shadow-inner space-y-6">
@@ -240,7 +237,8 @@ const ProntuarioDisplay: React.FC<{
           {entradaUnidade && ( <section><h4 className="text-lg font-semibold font-headline mb-2 border-b pb-1">Entrada na Unidade</h4><p className="text-sm whitespace-pre-wrap">{entradaUnidade.descricaoEntrada}</p></section> )}
           
           <section className="text-xs text-muted-foreground italic pt-4 border-t mt-4">
-            <p>Obs: Os campos dinâmicos como "Descrição da Demanda/Queixa", "Procedimento/Análise" e "Conclusão/Encaminhamento" são preenchidos no momento da geração do documento de prontuário.</p>
+            <p>Obs: Os campos dinâmicos como "Descrição da Demanda/Queixa", "Procedimento/Análise" e "Conclusão/Encaminhamento" são preenchidos no momento da geração do documento de prontuário via Google Docs.</p>
+            <p>As "Anotações de Evolução" do paciente serão usadas para o campo "Procedimento/Análise".</p>
           </section>
         </>
       )}
@@ -364,20 +362,28 @@ export default function PatientDetailPage() {
       psy1: 'Dr. Exemplo Silva',
       psy2: 'Dra. Modelo Souza',
     };
+    const patientNameMap: Record<string, string> = { // Add patient name map based on mock patients
+        '1': 'Ana Beatriz Silva',
+        '2': 'Bruno Almeida Costa',
+        '3': 'Carla Dias Oliveira',
+        // Add other mock patient IDs and names if they are used in scheduling
+    };
+
     let updatedSessionsList;
 
     if (editingSession && sessionData.id) {
       updatedSessionsList = sessions.map(s => (s.id === sessionData.id ? { 
           ...s, 
           ...sessionData,
+          patientName: sessionData.patientId ? patientNameMap[sessionData.patientId] || s.patientName : s.patientName,
           psychologistName: sessionData.psychologistId ? psychologistNameMap[sessionData.psychologistId] || s.psychologistName : s.psychologistName,
          } as Session : s));
     } else {
       const mainNewSession = { 
         ...sessionData, 
         id: `s-${Date.now()}`, 
-        patientId: patientId,
-        patientName: patient?.name,
+        patientId: patientId, // Should be patientId for new session context
+        patientName: patientData.patientId ? patientNameMap[patientData.patientId] || patient?.name : patient?.name, // Use patientData.patientId
         psychologistName: sessionData.psychologistId ? psychologistNameMap[sessionData.psychologistId] || 'Psicólogo Desconhecido' : 'Psicólogo Desconhecido',
       } as Session;
 
@@ -550,12 +556,15 @@ export default function PatientDetailPage() {
               <>
                 <TabsContent value="evolution">
                   <h3 className="text-lg font-semibold font-headline mb-2">Evolução das Sessões</h3>
-                  <RichTextEditor
+                   <RichTextEditor
                       initialContent={patient.sessionNotes || "<p></p>"}
-                      onUpdate={() => {}} 
-                      editable={false}
+                      onUpdate={(content) => {
+                        // This onUpdate is primarily for when the editor is directly editable.
+                        // Here, it's read-only, but if it were editable, you'd update patient state.
+                      }}
+                      editable={false} // Display only
                       editorClassName="h-auto max-h-[600px] overflow-y-auto bg-transparent p-0 rounded-none shadow-none border-none"
-                      pageClassName="min-h-[200px] shadow-none border"
+                      pageClassName="min-h-[200px] shadow-none border" // Less prominent page style for read-only
                   />
                 </TabsContent>
                 <TabsContent value="prontuario">
@@ -575,7 +584,7 @@ export default function PatientDetailPage() {
                       <CardContent>
                          <RichTextEditor
                             initialContent={patient.caseStudyNotes || "<p></p>"}
-                            onUpdate={() => {}} 
+                            onUpdate={() => {}} // Read-only, no update needed here
                             editable={false}
                             editorClassName="h-auto max-h-[400px] overflow-y-auto bg-transparent p-0 rounded-none shadow-none border-none"
                             pageClassName="min-h-[200px] shadow-none border"
@@ -713,6 +722,8 @@ export default function PatientDetailPage() {
         onOpenChange={setIsSessionFormOpen}
         session={editingSession}
         onSave={handleSaveSession}
+        // Pass patient data to SessionFormDialog if needed for new sessions
+        patientData={{ id: patient.id, name: patient.name }}
       />
 
        <Dialog open={isHistoryDialogOpen && areNotesVisible && activeTab === 'evolution'} onOpenChange={setIsHistoryDialogOpen}>
@@ -742,9 +753,9 @@ export default function PatientDetailPage() {
               </div>
             )}
           </ScrollArea>
-          <DialogFooter>
+          <UIDialogFooter>
             <Button variant="outline" onClick={() => setIsHistoryDialogOpen(false)}>Fechar</Button>
-          </DialogFooter>
+          </UIDialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -754,6 +765,7 @@ export default function PatientDetailPage() {
           onOpenChange={setIsGenerateProntuarioDialogOpen}
           patient={patient}
           currentUser={currentUser}
+          currentSessionNotesContent={patient.sessionNotes || "<p></p>"}
         />
       )}
     </div>
