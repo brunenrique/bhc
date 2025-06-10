@@ -10,7 +10,7 @@ import type { SessionStatusData } from "@/components/charts/SessionStatusChart";
 const SessionStatusChart = dynamic(() => 
   import('@/components/charts/SessionStatusChart').then(mod => mod.SessionStatusChart), 
   { 
-    ssr: false,
+    // ssr: false, // Removed ssr: false as it's not allowed in Server Components
     loading: () => <Skeleton className="h-[350px] w-full" />
   }
 );
