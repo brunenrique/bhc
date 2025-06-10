@@ -9,30 +9,20 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { X, Send, UserCircle } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useAppStore } from '@/store/appStore';
+import type { ChatMessage } from '@/types';
+import { useAuth } from "@/hooks/useAuth";
 
-interface Message {
-  id: string;
-  sender: string;
-  avatar?: string;
-  text: string;
-  timestamp: Date;
-}
 
-interface ChatWindowProps {
-  chatId: string; 
-  chatName: string;
-}
-
-export function ChatWindow({ chatId, chatName }: ChatWindowProps) {
+export function ChatWindow() {
   const { 
-    isChatWindowOpen, 
-    closeChatWindow, 
+    activeChat,
+    closeActiveChat, 
     messagesByChatId, 
     addMessage,
-    loadInitialMessages 
   } = useAppStore();
   
-  const messages = messagesByChatId[chatId] || [];
+  const { user: currentUser } = useAuth();
+  const messages = activeChat ? messagesByChatId[activeChat.id] || [] : [];
   const [newMessage, setNewMessage] = useState("");
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -41,17 +31,6 @@ export function ChatWindow({ chatId, chatName }: ChatWindowProps) {
     if (names.length === 1) return names[0][0]?.toUpperCase() || '';
     return (names[0][0] + (names[names.length - 1][0] || '')).toUpperCase();
   }
-
-  useEffect(() => {
-    if (isChatWindowOpen && chatId && !messagesByChatId[chatId]?.length) {
-      const mockInitialMessages: Message[] = [
-        { id: '1', sender: 'Dra. Aline', text: 'Olá! Alguém viu o prontuário do paciente X?', timestamp: new Date(Date.now() - 1000 * 60 * 5) },
-        { id: '2', sender: 'me', text: 'Acho que está com a secretária.', timestamp: new Date(Date.now() - 1000 * 60 * 3) },
-        { id: '3', sender: 'Secretaria', text: 'Confirmado, está aqui. Precisa de algo?', timestamp: new Date(Date.now() - 1000 * 60 * 1) },
-      ];
-      loadInitialMessages(chatId, mockInitialMessages);
-    }
-  }, [isChatWindowOpen, chatId, loadInitialMessages, messagesByChatId]);
   
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -64,33 +43,62 @@ export function ChatWindow({ chatId, chatName }: ChatWindowProps) {
 
   const handleSendMessage = useCallback((e: React.FormEvent) => {
     e.preventDefault();
-    if (newMessage.trim() === "" || !chatId) return;
-    const message: Message = {
+    if (newMessage.trim() === "" || !activeChat) return;
+    const message: ChatMessage = {
       id: Date.now().toString(),
-      sender: "me", 
+      sender: currentUser?.name || "Eu", 
+      avatar: currentUser?.avatarUrl,
       text: newMessage,
       timestamp: new Date(),
     };
-    addMessage(chatId, message);
+    addMessage(activeChat.id, message);
     setNewMessage("");
 
-    setTimeout(() => {
-       addMessage(chatId, {
-         id: (Date.now()+1).toString(),
-         sender: 'Bot PsiGuard',
-         text: 'Sua mensagem foi recebida! (Esta é uma resposta automática de demonstração)',
-         timestamp: new Date()
-       });
-    }, 1000);
-  }, [newMessage, chatId, addMessage]);
+    // Simulate a bot reply for demo purposes
+    if (activeChat.id !== 'general' && activeChat.type === 'private') {
+        setTimeout(() => {
+            const recipientName = activeChat.name.replace('Chat com ', '');
+            addMessage(activeChat.id, {
+                id: (Date.now()+1).toString(),
+                sender: recipientName, // Simulate reply from the other user
+                avatar: activeChat.avatarUrl,
+                text: `Recebi sua mensagem! (Resposta simulada de ${recipientName})`,
+                timestamp: new Date()
+            });
+        }, 1200);
+    } else if (activeChat.id === 'general') {
+         setTimeout(() => {
+            addMessage(activeChat.id, {
+                id: (Date.now()+1).toString(),
+                sender: 'Bot PsiGuard',
+                avatar: 'https://placehold.co/40x40.png?text=BG',
+                text: 'Sua mensagem no chat geral foi recebida! (Esta é uma resposta automática de demonstração)',
+                timestamp: new Date()
+            });
+        }, 1000);
+    }
+
+
+  }, [newMessage, activeChat, addMessage, currentUser]);
   
-  if (!isChatWindowOpen || !chatId) return null;
+  if (!activeChat) return null;
 
   return (
     <Card className="fixed bottom-20 right-6 w-80 h-[450px] shadow-xl z-50 flex flex-col bg-card border-border">
       <CardHeader className="flex flex-row items-center justify-between p-3 border-b">
-        <CardTitle className="text-base font-headline">{chatName}</CardTitle>
-        <Button variant="ghost" size="icon" onClick={closeChatWindow} className="h-7 w-7">
+        <div className="flex items-center gap-2">
+          {activeChat.type === 'private' && activeChat.avatarUrl && (
+            <Avatar className="h-7 w-7">
+              <AvatarImage src={activeChat.avatarUrl} alt={activeChat.name} data-ai-hint="person avatar" />
+              <AvatarFallback>{getInitials(activeChat.name.replace('Chat com ', ''))}</AvatarFallback>
+            </Avatar>
+          )}
+           {activeChat.type === 'general' && (
+            <Users className="h-5 w-5 text-primary" />
+          )}
+          <CardTitle className="text-base font-headline">{activeChat.name}</CardTitle>
+        </div>
+        <Button variant="ghost" size="icon" onClick={closeActiveChat} className="h-7 w-7">
           <X className="h-4 w-4" />
         </Button>
       </CardHeader>
@@ -98,23 +106,23 @@ export function ChatWindow({ chatId, chatName }: ChatWindowProps) {
         <ScrollArea className="h-full p-3" ref={scrollAreaRef}>
           <div className="space-y-3">
             {messages.map(msg => (
-              <div key={msg.id} className={`flex items-end gap-2 ${msg.sender === 'me' ? 'justify-end' : ''}`}>
-                {msg.sender !== 'me' && (
+              <div key={msg.id} className={`flex items-end gap-2 ${msg.sender === (currentUser?.name || "Eu") ? 'justify-end' : ''}`}>
+                {msg.sender !== (currentUser?.name || "Eu") && (
                   <Avatar className="h-7 w-7">
                     <AvatarImage src={msg.avatar} alt={msg.sender} data-ai-hint="person avatar" />
-                    <AvatarFallback>{getInitials(msg.sender) || <UserCircle />}</AvatarFallback>
+                    <AvatarFallback className="text-xs">{getInitials(msg.sender) || <UserCircle />}</AvatarFallback>
                   </Avatar>
                 )}
-                <div className={`max-w-[70%] p-2 rounded-lg text-sm ${msg.sender === 'me' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                <div className={`max-w-[70%] p-2 rounded-lg text-sm ${msg.sender === (currentUser?.name || "Eu") ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
                   <p>{msg.text}</p>
-                  <p className={`text-xs mt-1 ${msg.sender === 'me' ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
+                  <p className={`text-xs mt-1 ${msg.sender === (currentUser?.name || "Eu") ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
                     {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </p>
                 </div>
-                 {msg.sender === 'me' && (
+                 {msg.sender === (currentUser?.name || "Eu") && (
                   <Avatar className="h-7 w-7">
                     <AvatarImage src={msg.avatar} alt={msg.sender} data-ai-hint="person avatar" />
-                    <AvatarFallback>{getInitials(msg.sender) || <UserCircle />}</AvatarFallback>
+                    <AvatarFallback className="text-xs">{getInitials(msg.sender) || <UserCircle />}</AvatarFallback>
                   </Avatar>
                 )}
               </div>

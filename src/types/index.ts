@@ -16,11 +16,15 @@ export interface Patient {
   phone?: string;
   dateOfBirth?: string; // ISO Date string (YYYY-MM-DD)
   address?: string;
-  // Encrypted notes would be handled server-side or with a library
-  // For UI purposes, we might just have a string field
-  sessionNotes?: string; 
+  sessionNotes?: string;
+  previousSessionNotes?: PatientNoteVersion[];
   createdAt: string; // ISO Date string
   updatedAt: string; // ISO Date string
+}
+
+export interface PatientNoteVersion {
+  content: string;
+  timestamp: string; // ISO Date string
 }
 
 export type SessionRecurrence = "none" | "daily" | "weekly" | "monthly";
@@ -59,3 +63,18 @@ export interface DocumentResource {
   category?: string;
 }
 
+export interface ChatMessage { // Renamed from Message to avoid conflict if Message is used elsewhere
+  id: string;
+  sender: string; // 'me' or user ID/name
+  avatar?: string;
+  text: string;
+  timestamp: Date;
+}
+
+export interface Chat {
+  id: string;
+  name: string;
+  type: 'general' | 'private';
+  participants?: string[]; // For private chats, user IDs
+  avatarUrl?: string; // For direct chat with a user (e.g., the other user's avatar)
+}

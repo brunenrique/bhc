@@ -1,79 +1,86 @@
 
 import { create } from 'zustand';
-import type { User } from '@/types'; // Assuming Message type will be defined in types
+import type { User, ChatMessage, Chat } from '@/types';
 
-// Define Message type based on ChatWindow component
-interface Message {
-  id: string;
-  sender: string; // 'me' or user ID/name
-  avatar?: string;
-  text: string;
-  timestamp: Date;
-}
+// Mock users for chat selection (in a real app, this would come from a user service)
+const mockUsersForChatList: Pick<User, 'id' | 'name' | 'avatarUrl'>[] = [
+  { id: 'userDraAline', name: 'Dra. Aline S.', avatarUrl: 'https://placehold.co/40x40.png?text=AS' },
+  { id: 'userSecretaria', name: 'Secretaria Clínica', avatarUrl: 'https://placehold.co/40x40.png?text=SC' },
+  { id: 'userDrBruno', name: 'Dr. Bruno M.', avatarUrl: 'https://placehold.co/40x40.png?text=BM' },
+];
 
 interface ChatState {
-  isChatWindowOpen: boolean;
-  activeChatId: string | null; // For potential future multi-chat support
-  messagesByChatId: Record<string, Message[]>;
-  toggleChatWindow: () => void;
-  openChatWindow: (chatId: string) => void;
-  closeChatWindow: () => void;
-  addMessage: (chatId: string, message: Message) => void;
-  loadInitialMessages: (chatId: string, initialMessages: Message[]) => void;
+  isChatSelectorOpen: boolean;
+  activeChat: Chat | null;
+  messagesByChatId: Record<string, ChatMessage[]>;
+  mockUsersForChat: Pick<User, 'id' | 'name' | 'avatarUrl'>[];
+  toggleChatSelector: () => void;
+  openChat: (chat: Chat) => void;
+  closeActiveChat: () => void;
+  addMessage: (chatId: string, message: ChatMessage) => void;
+  loadInitialMessages: (chatId: string, initialMessages: ChatMessage[]) => void;
 }
 
-// For the prototype, direct state in components or Jotai atoms might be used initially.
-// The prompt mentions Zustand for chat, so this file is a placeholder for that eventual implementation.
 
 export const useAppStore = create<ChatState>((set, get) => ({
-  isChatWindowOpen: false,
-  activeChatId: null,
+  isChatSelectorOpen: false,
+  activeChat: null,
   messagesByChatId: {},
+  mockUsersForChat: mockUsersForChatList,
   
-  toggleChatWindow: () => set((state) => {
-    const newIsChatWindowOpen = !state.isChatWindowOpen;
-    if (!newIsChatWindowOpen && state.activeChatId) {
-      // If closing and there was an active chat, clear its messages
-      const newMessagesByChatId = { ...state.messagesByChatId };
-      delete newMessagesByChatId[state.activeChatId];
-      return { 
-        isChatWindowOpen: false, 
-        activeChatId: null,
-        messagesByChatId: newMessagesByChatId
-      };
+  toggleChatSelector: () => {
+    if (get().activeChat) {
+      get().closeActiveChat(); // Close active chat window if opening selector
+      set({ isChatSelectorOpen: false }); // Ensure selector is closed if a chat was open
+    } else {
+      set((state) => ({ isChatSelectorOpen: !state.isChatSelectorOpen }));
     }
-    return { 
-      isChatWindowOpen: newIsChatWindowOpen, 
-      activeChatId: newIsChatWindowOpen ? 'geral' : null 
-    };
-  }),
+  },
   
-  openChatWindow: (chatId: string) => set({ isChatWindowOpen: true, activeChatId: chatId }),
-  
-  closeChatWindow: () => set((state) => {
-    const currentActiveChatId = get().activeChatId;
-    const newMessagesByChatId = { ...state.messagesByChatId };
-    if (currentActiveChatId) {
-      delete newMessagesByChatId[currentActiveChatId];
+  openChat: (chat: Chat) => {
+    set({ activeChat: chat, isChatSelectorOpen: false });
+    const existingMessages = get().messagesByChatId[chat.id];
+    if (!existingMessages || existingMessages.length === 0) {
+      let initialMockMessages: ChatMessage[] = [];
+      if (chat.type === 'general') {
+        initialMockMessages = [
+          { id: 'gm1', sender: 'Sistema', text: `Bem-vindo ao ${chat.name}!`, timestamp: new Date(Date.now() - 1000 * 60 * 10) },
+          { id: 'gm2', sender: 'Dra. Aline S.', text: 'Alguém tem atualizações sobre o caso Y?', timestamp: new Date(Date.now() - 1000 * 60 * 5), avatarUrl: 'https://placehold.co/40x40.png?text=AS' },
+        ];
+      } else {
+         initialMockMessages = [
+          { id: `pm1-${chat.id}`, sender: 'Sistema', text: `Iniciando chat com ${chat.name}.`, timestamp: new Date(Date.now() - 1000 * 60 * 2) },
+        ];
+      }
+      get().loadInitialMessages(chat.id, initialMockMessages);
     }
-    return { 
-      isChatWindowOpen: false, 
-      activeChatId: null,
-      messagesByChatId: newMessagesByChatId
-    };
-  }),
+  },
   
-  addMessage: (chatId: string, message: Message) => {
-    const currentMessages = get().messagesByChatId[chatId] || [];
+  closeActiveChat: () => {
+    const currentActiveChat = get().activeChat;
+    if (currentActiveChat) {
+      set((state) => {
+        const newMessagesByChatId = { ...state.messagesByChatId };
+        delete newMessagesByChatId[currentActiveChat.id]; // Make chat ephemeral
+        return {
+          activeChat: null,
+          isChatSelectorOpen: false, // Also close selector if chat is closed directly
+          messagesByChatId: newMessagesByChatId
+        };
+      });
+    }
+  },
+  
+  addMessage: (chatId: string, message: ChatMessage) => {
     set((state) => ({
       messagesByChatId: {
         ...state.messagesByChatId,
-        [chatId]: [...currentMessages, message],
+        [chatId]: [...(state.messagesByChatId[chatId] || []), message],
       },
     }));
   },
 
-  loadInitialMessages: (chatId: string, initialMessages: Message[]) => {
+  loadInitialMessages: (chatId: string, initialMessages: ChatMessage[]) => {
      set((state) => ({
       messagesByChatId: {
         ...state.messagesByChatId,
@@ -82,16 +89,3 @@ export const useAppStore = create<ChatState>((set, get) => ({
     }));
   }
 }));
-
-// Auth state (example, might be in a separate store or context in a larger app)
-// This part can be removed if auth is handled purely by useAuth hook with localStorage
-interface AuthState {
-  currentUser: User | null;
-  setCurrentUser: (user: User | null) => void;
-}
-
-// export const useAuthStore = create<AuthState>((set) => ({
-//   currentUser: null,
-//   setCurrentUser: (user) => set({ currentUser: user }),
-// }));
-
