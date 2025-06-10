@@ -106,7 +106,6 @@ export default function SchedulingPage() {
     };
   }, []);
 
-  // Sync pending sessions effect (unchanged)
   useEffect(() => {
     const syncPendingSessions = async () => {
       if (isOnline) {
@@ -144,10 +143,11 @@ export default function SchedulingPage() {
         }
       }
     };
-    syncPendingSessions();
+    if (isOnline) { // Check isOnline before running the effect
+        syncPendingSessions();
+    }
   }, [isOnline, toast]);
 
-  // Session form handlers (unchanged)
   const handleNewSession = useCallback(() => {
     setSelectedSession(null);
     setIsSessionFormOpen(true);
@@ -168,8 +168,20 @@ export default function SchedulingPage() {
 
     let sessionToSave: Session;
     let updatedSessionsList: Session[];
-    const patientNameMap: Record<string, string> = { /* ... */ }; // Assuming this exists or is populated
-    const psychologistNameMap: Record<string, string> = { /* ... */ };
+    
+    // Mock data for patient and psychologist names based on IDs
+    // In a real app, this might come from a global store or fetched data
+    const patientNameMap: Record<string, string> = {
+      '1': 'Ana Beatriz Silva', // Assuming '1' is an ID for Ana
+      '2': 'Bruno Almeida Costa', // Assuming '2' is an ID for Bruno
+      '3': 'Carla Dias Oliveira',
+      'p1': 'Ana Silva', // from SessionFormDialog mock
+      'p2': 'Bruno Costa', // from SessionFormDialog mock
+    };
+    const psychologistNameMap: Record<string, string> = {
+      'psy1': 'Dr. Exemplo Silva',
+      'psy2': 'Dra. Modelo Souza',
+    };
 
     if (selectedSession && sessionData.id) { 
       sessionToSave = { 
@@ -183,13 +195,12 @@ export default function SchedulingPage() {
       const mainNewSession = { 
         ...sessionData, 
         id: `sess-${Date.now()}`, 
-        patientName: sessionData.patientId ? patientNameMap[sessionData.patientId] : 'Novo Paciente',
-        psychologistName: sessionData.psychologistId ? psychologistNameMap[sessionData.psychologistId] : 'Psicólogo Desconhecido',
+        patientName: sessionData.patientId ? patientNameMap[sessionData.patientId] : 'Novo Paciente', // Fallback name
+        psychologistName: sessionData.psychologistId ? psychologistNameMap[sessionData.psychologistId] : 'Psicólogo Desconhecido', // Fallback name
       } as Session;
       
       const sessionsToAdd = [mainNewSession];
       if (mainNewSession.recurring && mainNewSession.recurring !== 'none' && mainNewSession.startTime) {
-        // Recurrence logic (unchanged)
         const baseStartTime = parseISO(mainNewSession.startTime);
         const baseEndTime = mainNewSession.endTime ? parseISO(mainNewSession.endTime) : new Date(baseStartTime.getTime() + 60 * 60 * 1000);
         const duration = baseEndTime.getTime() - baseStartTime.getTime();
@@ -245,7 +256,6 @@ export default function SchedulingPage() {
     setSelectedSession(null); 
   }, [selectedSession, sessions, toast]);
 
-  // Waiting List Handlers
   const handleOpenNewWaitingListEntryDialog = useCallback(() => {
     setEditingWaitingListEntry(null);
     setIsWaitingListEntryDialogOpen(true);
@@ -296,20 +306,18 @@ export default function SchedulingPage() {
   }, [waitingList, toast]);
   
   const handleScheduleFromWaitingList = useCallback((entry: WaitingListEntry) => {
-    // Pre-fill SessionFormDialog with data from waiting list entry
     setSelectedSession({
-        id: '', // New session will get a new ID
+        id: '', 
         patientName: entry.patientName,
-        patientId: entry.patientId || '', // If you store patientId
+        patientId: entry.patientId || '', 
         psychologistId: entry.preferredPsychologistId || '',
         psychologistName: entry.preferredPsychologistName || '',
-        startTime: new Date().toISOString(), // Default to now, user can adjust
+        startTime: new Date().toISOString(), 
         endTime: new Date(new Date().getTime() + 60*60*1000).toISOString(),
         status: 'scheduled',
         notes: `Agendado a partir da lista de espera. Motivo: ${entry.reason || 'N/A'}`,
     });
     setIsSessionFormOpen(true);
-    // Optionally, update status of waiting list entry to 'scheduled'
     handleChangeWaitingListStatus(entry.id, 'scheduled');
   }, [handleChangeWaitingListStatus]);
   
@@ -344,7 +352,7 @@ export default function SchedulingPage() {
           onSelectSession={handleEditSession}
           currentCalendarDate={currentCalendarDate}
         />
-        <div id="waiting-list" className="pt-8"> {/* Anchor for sidebar link */}
+        <div id="waiting-list" className="pt-8">
             <Card className="shadow-lg">
                 <CardHeader className="flex flex-row items-center justify-between pb-3">
                     <div className="flex items-center gap-2">
@@ -384,3 +392,4 @@ export default function SchedulingPage() {
     </div>
   );
 }
+

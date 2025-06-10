@@ -48,10 +48,14 @@ export function SidebarNav() {
   const checkIsActive = (itemHref: string, currentPath: string, isAnchor?: boolean) => {
     if (isAnchor) {
       const [basePath, anchor] = itemHref.split('#');
-      return currentPath === basePath && typeof window !== 'undefined' && window.location.hash === `#${anchor}`;
+      if (currentPath !== basePath) return false;
+      // For client-side check after navigation or on initial load if hash is present
+      return typeof window !== 'undefined' && window.location.hash === `#${anchor}`;
     }
+    // Active if it's an exact match or if currentPath starts with itemHref (for nested routes),
+    // but not for very generic paths like "/" or "/dashboard" if a more specific match exists.
     return currentPath === itemHref || 
-           (currentPath.startsWith(itemHref) && itemHref !== "/" && itemHref !== "/dashboard" && !navItems.some(other => other.href !== itemHref && !other.anchor && currentPath.startsWith(other.href) && other.href.length > itemHref.length));
+           (currentPath.startsWith(itemHref + '/') && itemHref !== "/" );
   };
 
 
@@ -61,28 +65,36 @@ export function SidebarNav() {
         const isActive = checkIsActive(item.href, pathname, item.anchor);
         
         return (
-          <SidebarMenuItem key={item.label}> {/* Using label as key for simplicity assuming labels are unique */}
-            <Link href={item.href} passHref legacyBehavior={item.anchor}>
+          <SidebarMenuItem key={item.href}> {/* Use href as key if labels might not be unique */}
+            <Link href={item.href} passHref asChild>
               <SidebarMenuButton
-                asChild={item.anchor}
                 isActive={isActive}
                 tooltip={item.label}
-                className={cn(
-                  "w-full justify-start",
-                )}
-                onClick={item.anchor ? (e) => {
-                  e.preventDefault();
-                  const [path, anchorId] = item.href.split('#');
-                  if (pathname !== path) {
-                    // Navigate to base path first if not already there
-                    // Then scroll in a useEffect on the target page or handle differently
-                    // For now, simple navigation and rely on browser for anchor scroll if on same page
-                    window.location.href = item.href; 
-                  } else {
-                    const element = document.getElementById(anchorId);
-                    element?.scrollIntoView({ behavior: "smooth" });
-                  }
-                } : undefined}
+                className={cn("w-full justify-start")}
+                onClick={
+                  item.anchor
+                    ? (e) => {
+                        const [basePath, anchorId] = item.href.split('#');
+                        if (pathname === basePath && anchorId) {
+                          // If on the same page, prevent Link's default behavior if it reloads,
+                          // and manually scroll.
+                          const element = document.getElementById(anchorId);
+                          if (element) {
+                            e.preventDefault(); // Prevent default only if we successfully scroll
+                            element.scrollIntoView({ behavior: "smooth" });
+                             // Update URL hash manually after scrolling for better UX
+                            if (window.history.pushState) {
+                                window.history.pushState(null, '', `#${anchorId}`);
+                            } else {
+                                window.location.hash = `#${anchorId}`;
+                            }
+                          }
+                        }
+                        // If on a different page, Link component (asChild) will handle navigation,
+                        // and the browser will jump to the anchor.
+                      }
+                    : undefined
+                }
               >
                 <item.icon className="mr-2 h-5 w-5 flex-shrink-0" />
                 <span className="truncate font-body">{item.label}</span>
@@ -94,3 +106,4 @@ export function SidebarNav() {
     </SidebarMenu>
   );
 }
+
