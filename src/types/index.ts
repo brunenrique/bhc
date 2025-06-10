@@ -14,6 +14,17 @@ export interface PatientNoteVersion {
   timestamp: string; // ISO Date string
 }
 
+export type DocumentSignatureStatus = 'none' | 'pending_govbr_signature' | 'signed' | 'verification_failed';
+
+export interface DocumentSignatureDetails {
+  hash?: string; // SHA-256 hash of the original document
+  signerInfo?: string; // e.g., CPF do assinante (mock)
+  signedAt?: string; // ISO Date string of when it was marked as signed
+  verificationCode?: string; // Mock verification code
+  signedDocumentLink?: string; // Link to the (mock) uploaded signed document
+  p7sFile?: string; // Name of the .p7s file (mock)
+}
+
 export interface ProntuarioIdentificacao {
   nomeCompleto?: string;
   sexo?: string;
@@ -68,7 +79,8 @@ export interface ProntuarioData {
   conclusaoEncaminhamento?: ProntuarioConclusaoEncaminhamento;
   localAssinatura?: string;
   dataDocumento?: string; // ISO Date string for when the prontuario was "finalized"
-  // The signature part is mostly static text in the template, psi name/crp can be from responsavelTecnica
+  signatureStatus?: DocumentSignatureStatus;
+  signatureDetails?: DocumentSignatureDetails;
 }
 
 
@@ -112,17 +124,6 @@ export interface Assessment {
   status: "pending" | "sent" | "completed";
   results?: Record<string, any>; // Structure of results can vary
   createdAt: string; // ISO Date string
-}
-
-export type DocumentSignatureStatus = 'none' | 'pending_govbr_signature' | 'signed' | 'verification_failed';
-
-export interface DocumentSignatureDetails {
-  hash?: string; // SHA-256 hash of the original document
-  signerInfo?: string; // e.g., CPF do assinante (mock)
-  signedAt?: string; // ISO Date string of when it was marked as signed
-  verificationCode?: string; // Mock verification code
-  signedDocumentLink?: string; // Link to the (mock) uploaded signed document
-  p7sFile?: string; // Name of the .p7s file (mock)
 }
 
 export interface DocumentResource {

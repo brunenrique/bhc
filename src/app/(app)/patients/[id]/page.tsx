@@ -2,15 +2,16 @@
 "use client";
 
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState, useCallback } from 'react';
-import type { Patient, Session, PatientNoteVersion, ProntuarioData } from '@/types';
+import React, { useEffect, useState, useCallback, useRef, ChangeEvent } from 'react';
+import type { Patient, Session, PatientNoteVersion, ProntuarioData, DocumentSignatureStatus, DocumentSignatureDetails } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Edit, Mail, Phone, CalendarDays, FileText, PlusCircle, Repeat, Eye, EyeOff, Lock, History, Info, BookMarked } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { ArrowLeft, Edit, Mail, Phone, CalendarDays, FileText, PlusCircle, Repeat, Eye, EyeOff, Lock, History, Info, BookMarked, Fingerprint, ShieldCheck, ShieldX, ShieldAlert, SendToBack, UploadCloud } from 'lucide-react';
 import { PatientFormDialog } from '@/features/patients/components/PatientFormDialog';
 import { SessionFormDialog } from '@/features/scheduling/components/SessionFormDialog';
 import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { format, parseISO, addDays, addWeeks, addMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -20,6 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { cacheService } from '@/services/cacheService';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
 
 const mockProntuario: ProntuarioData = {
   identificacao: {
@@ -62,6 +64,7 @@ const mockProntuario: ProntuarioData = {
   },
   localAssinatura: 'Santana de Parnaíba',
   dataDocumento: new Date().toISOString(),
+  signatureStatus: 'none',
 };
 
 
@@ -79,7 +82,7 @@ const fetchPatientDetailsMock = async (id: string): Promise<Patient | null> => {
       { content: "Sessão de 15/07: Foco em reestruturação cognitiva de pensamentos automáticos negativos. Paciente identificou três padrões principais. Recomendações: Continuar o diário de pensamentos, praticar técnicas de respiração diafragmática duas vezes ao dia.", timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString() },
       { content: "Paciente apresenta quadro de ansiedade generalizada, com picos de estresse relacionados ao trabalho. Demonstra boa adesão às técnicas propostas em sessões anteriores.", timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString() }
     ],
-    prontuario: id === '1' ? mockProntuario : undefined, // Add mock prontuario for patient 1
+    prontuario: id === '1' ? { ...mockProntuario, signatureStatus: 'none' } : id === '2' ? { ...mockProntuario, nomeCompleto: 'Bruno Almeida Costa', signatureStatus: 'pending_govbr_signature', signatureDetails: { hash: `sha256-${Math.random().toString(36).substring(2,15)}`} } : undefined,
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(), 
     updatedAt: new Date().toISOString(),
   };
@@ -103,7 +106,26 @@ const recurrenceLabels: Record<string, string> = {
 };
 
 // Prontuário Display Component
-const ProntuarioDisplay: React.FC<{ prontuarioData: ProntuarioData | undefined }> = ({ prontuarioData }) => {
+const ProntuarioDisplay: React.FC<{ 
+  prontuarioData: ProntuarioData | undefined;
+  onInitiateSignature: () => void;
+  onUploadSignedFile: (file: File) => void;
+  onViewSignatureDetails: () => void;
+}> = ({ prontuarioData, onInitiateSignature, onUploadSignedFile, onViewSignatureDetails }) => {
+  const prontuarioFileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUploadTrigger = () => {
+    prontuarioFileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      onUploadSignedFile(file);
+      event.target.value = ""; 
+    }
+  };
+
   if (!prontuarioData) {
     return <p className="text-muted-foreground p-4 text-center">Nenhum dado de prontuário disponível para este paciente.</p>;
   }
@@ -111,11 +133,11 @@ const ProntuarioDisplay: React.FC<{ prontuarioData: ProntuarioData | undefined }
   const { 
     identificacao, entradaUnidade, finalidade, responsavelTecnica, 
     descricaoDemanda, procedimentosAnalise, conclusaoEncaminhamento,
-    localAssinatura, dataDocumento 
+    localAssinatura, dataDocumento, signatureStatus, signatureDetails
   } = prontuarioData;
 
   return (
-    <ScrollArea className="h-[400px] w-full rounded-md border p-4 bg-muted/20 shadow-inner space-y-6">
+    <ScrollArea className="h-[450px] w-full rounded-md border p-4 bg-muted/20 shadow-inner space-y-6">
       {identificacao && (
         <section>
           <h4 className="text-lg font-semibold font-headline mb-2 border-b pb-1">Identificação</h4>
@@ -124,7 +146,8 @@ const ProntuarioDisplay: React.FC<{ prontuarioData: ProntuarioData | undefined }
             <p><strong>Sexo:</strong> {identificacao.sexo}</p>
             <p><strong>CPF:</strong> {identificacao.cpf}</p>
             <p><strong>Data de Nasc.:</strong> {identificacao.dataNascimento ? format(parseISO(identificacao.dataNascimento), "dd/MM/yyyy", { locale: ptBR }) : 'N/A'}</p>
-            <p><strong>Estado Civil:</strong> {identificacao.estadoCivil}</p>
+            {/* ... other identification fields ... */}
+             <p><strong>Estado Civil:</strong> {identificacao.estadoCivil}</p>
             <p><strong>Raça/Cor:</strong> {identificacao.racaCor}</p>
             <p><strong>Possui filhos:</strong> {identificacao.possuiFilhos ? `Sim, ${identificacao.quantosFilhos || 0}` : 'Não'}</p>
             <p><strong>Situação profissional:</strong> {identificacao.situacaoProfissional}</p>
@@ -138,35 +161,10 @@ const ProntuarioDisplay: React.FC<{ prontuarioData: ProntuarioData | undefined }
         </section>
       )}
 
-      {entradaUnidade && (
-        <section>
-          <h4 className="text-lg font-semibold font-headline mb-2 border-b pb-1">1.1. Entrada na Unidade</h4>
-          <p className="text-sm whitespace-pre-wrap">{entradaUnidade.descricaoEntrada}</p>
-        </section>
-      )}
-
-      {finalidade && (
-        <section>
-          <h4 className="text-lg font-semibold font-headline mb-2 border-b pb-1">1.2. Finalidade</h4>
-          <p className="text-sm whitespace-pre-wrap">{finalidade.descricaoFinalidade}</p>
-        </section>
-      )}
-      
-      {responsavelTecnica && (
-        <section>
-          <h4 className="text-lg font-semibold font-headline mb-2 border-b pb-1">1.3. Responsável Técnica</h4>
-          <p className="text-sm"><strong>Nome:</strong> {responsavelTecnica.nomePsi}</p>
-          <p className="text-sm"><strong>CRP:</strong> {responsavelTecnica.crp}</p>
-        </section>
-      )}
-
-      {descricaoDemanda && (
-        <section>
-          <h4 className="text-lg font-semibold font-headline mb-2 border-b pb-1">Descrição da demanda/queixa</h4>
-          <p className="text-sm whitespace-pre-wrap">{descricaoDemanda.demandaQueixa}</p>
-        </section>
-      )}
-
+      {entradaUnidade && ( <section><h4 className="text-lg font-semibold font-headline mb-2 border-b pb-1">1.1. Entrada na Unidade</h4><p className="text-sm whitespace-pre-wrap">{entradaUnidade.descricaoEntrada}</p></section> )}
+      {finalidade && ( <section><h4 className="text-lg font-semibold font-headline mb-2 border-b pb-1">1.2. Finalidade</h4><p className="text-sm whitespace-pre-wrap">{finalidade.descricaoFinalidade}</p></section> )}
+      {responsavelTecnica && ( <section><h4 className="text-lg font-semibold font-headline mb-2 border-b pb-1">1.3. Responsável Técnica</h4><p className="text-sm"><strong>Nome:</strong> {responsavelTecnica.nomePsi}</p><p className="text-sm"><strong>CRP:</strong> {responsavelTecnica.crp}</p></section> )}
+      {descricaoDemanda && ( <section><h4 className="text-lg font-semibold font-headline mb-2 border-b pb-1">Descrição da demanda/queixa</h4><p className="text-sm whitespace-pre-wrap">{descricaoDemanda.demandaQueixa}</p></section> )}
       {procedimentosAnalise && procedimentosAnalise.length > 0 && (
         <section>
           <h4 className="text-lg font-semibold font-headline mb-2 border-b pb-1">Procedimento/Análise</h4>
@@ -180,13 +178,7 @@ const ProntuarioDisplay: React.FC<{ prontuarioData: ProntuarioData | undefined }
           </ul>
         </section>
       )}
-
-      {conclusaoEncaminhamento && (
-        <section>
-          <h4 className="text-lg font-semibold font-headline mb-2 border-b pb-1">Conclusão/Encaminhamento</h4>
-          <p className="text-sm whitespace-pre-wrap">{conclusaoEncaminhamento.condutaAdotada}</p>
-        </section>
-      )}
+      {conclusaoEncaminhamento && ( <section><h4 className="text-lg font-semibold font-headline mb-2 border-b pb-1">Conclusão/Encaminhamento</h4><p className="text-sm whitespace-pre-wrap">{conclusaoEncaminhamento.condutaAdotada}</p></section> )}
       
       <section className="text-xs text-muted-foreground italic pt-4 border-t mt-4">
         <p>Obs: Este documento não poderá ser utilizado para fins diferentes do apontado na finalidade acima, possui caráter sigiloso e trata-se de documento extrajudicial e não responsabilizo-me pelo uso dado ao relatório por parte da pessoa, grupo ou instituição, após a sua entrega em entrevista devolutiva.</p>
@@ -201,15 +193,103 @@ const ProntuarioDisplay: React.FC<{ prontuarioData: ProntuarioData | undefined }
           </div>
         </section>
       )}
+      
+      {/* Signature Section */}
+      <input 
+        type="file" 
+        accept=".p7s,.pdf"
+        ref={prontuarioFileInputRef} 
+        onChange={handleFileChange}
+        className="hidden"
+      />
+      <Separator className="my-4" />
+      <section className="space-y-3">
+        <h4 className="text-md font-semibold font-headline">Assinatura Digital do Prontuário (Simulado GOV.BR)</h4>
+        {(!signatureStatus || signatureStatus === 'none') && (
+          <Button onClick={onInitiateSignature} variant="outline">
+            <Fingerprint className="mr-2 h-4 w-4 text-blue-500" /> Iniciar Assinatura Digital
+          </Button>
+        )}
+        {signatureStatus === 'pending_govbr_signature' && (
+          <div className="p-3 border rounded-md bg-amber-50 border-amber-200 space-y-2">
+            <div className="flex items-center text-amber-700">
+              <SendToBack className="mr-2 h-5 w-5" />
+              <p className="font-medium">Assinatura Pendente</p>
+            </div>
+            <p className="text-xs text-amber-600">
+              O processo de assinatura foi iniciado. Acesse o portal GOV.BR para assinar.
+              Após assinar, faça o upload do arquivo .p7s ou PDF assinado abaixo.
+            </p>
+            <p className="text-xs text-amber-600 font-mono truncate">Hash (simulado): {signatureDetails?.hash || 'N/A'}</p>
+            <Button onClick={handleFileUploadTrigger} variant="secondary" size="sm">
+              <UploadCloud className="mr-2 h-4 w-4" /> Upload Prontuário Assinado
+            </Button>
+          </div>
+        )}
+        {signatureStatus === 'signed' && (
+          <div className="p-3 border rounded-md bg-green-50 border-green-200 space-y-2">
+             <div className="flex items-center text-green-700">
+              <ShieldCheck className="mr-2 h-5 w-5" />
+              <p className="font-medium">Prontuário Assinado Digitalmente</p>
+            </div>
+            <Button onClick={onViewSignatureDetails} variant="link" size="sm" className="p-0 h-auto text-green-700">
+              <Eye className="mr-1 h-4 w-4" /> Ver Detalhes da Assinatura
+            </Button>
+          </div>
+        )}
+         {signatureStatus === 'verification_failed' && (
+          <div className="p-3 border rounded-md bg-red-50 border-red-200 text-red-700">
+            <div className="flex items-center">
+              <ShieldX className="mr-2 h-5 w-5" />
+              <p className="font-medium">Falha na Verificação da Assinatura</p>
+            </div>
+            <p className="text-xs mt-1">O arquivo de assinatura fornecido não pôde ser validado (simulado).</p>
+          </div>
+        )}
+      </section>
     </ScrollArea>
   );
 };
+
+// Dialog for Prontuário Signature Details
+interface ProntuarioSignatureDetailsDialogProps {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  details: DocumentSignatureDetails | undefined;
+  patientName: string;
+}
+
+function ProntuarioSignatureDetailsDialog({ isOpen, onOpenChange, details, patientName }: ProntuarioSignatureDetailsDialogProps) {
+  if (!details) return null;
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="font-headline flex items-center"><Fingerprint className="mr-2 h-5 w-5 text-primary"/>Detalhes da Assinatura do Prontuário</DialogTitle>
+          <DialogDescription>Para o paciente: {patientName}</DialogDescription>
+        </DialogHeader>
+        <div className="py-4 space-y-2 text-sm">
+          <p><strong>Hash (Simulado):</strong> <span className="font-mono text-xs break-all">{details.hash || 'N/A'}</span></p>
+          <p><strong>Informações do Assinante (Simulado):</strong> {details.signerInfo || 'N/A'}</p>
+          <p><strong>Data da Assinatura (Simulada):</strong> {details.signedAt ? format(parseISO(details.signedAt), "dd/MM/yyyy HH:mm:ss", { locale: ptBR }) : 'N/A'}</p>
+          <p><strong>Código de Verificação (Simulado):</strong> {details.verificationCode || 'N/A'}</p>
+          {details.p7sFile && <p><strong>Arquivo de Assinatura (.p7s):</strong> {details.p7sFile}</p>}
+          {/* No link para documento assinado em prontuário, pois ele é parte do objeto Patient */}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Fechar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 
 export default function PatientDetailPage() {
   const router = useRouter();
   const params = useParams();
   const patientId = params.id as string;
+  const { toast } = useToast();
 
   const [patient, setPatient] = useState<Patient | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -220,6 +300,7 @@ export default function PatientDetailPage() {
   const [areNotesVisible, setAreNotesVisible] = useState(false);
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'notes' | 'prontuario'>('notes');
+  const [isProntuarioSigDetailsOpen, setIsProntuarioSigDetailsOpen] = useState(false);
 
 
   useEffect(() => {
@@ -263,6 +344,53 @@ export default function PatientDetailPage() {
     }
     return () => { isMounted = false; };
   }, [patientId]);
+
+  const updatePatientStateAndCache = useCallback(async (updatedPatient: Patient) => {
+    setPatient(updatedPatient);
+    await cacheService.patients.setDetail(updatedPatient.id, updatedPatient);
+  }, []);
+
+  const handleInitiateProntuarioSignature = useCallback(async () => {
+    if (!patient || !patient.prontuario) return;
+    const mockHash = `sha256-prontuario-${Math.random().toString(36).substring(2, 15)}`;
+    const updatedProntuario: ProntuarioData = {
+      ...patient.prontuario,
+      signatureStatus: 'pending_govbr_signature',
+      signatureDetails: { ...patient.prontuario.signatureDetails, hash: mockHash }
+    };
+    await updatePatientStateAndCache({ ...patient, prontuario: updatedProntuario, updatedAt: new Date().toISOString() });
+    toast({
+      title: "Assinatura do Prontuário Iniciada (Simulado)",
+      description: `Prontuário preparado. Por favor, 'vá ao portal GOV.BR' para assinar e depois faça o upload do arquivo .p7s ou PDF assinado. Hash (simulado): ${mockHash}`,
+      duration: 9000,
+    });
+  }, [patient, updatePatientStateAndCache, toast]);
+
+  const handleUploadSignedProntuario = useCallback(async (signedFile: File) => {
+    if (!patient || !patient.prontuario) return;
+
+    const isValidExtension = signedFile.name.endsWith('.p7s') || signedFile.name.endsWith('.pdf');
+    let newStatus: DocumentSignatureStatus = 'signed';
+    let newDetails: DocumentSignatureDetails = { ...patient.prontuario.signatureDetails };
+
+    if (!isValidExtension) {
+      newStatus = 'verification_failed';
+      toast({ title: "Falha na Verificação", description: "Arquivo de assinatura inválido para o prontuário. Use .p7s ou .pdf.", variant: "destructive" });
+    } else {
+      newDetails = {
+        ...patient.prontuario.signatureDetails,
+        signerInfo: `CPF Mock Prontuário ${Math.floor(100 + Math.random() * 900)} (Simulado)`,
+        signedAt: new Date().toISOString(),
+        verificationCode: `GOVBR-PRONT-${Date.now().toString().slice(-6)}`,
+        p7sFile: signedFile.name.endsWith('.p7s') ? signedFile.name : undefined,
+      };
+      toast({ title: "Prontuário Assinado (Simulado)", description: `Prontuário de ${patient.name} foi marcado como assinado.`, className: "bg-primary text-primary-foreground" });
+    }
+    
+    const updatedProntuario: ProntuarioData = { ...patient.prontuario, signatureStatus: newStatus, signatureDetails: newDetails };
+    await updatePatientStateAndCache({ ...patient, prontuario: updatedProntuario, updatedAt: new Date().toISOString() });
+  }, [patient, updatePatientStateAndCache, toast]);
+
 
   const handleEditSession = useCallback((session: Session) => {
     setEditingSession(session);
@@ -445,7 +573,6 @@ export default function PatientDetailPage() {
           </div>
           <Separator />
           
-          {/* Clinical Records Section */}
           <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'notes' | 'prontuario')}>
             <div className="flex justify-between items-center mb-3">
               <TabsList>
@@ -464,7 +591,7 @@ export default function PatientDetailPage() {
                 )}
                 <Button variant="outline" size="sm" onClick={() => setAreNotesVisible(!areNotesVisible)}>
                     {areNotesVisible ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
-                    {areNotesVisible ? "Ocultar Detalhes" : "Visualizar Detalhes"}
+                    {areNotesVisible ? "Ocultar Detalhes Clínicos" : "Visualizar Detalhes Clínicos"}
                 </Button>
               </div>
             </div>
@@ -474,7 +601,7 @@ export default function PatientDetailPage() {
                 <Lock className="h-5 w-5 text-primary/80" />
                 <AlertTitle className="font-headline text-primary/90">Conteúdo Confidencial</AlertTitle>
                 <AlertDescription className="text-muted-foreground">
-                    Os detalhes clínicos são confidenciais. Clique em "Visualizar Detalhes" para exibir o conteúdo.
+                    Os detalhes clínicos são confidenciais. Clique em "Visualizar Detalhes Clínicos" para exibir o conteúdo.
                     Lembre-se de ocultá-los ao se afastar. (Simulação de segurança)
                 </AlertDescription>
               </Alert>
@@ -488,7 +615,12 @@ export default function PatientDetailPage() {
                 </TabsContent>
                 <TabsContent value="prontuario">
                    <h3 className="text-lg font-semibold font-headline mb-2">Prontuário Psicológico</h3>
-                   <ProntuarioDisplay prontuarioData={patient.prontuario} />
+                   <ProntuarioDisplay 
+                      prontuarioData={patient.prontuario} 
+                      onInitiateSignature={handleInitiateProntuarioSignature}
+                      onUploadSignedFile={handleUploadSignedProntuario}
+                      onViewSignatureDetails={() => setIsProntuarioSigDetailsOpen(true)}
+                    />
                 </TabsContent>
               </>
             )}
@@ -584,7 +716,14 @@ export default function PatientDetailPage() {
         </DialogContent>
       </Dialog>
 
+      {patient?.prontuario && (
+        <ProntuarioSignatureDetailsDialog
+            isOpen={isProntuarioSigDetailsOpen && areNotesVisible && activeTab === 'prontuario'}
+            onOpenChange={setIsProntuarioSigDetailsOpen}
+            details={patient.prontuario.signatureDetails}
+            patientName={patient.name}
+        />
+      )}
     </div>
   );
 }
-
