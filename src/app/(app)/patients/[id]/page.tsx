@@ -2,18 +2,18 @@
 "use client";
 
 import { useParams, useRouter } from 'next/navigation';
-import React, { useEffect, useState, useCallback, useRef, ChangeEvent } from 'react';
+import React, { useEffect, useState, useCallback, useRef, ChangeEvent, useMemo } from 'react';
 import type { Patient, Session, PatientNoteVersion, ProntuarioData, DocumentSignatureStatus, DocumentSignatureDetails, Assessment } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Edit, Mail, Phone, CalendarDays, FileText, PlusCircle, Repeat, Eye, EyeOff, Lock, History, Info, BookMarked, Fingerprint, ShieldCheck, ShieldX, ShieldAlert, SendToBack, UploadCloud, ListChecks, BarChart3, FileSignature } from 'lucide-react';
+import { ArrowLeft, Edit, Mail, Phone, CalendarDays, FileText, PlusCircle, Repeat, Eye, EyeOff, Lock, History, Info, BookMarked, Fingerprint, ShieldCheck, ShieldX, ShieldAlert, SendToBack, UploadCloud, ListChecks, BarChart3, FileSignature, CalendarCheck2, CalendarX2, UserCheck, UserX, AlertTriangle } from 'lucide-react';
 import { PatientFormDialog } from '@/features/patients/components/PatientFormDialog';
 import { SessionFormDialog } from '@/features/scheduling/components/SessionFormDialog';
 import { Separator } from '@/components/ui/separator';
 import Image from 'next/image';
-import { format, parseISO, addDays, addWeeks, addMonths } from 'date-fns';
+import { format, parseISO, addDays, addWeeks, addMonths, isFuture } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -26,7 +26,7 @@ import { PatientTherapeuticPlan } from '@/features/patients/components/PatientTh
 import { PatientAssessmentsSection } from '@/features/patients/components/PatientAssessmentsSection';
 import { PatientEvolutionChart } from '@/features/patients/components/PatientEvolutionChart';
 // Mock assessments data - in a real app, this would be fetched or filtered from a global store/cache
-import { mockAssessmentsData as allMockAssessments } from '@/app/(app)/assessments/page'; // Use existing mock data
+import { mockAssessmentsData as allMockAssessments } from '@/app/(app)/assessments/page'; 
 
 const mockProntuario: ProntuarioData = {
   identificacao: {
@@ -126,9 +126,14 @@ const fetchPatientDetailsMock = async (id: string): Promise<Patient | null> => {
 
 const fetchPatientSessionsMock = async (patientId: string): Promise<Session[]> => {
   await new Promise(resolve => setTimeout(resolve, 200)); 
+  let baseDate = new Date();
   return [
-    { id: 's1', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo", startTime: new Date(Date.now() - 1000*60*60*24*7).toISOString(), endTime: new Date(Date.now() - 1000*60*60*24*7 + 1000*60*60).toISOString(), status: 'completed', recurring: 'weekly'},
-    { id: 's2', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo", startTime: new Date(Date.now() - 1000*60*60*24*2).toISOString(), endTime: new Date(Date.now() - 1000*60*60*24*2 + 1000*60*60).toISOString(), status: 'scheduled', notes: 'Foco em técnicas de relaxamento.', recurring: 'none'},
+    { id: 's1', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo", startTime: addDays(baseDate, -7).toISOString(), endTime: addDays(baseDate, -7).setHours(baseDate.getHours()+1).toString(), status: 'completed', recurring: 'weekly'},
+    { id: 's2', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo", startTime: addDays(baseDate, 2).toISOString(), endTime: addDays(baseDate, 2).setHours(baseDate.getHours()+1).toString(), status: 'scheduled', notes: 'Foco em técnicas de relaxamento.', recurring: 'none'},
+    { id: 's3', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo", startTime: addDays(baseDate, -14).toISOString(), endTime: addDays(baseDate, -14).setHours(baseDate.getHours()+1).toString(), status: 'completed'},
+    { id: 's4', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo", startTime: addDays(baseDate, -21).toISOString(), endTime: addDays(baseDate, -21).setHours(baseDate.getHours()+1).toString(), status: 'no-show'},
+    { id: 's5', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo", startTime: addDays(baseDate, -28).toISOString(), endTime: addDays(baseDate, -28).setHours(baseDate.getHours()+1).toString(), status: 'cancelled'},
+     { id: 's6', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo", startTime: addDays(baseDate, 7).toISOString(), endTime: addDays(baseDate, 7).setHours(baseDate.getHours()+1).toString(), status: 'scheduled', notes: 'Sessão futura de acompanhamento.'},
   ].sort((a,b) => parseISO(b.startTime).getTime() - parseISO(a.startTime).getTime());
 }
 
@@ -347,7 +352,6 @@ export default function PatientDetailPage() {
           const cachedSessions = await cacheService.patients.getSessions(patientId);
           if (isMounted && cachedSessions) setSessions(cachedSessions.sort((a,b) => parseISO(b.startTime).getTime() - parseISO(a.startTime).getTime()));
           
-          // Load all assessments from cache to filter later
           const cachedAllAssessments = await cacheService.assessments.getList();
           if(isMounted && cachedAllAssessments) {
             setPatientAssessments(cachedAllAssessments.filter(asm => asm.patientId === patientId && asm.status === 'completed'));
@@ -360,8 +364,6 @@ export default function PatientDetailPage() {
         const patientData = await fetchPatientDetailsMock(patientId);
         const sessionsData = await fetchPatientSessionsMock(patientId);
         
-        // For assessments, filter the global mock data for this patient.
-        // In a real app, you'd fetch assessments for this specific patient.
         const assessmentsForPatient = allMockAssessments.filter(asm => asm.patientId === patientId && asm.status === 'completed');
 
 
@@ -374,7 +376,6 @@ export default function PatientDetailPage() {
           await cacheService.patients.setSessions(patientId, sessionsData);
           
           setPatientAssessments(assessmentsForPatient);
-          // No specific cache for patient's assessments subset here, assuming assessments page handles master list cache
 
           setIsLoading(false);
         }
@@ -460,8 +461,6 @@ export default function PatientDetailPage() {
       ...patient, 
       ...updatedData, 
       previousSessionNotes: previousNotes,
-      // For PTI, we'd need a separate form. For now, it's read-only from mock.
-      // therapeuticPlan: updatedData.therapeuticPlan || patient.therapeuticPlan, 
       updatedAt: new Date().toISOString() 
     };
     
@@ -528,6 +527,18 @@ export default function PatientDetailPage() {
     setIsSessionFormOpen(false);
     setEditingSession(null);
   }, [patientId, editingSession, patient?.name, sessions]);
+
+  const sessionStats = useMemo(() => {
+    const nextScheduled = sessions
+      .filter(s => s.status === 'scheduled' && isFuture(parseISO(s.startTime)))
+      .sort((a, b) => parseISO(a.startTime).getTime() - parseISO(b.startTime).getTime())[0];
+    
+    const completedCount = sessions.filter(s => s.status === 'completed').length;
+    const noShowCount = sessions.filter(s => s.status === 'no-show').length;
+    const cancelledCount = sessions.filter(s => s.status === 'cancelled').length;
+
+    return { nextScheduled, completedCount, noShowCount, cancelledCount };
+  }, [sessions]);
 
 
   if (isLoading && !patient) {
@@ -677,43 +688,89 @@ export default function PatientDetailPage() {
       </Card>
 
       <Card className="shadow-lg">
-        <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-xl font-headline">Histórico de Sessões Agendadas</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between pb-3">
+            <CardTitle className="text-xl font-headline">Histórico e Resumo de Sessões</CardTitle>
             <Button onClick={handleNewSession} size="sm">
                 <PlusCircle className="mr-2 h-4 w-4" /> Nova Sessão
             </Button>
         </CardHeader>
         <CardContent>
-            {sessions.length > 0 ? (
-                <ScrollArea className="h-72 pr-3">
-                    <ul className="space-y-3">
-                        {sessions.map(s => (
-                            <li key={s.id} className="p-3 border rounded-lg hover:bg-muted/30 transition-colors">
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <p className="font-semibold text-sm">Data: {format(parseISO(s.startTime), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
-                                        <p className="text-xs text-muted-foreground">Com: {s.psychologistName || 'Psicólogo não informado'}</p>
-                                        {s.recurring && s.recurring !== "none" && (
-                                          <p className="text-xs text-muted-foreground flex items-center mt-0.5">
-                                            <Repeat className="w-3 h-3 mr-1 text-blue-500" /> Recorrência: {recurrenceLabels[s.recurring] || s.recurring}
-                                          </p>
-                                        )}
-                                        <Badge variant={s.status === 'completed' ? 'secondary' : s.status === 'scheduled' ? 'default' : 'outline'} className="mt-1 text-xs capitalize">
-                                            {s.status === 'completed' ? 'Concluída' : s.status === 'scheduled' ? 'Agendada' : s.status}
-                                        </Badge>
-                                        {s.notes && <p className="text-xs text-muted-foreground mt-1 italic">Nota: {s.notes.substring(0,50)}...</p>}
-                                    </div>
-                                    <Button variant="ghost" size="sm" onClick={() => handleEditSession(s)}>
-                                        <Edit className="w-4 h-4 mr-1" /> Editar
-                                    </Button>
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
-                </ScrollArea>
-            ) : (
-                 isLoading ? <Skeleton className="h-20 w-full" /> : <p className="text-muted-foreground">Nenhuma sessão registrada para este paciente.</p>
-            )}
+          <div className="mb-4 p-3 border rounded-lg bg-muted/30">
+            <h4 className="text-md font-semibold font-headline mb-2">Resumo Rápido</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
+              <div className="p-2.5 border rounded-md bg-background shadow-sm">
+                <div className="flex items-center text-primary mb-1">
+                  <CalendarCheck2 className="w-4 h-4 mr-1.5" />
+                  <span className="font-medium">Próxima Agendada</span>
+                </div>
+                {sessionStats.nextScheduled ? (
+                  <>
+                    <p>{format(parseISO(sessionStats.nextScheduled.startTime), "dd/MM/yy 'às' HH:mm", { locale: ptBR })}</p>
+                    <p className="text-xs text-muted-foreground">Com: {sessionStats.nextScheduled.psychologistName}</p>
+                  </>
+                ) : (
+                  <p className="text-muted-foreground text-xs">Nenhuma sessão futura.</p>
+                )}
+              </div>
+              <div className="p-2.5 border rounded-md bg-background shadow-sm">
+                 <div className="flex items-center text-green-600 mb-1">
+                  <UserCheck className="w-4 h-4 mr-1.5" />
+                  <span className="font-medium">Realizadas</span>
+                </div>
+                <p className="text-2xl font-bold">{sessionStats.completedCount}</p>
+              </div>
+              <div className="p-2.5 border rounded-md bg-background shadow-sm">
+                <div className="flex items-center text-red-600 mb-1">
+                  <UserX className="w-4 h-4 mr-1.5" />
+                  <span className="font-medium">Faltas</span>
+                </div>
+                <p className="text-2xl font-bold">{sessionStats.noShowCount}</p>
+              </div>
+              <div className="p-2.5 border rounded-md bg-background shadow-sm">
+                <div className="flex items-center text-amber-600 mb-1">
+                  <CalendarX2 className="w-4 h-4 mr-1.5" />
+                  <span className="font-medium">Canceladas</span>
+                </div>
+                <p className="text-2xl font-bold">{sessionStats.cancelledCount}</p>
+              </div>
+            </div>
+          </div>
+          <Separator className="my-4"/>
+          <h4 className="text-md font-semibold font-headline mb-2">Todas as Sessões</h4>
+          {sessions.length > 0 ? (
+              <ScrollArea className="h-60 pr-3"> {/* Adjusted height */}
+                  <ul className="space-y-3">
+                      {sessions.map(s => (
+                          <li key={s.id} className="p-3 border rounded-lg hover:bg-muted/30 transition-colors">
+                              <div className="flex justify-between items-start">
+                                  <div>
+                                      <p className="font-semibold text-sm">Data: {format(parseISO(s.startTime), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+                                      <p className="text-xs text-muted-foreground">Com: {s.psychologistName || 'Psicólogo não informado'}</p>
+                                      {s.recurring && s.recurring !== "none" && (
+                                        <p className="text-xs text-muted-foreground flex items-center mt-0.5">
+                                          <Repeat className="w-3 h-3 mr-1 text-blue-500" /> Recorrência: {recurrenceLabels[s.recurring] || s.recurring}
+                                        </p>
+                                      )}
+                                      <Badge 
+                                        variant={s.status === 'completed' ? 'secondary' : s.status === 'scheduled' ? 'default' : s.status === 'cancelled' ? 'outline' : 'destructive'} 
+                                        className="mt-1 text-xs capitalize"
+                                      >
+                                          {s.status === 'completed' ? <UserCheck className="w-3 h-3 mr-1"/> : s.status === 'scheduled' ? <CalendarCheck2 className="w-3 h-3 mr-1"/> : s.status === 'cancelled' ? <CalendarX2 className="w-3 h-3 mr-1"/> : <AlertTriangle className="w-3 h-3 mr-1"/>}
+                                          {s.status === 'completed' ? 'Realizada' : s.status === 'scheduled' ? 'Agendada' : s.status === 'cancelled' ? 'Cancelada' : 'Faltou'}
+                                      </Badge>
+                                      {s.notes && <p className="text-xs text-muted-foreground mt-1 italic">Nota: {s.notes.substring(0,50)}...</p>}
+                                  </div>
+                                  <Button variant="ghost" size="sm" onClick={() => handleEditSession(s)}>
+                                      <Edit className="w-4 h-4 mr-1" /> Editar
+                                  </Button>
+                              </div>
+                          </li>
+                      ))}
+                  </ul>
+              </ScrollArea>
+          ) : (
+                isLoading ? <Skeleton className="h-20 w-full" /> : <p className="text-muted-foreground">Nenhuma sessão registrada para este paciente.</p>
+          )}
         </CardContent>
       </Card>
 
