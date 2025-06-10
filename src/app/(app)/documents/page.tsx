@@ -7,7 +7,7 @@ import { Loader2 } from "lucide-react";
 import { cacheService } from "@/services/cacheService";
 import { useToast } from "@/hooks/use-toast"; // Import useToast
 
-const mockDocumentsData: DocumentResource[] = [
+export const mockDocumentsData: DocumentResource[] = [
   { id: 'doc1', name: 'Formulário de Consentimento Informado - Ana Silva.pdf', type: 'pdf', url: '#', uploadedAt: new Date(Date.now() - 1000*60*60*24*5).toISOString(), size: 120 * 1024, category: 'Formulários Clínicos', signatureStatus: 'signed', signatureDetails: { hash: 'mockhash_consent_ana', signerInfo: 'Ana Silva (Paciente Mock)', signedAt: new Date(Date.now() - 1000*60*60*24*4).toISOString(), verificationCode: 'VERIFY-CONSENT-ANA-123', signedDocumentLink: '#' } },
   { id: 'doc2', name: 'Termos de Serviço Psicologia Clínica.docx', type: 'docx', url: '#', uploadedAt: new Date(Date.now() - 1000*60*60*24*10).toISOString(), size: 85 * 1024, category: 'Documentos Legais', signatureStatus: 'none' },
   { id: 'doc3', name: 'Relatório Psicológico - Bruno Costa.pdf', type: 'pdf', url: '#', uploadedAt: new Date(Date.now() - 1000*60*60*24*2).toISOString(), size: 250 * 1024, category: 'Relatórios e Encaminhamentos', signatureStatus: 'pending_govbr_signature', signatureDetails: { hash: 'mockhash_report_bruno' } },

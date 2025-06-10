@@ -22,7 +22,7 @@ const mockPatientsData: Patient[] = [
   { id: '5', name: 'Eduarda Gomes Ferreira', email: 'eduarda.ferreira@example.com', phone: '(51) 93333-1111', dateOfBirth: '1998-03-30', createdAt: subDays(new Date(), 45).toISOString(), updatedAt: new Date().toISOString() },
 ];
 
-const mockSessionsData: Session[] = [
+export const mockSessionsData: Session[] = [
   // Ana Silva
   { id: 's_ana_near', patientId: '1', patientName: 'Ana Beatriz Silva', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: addDays(new Date(), 1).setHours(10,0,0,0).toString(), endTime: new Date(addDays(new Date(), 1).setHours(11,0,0,0)).toISOString(), status: 'scheduled' }, // Amanhã às 10h
   { id: 's_ana_week', patientId: '1', patientName: 'Ana Beatriz Silva', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: addDays(new Date(), 7).setHours(14,0,0,0).toString(), endTime: new Date(addDays(new Date(), 7).setHours(15,0,0,0)).toISOString(), status: 'scheduled' }, // Próxima semana às 14h

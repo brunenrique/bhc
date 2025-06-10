@@ -9,7 +9,7 @@ import { useState, useCallback, useMemo, useEffect } from "react";
 import type { Patient } from "@/types";
 import { cacheService } from '@/services/cacheService';
 
-const mockPatients: Patient[] = [
+export const mockPatientsData: Patient[] = [
   { id: '1', name: 'Ana Beatriz Silva', email: 'ana.silva@example.com', phone: '(11) 98765-4321', dateOfBirth: '1990-05-15', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(), updatedAt: new Date().toISOString() },
   { id: '2', name: 'Bruno Almeida Costa', email: 'bruno.costa@example.com', phone: '(21) 91234-5678', dateOfBirth: '1985-11-20', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(), updatedAt: new Date().toISOString() },
   { id: '3', name: 'Carla Dias Oliveira', email: 'carla.oliveira@example.com', phone: '(31) 95555-5555', dateOfBirth: '2000-02-10', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
@@ -28,22 +28,24 @@ export default function PatientsPage() {
       setIsLoading(true);
       try {
         const cachedPatients = await cacheService.patients.getList();
-        if (isMounted && cachedPatients) {
+        if (isMounted && cachedPatients && cachedPatients.length > 0) {
           setPatients(cachedPatients);
+        } else if (isMounted) {
+          setPatients(mockPatientsData); 
+          try {
+            await cacheService.patients.setList(mockPatientsData);
+          } catch (error) {
+            // console.warn("Error saving initial patients to cache:", error);
+          }
         }
       } catch (error) {
         // console.warn("Error loading patients from cache:", error);
+        if (isMounted) {
+           setPatients(mockPatientsData); // Fallback if cache read fails
+        }
       }
-
-      await new Promise(resolve => setTimeout(resolve, 300)); 
       
       if (isMounted) {
-        setPatients(mockPatients); 
-        try {
-          await cacheService.patients.setList(mockPatients);
-        } catch (error) {
-          // console.warn("Error saving patients to cache:", error);
-        }
         setIsLoading(false);
       }
     };
