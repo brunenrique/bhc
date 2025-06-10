@@ -1,19 +1,22 @@
 
 "use client";
 
+import React, { useEffect, useRef, useCallback, useState, forwardRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { X, Send, UserCircle } from "lucide-react";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { X, Send, UserCircle, Users } from "lucide-react";
 import { useAppStore } from '@/store/appStore';
 import type { ChatMessage } from '@/types';
 import { useAuth } from "@/hooks/useAuth";
 
+interface ChatWindowProps {
+  style?: React.CSSProperties;
+}
 
-export function ChatWindow() {
+export const ChatWindow = forwardRef<HTMLDivElement, ChatWindowProps>(({ style }, ref) => {
   const { 
     activeChat,
     closeActiveChat, 
@@ -54,13 +57,12 @@ export function ChatWindow() {
     addMessage(activeChat.id, message);
     setNewMessage("");
 
-    // Simulate a bot reply for demo purposes
     if (activeChat.id !== 'general' && activeChat.type === 'private') {
         setTimeout(() => {
             const recipientName = activeChat.name.replace('Chat com ', '');
             addMessage(activeChat.id, {
                 id: (Date.now()+1).toString(),
-                sender: recipientName, // Simulate reply from the other user
+                sender: recipientName, 
                 avatar: activeChat.avatarUrl,
                 text: `Recebi sua mensagem! (Resposta simulada de ${recipientName})`,
                 timestamp: new Date()
@@ -77,14 +79,16 @@ export function ChatWindow() {
             });
         }, 1000);
     }
-
-
   }, [newMessage, activeChat, addMessage, currentUser]);
   
   if (!activeChat) return null;
 
   return (
-    <Card className="fixed bottom-20 right-6 w-80 h-[450px] shadow-xl z-50 flex flex-col bg-card border-border">
+    <Card 
+      ref={ref} 
+      style={style} 
+      className="w-80 h-[450px] shadow-xl z-50 flex flex-col bg-card border-border"
+    >
       <CardHeader className="flex flex-row items-center justify-between p-3 border-b">
         <div className="flex items-center gap-2">
           {activeChat.type === 'private' && activeChat.avatarUrl && (
@@ -146,4 +150,6 @@ export function ChatWindow() {
       </CardFooter>
     </Card>
   );
-}
+});
+
+ChatWindow.displayName = "ChatWindow";
