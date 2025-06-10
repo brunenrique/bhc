@@ -11,9 +11,10 @@ import { DatePickerWithRange } from "@/components/ui/date-picker-with-range";
 import type { DateRange } from "react-day-picker";
 import { subDays } from 'date-fns';
 import { MainComplaintsCloud } from '@/components/charts/MainComplaintsCloud';
-import { AssessmentScoreTrend } from '@/components/charts/AssessmentScoreTrend'; // Import the new chart
-import { mockAssessmentsData } from '@/app/(app)/assessments/page'; // Import mock assessment data
+import { AssessmentScoreTrend } from '@/components/charts/AssessmentScoreTrend';
+import { mockAssessmentsData } from '@/app/(app)/assessments/page';
 import type { Assessment } from '@/types';
+import { CorrelationAnalysis } from '@/components/ai/CorrelationAnalysis'; // Importa o novo componente
 
 const mockPsychologists = [
   { id: 'all', name: 'Todos Psicólogos' },
@@ -60,7 +61,7 @@ interface Filters {
 export default function ClinicalAnalysisPage() {
   const [filters, setFilters] = useState<Filters>({
     dateRange: {
-      from: subDays(new Date(), 90), // Default to last 90 days
+      from: subDays(new Date(), 90), 
       to: new Date(),
     },
     psychologistId: 'all',
@@ -209,6 +210,8 @@ export default function ClinicalAnalysisPage() {
                 selectedAssessmentTitle={filters.assessmentTypeForTrend} 
               />
             </ChartContainer>
+
+            <CorrelationAnalysis />
           </div>
 
         </CardContent>
