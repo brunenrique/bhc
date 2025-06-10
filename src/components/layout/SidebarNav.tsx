@@ -56,14 +56,12 @@ export function SidebarNav() {
         
         return (
           <SidebarMenuItem key={item.href}>
-            <Link href={item.href} legacyBehavior passHref>
+            <Link href={item.href}>
               <SidebarMenuButton
-                as="a" // Use <a> tag for proper navigation with Link
                 isActive={isActive}
                 tooltip={item.label}
                 className={cn(
                   "w-full justify-start",
-                  // isActive && "bg-sidebar-accent text-sidebar-accent-foreground" // isActive is now handled by data-active attribute
                 )}
               >
                 <item.icon className="mr-2 h-5 w-5 flex-shrink-0" />
