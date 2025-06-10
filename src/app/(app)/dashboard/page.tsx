@@ -2,23 +2,37 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { DashboardCard } from "@/components/ui/dashboard/DashboardCard";
 import { ChartContainer } from "@/components/ui/dashboard/ChartContainer";
-import { Users, UserCheck, CalendarCheck2, AlertTriangle, BarChart3, Activity } from "lucide-react"; // Added BarChart3 and Activity
+import { Users, UserCheck, CalendarCheck2, AlertTriangle, Activity } from "lucide-react"; 
+import dynamic from 'next/dynamic';
+import { Skeleton } from "@/components/ui/skeleton";
+import type { SessionStatusData } from "@/components/charts/SessionStatusChart"; // Import the type
 
-// This is now a Server Component, so no client-side hooks like useAuth or useState directly here.
-// Data fetching would typically happen here (e.g., from Firestore) or be passed as props.
-// For now, we'll use mock data.
+const SessionStatusChart = dynamic(() => 
+  import('@/components/charts/SessionStatusChart').then(mod => mod.SessionStatusChart), 
+  { 
+    ssr: false,
+    loading: () => <Skeleton className="h-[350px] w-full" />
+  }
+);
 
 const mockOverviewData = {
-  activePatients: Math.floor(Math.random() * 150) + 50, // e.g., 50-200
-  activePsychologists: Math.floor(Math.random() * 10) + 3, // e.g., 3-13
-  sessionsThisMonth: Math.floor(Math.random() * 300) + 100, // e.g., 100-400
-  noShowRate: `${(Math.random() * 15 + 5).toFixed(1)}%`, // e.g., 5.0% - 20.0%
+  activePatients: Math.floor(Math.random() * 150) + 50,
+  activePsychologists: Math.floor(Math.random() * 10) + 3,
+  sessionsThisMonth: Math.floor(Math.random() * 300) + 100,
+  noShowRate: `${(Math.random() * 15 + 5).toFixed(1)}%`,
+};
+
+// Mock data for the SessionStatusChart
+const mockSessionStatusData: SessionStatusData = {
+  scheduled: Math.floor(Math.random() * 50) + 20,
+  completed: Math.floor(Math.random() * 100) + 50,
+  cancelled: Math.floor(Math.random() * 20) + 5,
+  noShow: Math.floor(Math.random() * 15) + 3,
 };
 
 export default function DashboardOverviewPage() {
   return (
     <div className="space-y-8">
-      {/* The main title "Painel de Controle" is now in the layout, so we can have a more specific title here */}
       <h1 className="text-3xl font-headline font-semibold">Visão Geral da Clínica</h1>
       <p className="text-muted-foreground font-body">
         Um resumo das atividades e principais indicadores da clínica. (Dados de exemplo)
@@ -61,10 +75,7 @@ export default function DashboardOverviewPage() {
           description="Distribuição das sessões por status no mês corrente."
           className="shadow-lg"
         >
-          <div className="h-[350px] flex items-center justify-center text-muted-foreground bg-muted/30 rounded-md">
-            <BarChart3 className="h-10 w-10 mr-2"/>
-            <p>Gráfico de status das sessões (Ex: Agendadas, Realizadas, Canceladas) aparecerá aqui.</p>
-          </div>
+          <SessionStatusChart data={mockSessionStatusData} />
         </ChartContainer>
         
         <ChartContainer 
