@@ -1,19 +1,20 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-// import { Button } from "@/components/ui/button"; // Uncomment if using an "Apply Filters" button
 import { Label } from "@/components/ui/label";
 import { ChartContainer } from "@/components/ui/dashboard/ChartContainer";
-import { Activity, Filter } from "lucide-react";
+import { Activity, Filter, TrendingUp } from "lucide-react";
 import { DatePickerWithRange } from "@/components/ui/date-picker-with-range";
 import type { DateRange } from "react-day-picker";
 import { subDays } from 'date-fns';
-import { MainComplaintsCloud } from '@/components/charts/MainComplaintsCloud'; // Import the new component
+import { MainComplaintsCloud } from '@/components/charts/MainComplaintsCloud';
+import { AssessmentScoreTrend } from '@/components/charts/AssessmentScoreTrend'; // Import the new chart
+import { mockAssessmentsData } from '@/app/(app)/assessments/page'; // Import mock assessment data
+import type { Assessment } from '@/types';
 
-// Mock data (replace with actual data fetching later)
 const mockPsychologists = [
   { id: 'all', name: 'Todos Psicólogos' },
   { id: 'psy1', name: 'Dr. Exemplo Silva' },
@@ -31,7 +32,6 @@ const mockProfessionalSituations = [
   { id: 'other', name: 'Outra' },
 ];
 
-// Mock complaints for the word cloud
 const mockComplaintsData = [
   "Sinto muita ansiedade no trabalho e em situações sociais.",
   "Tenho tido problemas para dormir, acordo cansado.",
@@ -48,45 +48,57 @@ const mockComplaintsData = [
   "Não consigo relaxar, sempre tenso e alerta.",
   "Pensamentos negativos e pessimistas sobre mim e sobre a vida.",
   "Perda de interesse em atividades que antes eram prazerosas.",
-  "Dificuldade em lidar com perdas recentes.",
-  "Fobia social, evito sair de casa ou interagir.",
-  "Sintomas de burnout, exaustão emocional e física.",
-  "Conflitos familiares frequentes.",
-  "Dificuldade em tomar decisões importantes.",
-  "Sensação de vazio e falta de propósito.",
-  "Medo de dirigir após um pequeno acidente.",
-  "Problemas com imagem corporal e alimentação.",
-  "Insônia persistente, já tentei várias coisas.",
-  "Ansiedade relacionada a apresentações em público."
 ];
-
 
 interface Filters {
   dateRange: DateRange | undefined;
   psychologistId: string;
   professionalSituation: string;
+  assessmentTypeForTrend: string | undefined;
 }
 
 export default function ClinicalAnalysisPage() {
   const [filters, setFilters] = useState<Filters>({
     dateRange: {
-      from: subDays(new Date(), 30), 
+      from: subDays(new Date(), 90), // Default to last 90 days
       to: new Date(),
     },
     psychologistId: 'all',
     professionalSituation: 'all',
+    assessmentTypeForTrend: undefined,
   });
   const [complaintsForCloud, setComplaintsForCloud] = useState<string[]>(mockComplaintsData);
+  const [assessmentsForTrend, setAssessmentsForTrend] = useState<Assessment[]>(mockAssessmentsData);
+
+  const availableAssessmentTitles = useMemo(() => {
+    const titles = new Set<string>();
+    mockAssessmentsData.forEach(assessment => {
+      if (assessment.title && assessment.status === 'completed' && assessment.results?.score !== undefined) {
+        titles.add(assessment.title);
+      }
+    });
+    return Array.from(titles);
+  }, []);
+
+  useEffect(() => {
+    if (availableAssessmentTitles.length > 0 && !filters.assessmentTypeForTrend) {
+      setFilters(prev => ({ ...prev, assessmentTypeForTrend: availableAssessmentTitles[0]}));
+    }
+  }, [availableAssessmentTitles, filters.assessmentTypeForTrend]);
+
 
   const handleFilterChange = <K extends keyof Filters>(key: K, value: Filters[K]) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
-  // Placeholder for data fetching based on filters
   useEffect(() => {
+    // Placeholder for data fetching based on filters
     // console.log("Filters changed, would refetch data:", filters);
-    // Example: fetchClinicalData(filters).then(data => setComplaintsForCloud(data.complaints));
-    // For now, we just use the mock data.
+    // For now, we just use the mock data or re-filter it.
+    // Example: fetchClinicalData(filters).then(data => {
+    //   setComplaintsForCloud(data.complaints);
+    //   setAssessmentsForTrend(data.assessments);
+    // });
   }, [filters]);
 
 
@@ -103,7 +115,7 @@ export default function ClinicalAnalysisPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4 p-4 border rounded-lg bg-muted/20 mb-6 shadow-sm items-end">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4 p-4 border rounded-lg bg-muted/20 mb-6 shadow-sm items-end">
             <div>
               <Label htmlFor="date-range-picker" className="text-sm font-medium">Período da Análise</Label>
               <DatePickerWithRange
@@ -145,14 +157,26 @@ export default function ClinicalAnalysisPage() {
                 </SelectContent>
               </Select>
             </div>
-            {/* 
-            Optional: Apply button if auto-update on change is not desired
-            <div className="lg:col-span-3 flex justify-end items-end">
-              <Button className="w-full lg:w-auto">
-                <Filter className="mr-2 h-4 w-4"/> Aplicar Filtros
-              </Button>
+            <div>
+              <Label htmlFor="assessment-type-trend-filter" className="text-sm font-medium">Tendência de Escala/Avaliação</Label>
+              <Select
+                value={filters.assessmentTypeForTrend}
+                onValueChange={(value) => handleFilterChange('assessmentTypeForTrend', value)}
+              >
+                <SelectTrigger id="assessment-type-trend-filter" className="w-full mt-1">
+                  <SelectValue placeholder="Selecione uma avaliação" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableAssessmentTitles.length > 0 ? (
+                    availableAssessmentTitles.map(title => (
+                      <SelectItem key={title} value={title}>{title}</SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="none" disabled>Nenhuma avaliação com score encontrada</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
             </div>
-            */}
           </div>
 
           <div className="space-y-8 mt-8">
@@ -173,6 +197,17 @@ export default function ClinicalAnalysisPage() {
               className="shadow-md hover:shadow-lg transition-shadow"
             >
               <MainComplaintsCloud complaints={complaintsForCloud} />
+            </ChartContainer>
+            
+            <ChartContainer
+              title="Tendência de Scores de Avaliação"
+              description={`Média de scores para "${filters.assessmentTypeForTrend || "Avaliação Selecionada"}" ao longo do tempo.`}
+              className="shadow-md hover:shadow-lg transition-shadow"
+            >
+              <AssessmentScoreTrend 
+                assessments={assessmentsForTrend} 
+                selectedAssessmentTitle={filters.assessmentTypeForTrend} 
+              />
             </ChartContainer>
           </div>
 
