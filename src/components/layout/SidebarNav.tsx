@@ -17,7 +17,8 @@ import {
   FileText,
   Brain, 
   Settings,
-  AreaChart, // Icon for Admin Metrics
+  AreaChart, 
+  MessageSquare, // Ícone para WhatsApp
   LucideIcon,
 } from "lucide-react";
 // import { useAuth } from '@/hooks/useAuth'; // For role-based navigation
@@ -36,7 +37,8 @@ const navItems: NavItem[] = [
   { href: "/assessments", label: "Avaliações", icon: ClipboardList },
   { href: "/documents", label: "Documentos", icon: FileText },
   { href: "/ai-insights", label: "Insights IA", icon: Brain },
-  { href: "/admin/metrics", label: "Métricas Admin", icon: AreaChart, roles: ['admin'] }, // Added admin metrics link
+  { href: "/whatsapp-reminders", label: "Lembretes WhatsApp", icon: MessageSquare },
+  { href: "/admin/metrics", label: "Métricas Admin", icon: AreaChart, roles: ['admin'] }, 
   { href: "/settings", label: "Configurações", icon: Settings },
 ];
 
