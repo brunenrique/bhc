@@ -7,7 +7,7 @@ export interface User {
   name: string;
   role: UserRole;
   avatarUrl?: string;
-  crp?: string; 
+  crp?: string;
 }
 
 export interface PatientNoteVersion {
@@ -18,19 +18,19 @@ export interface PatientNoteVersion {
 export type DocumentSignatureStatus = 'none' | 'pending_govbr_signature' | 'signed' | 'verification_failed';
 
 export interface DocumentSignatureDetails {
-  hash?: string; 
-  signerInfo?: string; 
-  signedAt?: string; 
-  verificationCode?: string; 
-  signedDocumentLink?: string; 
-  p7sFile?: string; 
+  hash?: string;
+  signerInfo?: string;
+  signedAt?: string;
+  verificationCode?: string;
+  signedDocumentLink?: string;
+  p7sFile?: string;
 }
 
 export interface ProntuarioIdentificacao {
   nomeCompleto?: string;
   sexo?: string;
   cpf?: string;
-  dataNascimento?: string; 
+  dataNascimento?: string;
   estadoCivil?: string;
   racaCor?: string;
   possuiFilhos?: boolean;
@@ -39,8 +39,8 @@ export interface ProntuarioIdentificacao {
   profissao?: string;
   escolaridade?: string;
   renda?: string;
-  enderecoCasa?: string; 
-  tipoMoradia?: string; 
+  enderecoCasa?: string;
+  tipoMoradia?: string;
   telefone?: string;
   contatoEmergencia?: string;
 }
@@ -50,19 +50,19 @@ export interface ProntuarioEntradaUnidade {
 }
 
 export interface ProcedimentoAnaliseEntry {
-  entryId: string; 
+  entryId: string;
   date: string; // ISO Date string of the session/entry
   content: string; // HTML content of the session notes
 }
 
 export interface ProntuarioData {
   identificacao?: ProntuarioIdentificacao;
-  entradaUnidade?: ProntuarioEntradaUnidade; 
-  demandaQueixaPrincipal?: string; 
-  procedimentosAnalise?: ProcedimentoAnaliseEntry[]; 
-  conclusaoEncaminhamentoGeral?: string; 
+  entradaUnidade?: ProntuarioEntradaUnidade;
+  demandaQueixaPrincipal?: string;
+  procedimentosAnalise?: ProcedimentoAnaliseEntry[];
+  conclusaoEncaminhamentoGeral?: string;
 
-  localAssinatura?: string; 
+  localAssinatura?: string;
 
   signatureStatus?: DocumentSignatureStatus;
   signatureDetails?: DocumentSignatureDetails;
@@ -81,7 +81,7 @@ export interface TherapeuticGoal {
 export interface TherapeuticPlan {
   id: string;
   patientId: string;
-  overallSummary?: string; 
+  overallSummary?: string;
   goals: TherapeuticGoal[];
   lastUpdatedAt: string; // ISO Date string
 }
@@ -91,15 +91,15 @@ export interface Patient {
   name: string;
   email?: string;
   phone?: string;
-  dateOfBirth?: string; 
-  address?: string; 
-  sessionNotes?: string; 
-  previousSessionNotes?: PatientNoteVersion[]; 
-  prontuario?: ProntuarioData; 
-  therapeuticPlan?: TherapeuticPlan; 
-  caseStudyNotes?: string; 
-  createdAt: string; 
-  updatedAt: string; 
+  dateOfBirth?: string;
+  address?: string;
+  sessionNotes?: string;
+  previousSessionNotes?: PatientNoteVersion[];
+  prontuario?: ProntuarioData;
+  therapeuticPlan?: TherapeuticPlan;
+  caseStudyNotes?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 
@@ -108,15 +108,15 @@ export type SessionRecurrence = "none" | "daily" | "weekly" | "monthly";
 export interface Session {
   id: string;
   patientId: string;
-  patientName?: string; 
+  patientName?: string;
   psychologistId: string;
-  psychologistName?: string; 
+  psychologistName?: string;
   startTime: string; // ISO Date string
   endTime: string; // ISO Date string
   status: "scheduled" | "completed" | "cancelled" | "no-show";
   recurring?: SessionRecurrence | null;
-  notes?: string; 
-  isPendingSync?: boolean; 
+  notes?: string;
+  isPendingSync?: boolean;
 }
 
 export interface AssessmentResultDetails {
@@ -128,20 +128,20 @@ export interface AssessmentResultDetails {
 }
 export interface Assessment {
   id:string;
-  title: string; 
+  title: string;
   patientId: string;
   patientName?: string;
-  formLink?: string; 
+  formLink?: string;
   status: "pending" | "sent" | "completed";
-  results?: AssessmentResultDetails; 
+  results?: AssessmentResultDetails;
   createdAt: string; // ISO Date string
 }
 
 export interface DocumentResource {
   id: string;
   name: string;
-  type: "pdf" | "doc" | "docx" | "txt" | "png" | "jpg" | "jpeg" | "other"; 
-  url: string; 
+  type: "pdf" | "doc" | "docx" | "txt" | "png" | "jpg" | "jpeg" | "other";
+  url: string;
   uploadedAt: string; // ISO Date string
   size?: number; // in bytes
   category?: string;
@@ -151,7 +151,7 @@ export interface DocumentResource {
 
 export interface ChatMessage {
   id: string;
-  sender: string; 
+  sender: string;
   avatar?: string;
   text: string;
   timestamp: Date;
@@ -161,14 +161,14 @@ export interface Chat {
   id: string;
   name: string;
   type: 'general' | 'private';
-  participants?: string[]; 
-  avatarUrl?: string; 
+  participants?: string[];
+  avatarUrl?: string;
 }
 
 export interface EvolutionDataPoint {
-  date: string; 
+  date: string;
   score: number;
-  instrumentName: string; 
+  instrumentName: string;
 }
 
 export interface WaitingListEntry {
@@ -190,7 +190,7 @@ export interface WaitingListEntry {
 // Data structure for Prontuário (local generation)
 export interface ProntuarioGenerationDataDynamic {
   'Descrição da Demanda/Queixa': string;
-  'Descrição do Procedimento/Análise': string; 
+  'Descrição do Procedimento/Análise': string;
   'Descrição da Conclusão/Encaminhamento': string;
 }
 
@@ -202,7 +202,7 @@ export interface ProntuarioGenerationDataData {
   'Dia de Emissão': string;
   'Mês de Emissão': string;
   'Ano de Emissão': string;
-  'Data do Atendimento': string; 
+  'Data do Atendimento': string;
 }
 
 export interface ProntuarioGenerationDataPaciente {
@@ -212,21 +212,21 @@ export interface ProntuarioGenerationDataPaciente {
   'Data de Nasc. do Paciente'?: string;
   'Estado Civil do Paciente'?: string;
   'Raça/Cor do Paciente'?: string;
-  'Status Filhos'?: string; 
-  'Quantidade de Filhos'?: string; 
+  'Status Filhos'?: string;
+  'Quantidade de Filhos'?: string;
   'Situação Profissional do Paciente'?: string;
   'Profissão do Paciente'?: string;
   'Escolaridade do Paciente'?: string;
   'Renda do Paciente'?: string;
-  'Endereço do Paciente'?: string; 
-  'Tipo de Moradia'?: string; 
+  'Endereço do Paciente'?: string;
+  'Tipo de Moradia'?: string;
   'Telefone do Paciente'?: string;
   'Contato de Emergência'?: string;
-  'Descrição da Entrada na Unidade'?: string; 
+  'Descrição da Entrada na Unidade'?: string;
 }
 
 
-export interface ProntuarioAppsScriptPayload { 
+export interface ProntuarioAppsScriptPayload {
   paciente: ProntuarioGenerationDataPaciente;
   dinamico: ProntuarioGenerationDataDynamic;
   psicologo: ProntuarioGenerationDataPsicologo;
