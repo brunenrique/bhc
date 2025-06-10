@@ -3,40 +3,63 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Default deny all access unless explicitly allowed
-    match /{document=**} {
-      allow read, write: if false;
+    // Helper function to check user roles from token claims
+    function isSignedIn() {
+      return request.auth != null;
     }
 
-    // Allow users to read and write their own data
-    match /users/{userId}/{documents=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    function getUserRole() {
+      return request.auth.token.role; // Assumes 'role' is a custom claim in the auth token
     }
 
-    // Allow authenticated users to manage patient records
-    // Consider refining based on roles (e.g., psychologist, admin)
-    match /patients/{patientId}/{documents=**} {
-      allow read, write: if request.auth != null;
+    function isPsychologist() {
+      return isSignedIn() && getUserRole() == 'psychologist';
     }
 
-    // Allow authenticated users to manage sessions
-    match /sessions/{sessionId}/{documents=**} {
-      allow read, write: if request.auth != null;
-    }
-
-    // Allow authenticated users to manage assessments
-    match /assessments/{assessmentId}/{documents=**} {
-      allow read, write: if request.auth != null;
+    function isAdmin() {
+      return isSignedIn() && getUserRole() == 'admin';
     }
     
-    // Allow authenticated users to manage documents
-    // This is a generic rule, you might want to make it more specific
-    match /documents/{documentId}/{documents=**} {
-      allow read, write: if request.auth != null;
+    function isSecretary() {
+      return isSignedIn() && getUserRole() == 'secretary';
     }
 
-    // Note: For production, these rules should be more granular and restrictive.
-    // Example: Only a psychologist associated with a patient can read/write patient data.
-    // Example: Admins might have broader access for management.
+    // Rules for 'patients' collection
+    match /patients/{patientId} {
+      // Allow create:
+      // - Psychologists can create patients (and should ideally set themselves as psychologistId).
+      // - Admins can create patients.
+      allow create: if isPsychologist() || isAdmin();
+
+      // Allow read:
+      // - Psychologists can read any patient (in a real app, might restrict to their own).
+      // - Admins can read any patient.
+      // - Secretaries can read any patient.
+      allow read: if isPsychologist() || isAdmin() || isSecretary();
+      
+      // Allow update:
+      // - Psychologists can update any patient (in a real app, might restrict to their own).
+      // - Admins can update any patient.
+      allow update: if isPsychologist() || isAdmin();
+
+      // Allow delete:
+      // - Admins can delete patients.
+      // - Psychologists can delete patients (in a real app, might restrict to their own or add soft delete).
+      allow delete: if isAdmin() || isPsychologist();
+    }
+
+    // Example for user profiles - only the user themselves or an admin can modify
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow write: if request.auth.uid == userId || isAdmin();
+    }
+
+    // Add rules for other collections as needed (e.g., sessions, assessments)
+    // match /sessions/{sessionId} {
+    //   // Define rules for sessions
+    // }
+    // match /assessments/{assessmentId} {
+    //   // Define rules for assessments
+    // }
   }
 }
