@@ -7,10 +7,31 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import {
   LayoutDashboard, CalendarDays, Users, ClipboardList, FileText, Settings, MessageSquare, ListTodo, Info, HelpCircle, BookOpenText,
-  Edit, PlusCircle, Search, Download, Fingerprint, UploadCloud, Eye, Trash2, ExternalLink, UserCheck, UserX, CalendarX2, CalendarCheck2, FileSignature, BarChart3, CaseSensitive, Bot,
-  FileText as FileTextIconLucide, BookMarked, ShieldCheck, ShieldX, ShieldAlert, Edit3,
+  Edit, PlusCircle, Search, Download, Fingerprint, UploadCloud, Eye, Trash2, UserCheck, UserX, CalendarX2, CalendarCheck2, FileSignature, BarChart3, CaseSensitive, Bot,
+  FileText as FileTextIconLucide, BookMarked, ShieldCheck, ShieldX, ShieldAlert, Edit3, Save, Send, Mail, CalendarPlus2, MoreHorizontal,
 } from "lucide-react";
-import Image from "next/image";
+// Removed: import Image from "next/image"; // Not used in current guide content
+
+// Define ExternalLink icon here as it's used in the guide and might not be global
+const ExternalLink = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+    <polyline points="15 3 21 3 21 9" />
+    <line x1="10" x2="21" y1="14" y2="3" />
+  </svg>
+);
+
 
 export default function GuidePage() {
   return (
@@ -105,7 +126,7 @@ export default function GuidePage() {
                 <li>Preencha nome, contato, preferências e o motivo.</li>
                 <li>Na tabela da lista de espera, você pode:
                     <ul>
-                        <li><Badge variant="outline"><CalendarPlus className="h-3 w-3 mr-1"/> Agendar Sessão</Badge>: Move o paciente da lista para um novo agendamento.</li>
+                        <li><Badge variant="outline"><CalendarPlus2 className="h-3 w-3 mr-1"/> Agendar Sessão</Badge>: Move o paciente da lista para um novo agendamento.</li>
                         <li><Badge variant="outline"><Edit className="h-3 w-3 mr-1"/> Editar Entrada</Badge>: Modifica os dados da entrada.</li>
                         <li>Alterar o status (Aguardando, Contatado, Agendado, Arquivado).</li>
                         <li><Badge variant="destructive"><Trash2 className="h-3 w-3 mr-1"/> Remover da Lista</Badge>.</li>
@@ -225,7 +246,7 @@ export default function GuidePage() {
                 <li>No diálogo:
                     <ul>
                         <li>Escolha um <Badge>Modelo de Mensagem</Badge> ou escreva uma mensagem personalizada. Os placeholders (ex: <code>{"{{paciente_primeiro_nome}}"}</code>) serão preenchidos automaticamente.</li>
-                        <li>Clique em <Badge variant="outline"><Mailbox className="h-3 w-3 mr-1"/>Gerar Link WhatsApp</Badge>.</li>
+                        <li>Clique em <Badge variant="outline"><Mail className="h-3 w-3 mr-1"/>Gerar Link WhatsApp</Badge>.</li>
                         <li>Copie o link gerado ou clique em <Badge><ExternalLink className="h-3 w-3 mr-1"/>Abrir no WhatsApp</Badge> para enviar a mensagem (requer WhatsApp Web/Desktop conectado).</li>
                     </ul>
                 </li>
@@ -257,3 +278,4 @@ export default function GuidePage() {
     </div>
   );
 }
+
