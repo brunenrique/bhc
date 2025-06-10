@@ -30,11 +30,38 @@ export const useAppStore = create<ChatState>((set, get) => ({
   activeChatId: null,
   messagesByChatId: {},
   
-  toggleChatWindow: () => set((state) => ({ isChatWindowOpen: !state.isChatWindowOpen, activeChatId: !state.isChatWindowOpen ? 'geral' : null })),
+  toggleChatWindow: () => set((state) => {
+    const newIsChatWindowOpen = !state.isChatWindowOpen;
+    if (!newIsChatWindowOpen && state.activeChatId) {
+      // If closing and there was an active chat, clear its messages
+      const newMessagesByChatId = { ...state.messagesByChatId };
+      delete newMessagesByChatId[state.activeChatId];
+      return { 
+        isChatWindowOpen: false, 
+        activeChatId: null,
+        messagesByChatId: newMessagesByChatId
+      };
+    }
+    return { 
+      isChatWindowOpen: newIsChatWindowOpen, 
+      activeChatId: newIsChatWindowOpen ? 'geral' : null 
+    };
+  }),
   
   openChatWindow: (chatId: string) => set({ isChatWindowOpen: true, activeChatId: chatId }),
   
-  closeChatWindow: () => set({ isChatWindowOpen: false, activeChatId: null }),
+  closeChatWindow: () => set((state) => {
+    const currentActiveChatId = get().activeChatId;
+    const newMessagesByChatId = { ...state.messagesByChatId };
+    if (currentActiveChatId) {
+      delete newMessagesByChatId[currentActiveChatId];
+    }
+    return { 
+      isChatWindowOpen: false, 
+      activeChatId: null,
+      messagesByChatId: newMessagesByChatId
+    };
+  }),
   
   addMessage: (chatId: string, message: Message) => {
     const currentMessages = get().messagesByChatId[chatId] || [];
@@ -67,3 +94,4 @@ interface AuthState {
 //   currentUser: null,
 //   setCurrentUser: (user) => set({ currentUser: user }),
 // }));
+
