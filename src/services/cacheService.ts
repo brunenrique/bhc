@@ -2,7 +2,7 @@
 "use client"; // idb-keyval is client-side only
 
 import { get, set, del, clear, createStore } from 'idb-keyval';
-import type { Patient, Session, DocumentResource, Assessment } from '@/types';
+import type { Patient, Session, DocumentResource, Assessment, WaitingListEntry } from '@/types';
 
 // Create a custom store for PsiGuard data
 const psiguardStore = createStore('psiguard-db', 'psiguard-store');
@@ -16,7 +16,7 @@ export const CACHE_KEYS = {
   DOCUMENTS_LIST: 'documents_list',
   ASSESSMENTS_LIST: 'assessments_list',
   ADMIN_METRICS_SUMMARY: 'admin_metrics_summary',
-  // Add more keys as needed
+  WAITING_LIST: 'waiting_list',
 };
 
 async function getFromCache<T>(key: string): Promise<T | undefined> {
@@ -113,6 +113,10 @@ interface AdminMetricsSummary {
 const getCachedAdminMetricsSummary = () => getFromCache<AdminMetricsSummary>(CACHE_KEYS.ADMIN_METRICS_SUMMARY);
 const setCachedAdminMetricsSummary = (summary: AdminMetricsSummary) => setInCache(CACHE_KEYS.ADMIN_METRICS_SUMMARY, summary);
 
+// Waiting List
+const getCachedWaitingList = () => getFromCache<WaitingListEntry[]>(CACHE_KEYS.WAITING_LIST);
+const setCachedWaitingList = (entries: WaitingListEntry[]) => setInCache(CACHE_KEYS.WAITING_LIST, entries);
+
 
 export const cacheService = {
   get: getFromCache,
@@ -150,5 +154,9 @@ export const cacheService = {
    adminMetrics: {
     getSummary: getCachedAdminMetricsSummary,
     setSummary: setCachedAdminMetricsSummary,
+  },
+  waitingList: {
+    getList: getCachedWaitingList,
+    setList: setCachedWaitingList,
   }
 };

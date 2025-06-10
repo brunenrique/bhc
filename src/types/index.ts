@@ -50,24 +50,19 @@ export interface ProntuarioEntradaUnidade {
 }
 
 export interface ProcedimentoAnaliseEntry {
-  entryId: string; // Unique ID for this entry (e.g., timestamp or session ID)
+  entryId: string; 
   date: string; // ISO Date string of the session/entry
   content: string; // HTML content of the session notes
 }
 
-// ProntuarioData holds the evolving internal prontuário.
 export interface ProntuarioData {
   identificacao?: ProntuarioIdentificacao;
   entradaUnidade?: ProntuarioEntradaUnidade; 
-  // Static text parts like 'Finalidade' and 'Responsavel Tecnica' can be part of the display template.
-  // However, if 'Responsavel Tecnica' needs to be dynamic per patient or over time, store it here.
-  // For now, assuming psychologist details from currentUser will be used for display.
-  
-  demandaQueixaPrincipal?: string; // Initial/overall demand
-  procedimentosAnalise?: ProcedimentoAnaliseEntry[]; // Log of session notes
-  conclusaoEncaminhamentoGeral?: string; // Overall conclusion/forwarding
+  demandaQueixaPrincipal?: string; 
+  procedimentosAnalise?: ProcedimentoAnaliseEntry[]; 
+  conclusaoEncaminhamentoGeral?: string; 
 
-  localAssinatura?: string; // e.g., "Santana de Parnaíba"
+  localAssinatura?: string; 
 
   signatureStatus?: DocumentSignatureStatus;
   signatureDetails?: DocumentSignatureDetails;
@@ -98,11 +93,11 @@ export interface Patient {
   phone?: string;
   dateOfBirth?: string; 
   address?: string; 
-  sessionNotes?: string; // HTML content from RichTextEditor for the CURRENT "Evolução das Sessões"
-  previousSessionNotes?: PatientNoteVersion[]; // History of patient.sessionNotes (main editor)
+  sessionNotes?: string; 
+  previousSessionNotes?: PatientNoteVersion[]; 
   prontuario?: ProntuarioData; 
   therapeuticPlan?: TherapeuticPlan; 
-  caseStudyNotes?: string; // HTML content from RichTextEditor for "Estudo de Caso"
+  caseStudyNotes?: string; 
   createdAt: string; 
   updatedAt: string; 
 }
@@ -120,7 +115,7 @@ export interface Session {
   endTime: string; // ISO Date string
   status: "scheduled" | "completed" | "cancelled" | "no-show";
   recurring?: SessionRecurrence | null;
-  notes?: string; // Specific notes for this particular session instance
+  notes?: string; 
   isPendingSync?: boolean; 
 }
 
@@ -176,8 +171,23 @@ export interface EvolutionDataPoint {
   instrumentName: string; 
 }
 
-// Data structure for Prontuário template filling (IF it were external, now internal)
-// Retaining for potential local templating logic or future re-integration.
+export interface WaitingListEntry {
+  id: string;
+  patientName: string;
+  patientId?: string; // Optional: if linking to an existing patient record
+  contactPhone?: string;
+  reason?: string; // e.g., "Preferência de horário", "Primeira consulta"
+  preferredPsychologistId?: string;
+  preferredPsychologistName?: string;
+  preferredDays?: string; // e.g., "Seg, Qua (Manhã)"
+  preferredTimes?: string; // e.g., "09:00 - 12:00"
+  addedAt: string; // ISO Date string
+  status: 'waiting' | 'contacted' | 'scheduled' | 'archived';
+  notes?: string;
+}
+
+
+// Data structure for Prontuário (local generation)
 export interface ProntuarioGenerationDataDynamic {
   'Descrição da Demanda/Queixa': string;
   'Descrição do Procedimento/Análise': string; 
