@@ -11,6 +11,7 @@ import { Activity, Filter } from "lucide-react";
 import { DatePickerWithRange } from "@/components/ui/date-picker-with-range";
 import type { DateRange } from "react-day-picker";
 import { subDays } from 'date-fns';
+import { MainComplaintsCloud } from '@/components/charts/MainComplaintsCloud'; // Import the new component
 
 // Mock data (replace with actual data fetching later)
 const mockPsychologists = [
@@ -30,6 +31,36 @@ const mockProfessionalSituations = [
   { id: 'other', name: 'Outra' },
 ];
 
+// Mock complaints for the word cloud
+const mockComplaintsData = [
+  "Sinto muita ansiedade no trabalho e em situações sociais.",
+  "Tenho tido problemas para dormir, acordo cansado.",
+  "Estou desmotivado e sem energia para fazer as coisas que gostava.",
+  "Muita tristeza e choro fácil nos últimos meses.",
+  "Dificuldade de concentração e foco nas tarefas diárias.",
+  "Preocupação excessiva com o futuro, medo de que algo ruim aconteça.",
+  "Irritabilidade constante, perco a paciência facilmente.",
+  "Problemas de relacionamento com meu parceiro(a).",
+  "Sentimento de solidão, mesmo rodeado de pessoas.",
+  "Baixa autoestima e insegurança sobre minhas capacidades.",
+  "Ataques de pânico recorrentes, com falta de ar e taquicardia.",
+  "Estresse crônico devido às pressões do trabalho.",
+  "Não consigo relaxar, sempre tenso e alerta.",
+  "Pensamentos negativos e pessimistas sobre mim e sobre a vida.",
+  "Perda de interesse em atividades que antes eram prazerosas.",
+  "Dificuldade em lidar com perdas recentes.",
+  "Fobia social, evito sair de casa ou interagir.",
+  "Sintomas de burnout, exaustão emocional e física.",
+  "Conflitos familiares frequentes.",
+  "Dificuldade em tomar decisões importantes.",
+  "Sensação de vazio e falta de propósito.",
+  "Medo de dirigir após um pequeno acidente.",
+  "Problemas com imagem corporal e alimentação.",
+  "Insônia persistente, já tentei várias coisas.",
+  "Ansiedade relacionada a apresentações em público."
+];
+
+
 interface Filters {
   dateRange: DateRange | undefined;
   psychologistId: string;
@@ -45,6 +76,7 @@ export default function ClinicalAnalysisPage() {
     psychologistId: 'all',
     professionalSituation: 'all',
   });
+  const [complaintsForCloud, setComplaintsForCloud] = useState<string[]>(mockComplaintsData);
 
   const handleFilterChange = <K extends keyof Filters>(key: K, value: Filters[K]) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -53,7 +85,8 @@ export default function ClinicalAnalysisPage() {
   // Placeholder for data fetching based on filters
   useEffect(() => {
     // console.log("Filters changed, would refetch data:", filters);
-    // Example: fetchClinicalData(filters);
+    // Example: fetchClinicalData(filters).then(data => setComplaintsForCloud(data.complaints));
+    // For now, we just use the mock data.
   }, [filters]);
 
 
@@ -135,14 +168,11 @@ export default function ClinicalAnalysisPage() {
             </ChartContainer>
 
             <ChartContainer
-              title="Análise de Queixas Principais (Filtrado)"
-              description="Principais queixas e demandas dos pacientes no período e filtros selecionados."
+              title="Análise de Queixas Principais (IA)"
+              description="Nuvem de palavras com os temas mais frequentes das queixas dos pacientes no período e filtros selecionados."
               className="shadow-md hover:shadow-lg transition-shadow"
             >
-              <div className="h-[350px] flex items-center justify-center text-muted-foreground bg-muted/30 rounded-md p-4">
-                <Filter className="h-10 w-10 mr-3 text-primary/60"/>
-                <p>Gráfico de queixas principais (Ex: ansiedade, depressão) aparecerá aqui.</p>
-              </div>
+              <MainComplaintsCloud complaints={complaintsForCloud} />
             </ChartContainer>
           </div>
 
