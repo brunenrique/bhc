@@ -83,6 +83,23 @@ export interface ProntuarioData {
   signatureDetails?: DocumentSignatureDetails;
 }
 
+export interface TherapeuticGoal {
+  id: string;
+  description: string;
+  status: 'active' | 'achieved' | 'on_hold' | 'discontinued';
+  createdAt: string; // ISO Date string
+  targetDate?: string; // ISO Date string
+  achievedAt?: string; // ISO Date string
+  notes?: string;
+}
+
+export interface TherapeuticPlan {
+  id: string;
+  patientId: string;
+  overallSummary?: string; // Brief summary of the plan's focus
+  goals: TherapeuticGoal[];
+  lastUpdatedAt: string; // ISO Date string
+}
 
 export interface Patient {
   id: string;
@@ -91,9 +108,10 @@ export interface Patient {
   phone?: string;
   dateOfBirth?: string; // ISO Date string (YYYY-MM-DD)
   address?: string;
-  sessionNotes?: string;
+  sessionNotes?: string; // To be renamed to "Evolução das Sessões" in UI
   previousSessionNotes?: PatientNoteVersion[];
-  prontuario?: ProntuarioData; // New field for structured record
+  prontuario?: ProntuarioData;
+  therapeuticPlan?: TherapeuticPlan; // New field for PTI
   createdAt: string; // ISO Date string
   updatedAt: string; // ISO Date string
 }
@@ -115,14 +133,21 @@ export interface Session {
   isPendingSync?: boolean; // For offline mode
 }
 
+export interface AssessmentResultDetails {
+  score: number;
+  level: string;
+  summary?: string;
+  answeredAt?: string; // ISO Date string
+  detailedAnswers?: Array<{question: string, answer: string}>;
+}
 export interface Assessment {
   id:string;
-  title: string;
+  title: string; // This can serve as instrumentName
   patientId: string;
   patientName?: string;
   formLink?: string; // Tokenized link
   status: "pending" | "sent" | "completed";
-  results?: Record<string, any>; // Structure of results can vary
+  results?: AssessmentResultDetails; // Structure of results can vary
   createdAt: string; // ISO Date string
 }
 
@@ -138,9 +163,9 @@ export interface DocumentResource {
   signatureDetails?: DocumentSignatureDetails;
 }
 
-export interface ChatMessage { // Renamed from Message to avoid conflict if Message is used elsewhere
+export interface ChatMessage {
   id: string;
-  sender: string; // 'me' or user ID/name
+  sender: string; 
   avatar?: string;
   text: string;
   timestamp: Date;
@@ -150,7 +175,13 @@ export interface Chat {
   id: string;
   name: string;
   type: 'general' | 'private';
-  participants?: string[]; // For private chats, user IDs
-  avatarUrl?: string; // For direct chat with a user (e.g., the other user's avatar)
+  participants?: string[]; 
+  avatarUrl?: string; 
 }
 
+// Data point for evolution chart
+export interface EvolutionDataPoint {
+  date: string; // ISO Date string (from assessment createdAt)
+  score: number;
+  instrumentName: string; // Title of the assessment
+}

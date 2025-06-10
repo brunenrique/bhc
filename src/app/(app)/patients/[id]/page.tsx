@@ -3,12 +3,12 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import React, { useEffect, useState, useCallback, useRef, ChangeEvent } from 'react';
-import type { Patient, Session, PatientNoteVersion, ProntuarioData, DocumentSignatureStatus, DocumentSignatureDetails } from '@/types';
+import type { Patient, Session, PatientNoteVersion, ProntuarioData, DocumentSignatureStatus, DocumentSignatureDetails, Assessment } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Edit, Mail, Phone, CalendarDays, FileText, PlusCircle, Repeat, Eye, EyeOff, Lock, History, Info, BookMarked, Fingerprint, ShieldCheck, ShieldX, ShieldAlert, SendToBack, UploadCloud } from 'lucide-react';
+import { ArrowLeft, Edit, Mail, Phone, CalendarDays, FileText, PlusCircle, Repeat, Eye, EyeOff, Lock, History, Info, BookMarked, Fingerprint, ShieldCheck, ShieldX, ShieldAlert, SendToBack, UploadCloud, ListChecks, BarChart3, FileSignature } from 'lucide-react';
 import { PatientFormDialog } from '@/features/patients/components/PatientFormDialog';
 import { SessionFormDialog } from '@/features/scheduling/components/SessionFormDialog';
 import { Separator } from '@/components/ui/separator';
@@ -22,6 +22,11 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { cacheService } from '@/services/cacheService';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
+import { PatientTherapeuticPlan } from '@/features/patients/components/PatientTherapeuticPlan';
+import { PatientAssessmentsSection } from '@/features/patients/components/PatientAssessmentsSection';
+import { PatientEvolutionChart } from '@/features/patients/components/PatientEvolutionChart';
+// Mock assessments data - in a real app, this would be fetched or filtered from a global store/cache
+import { mockAssessmentsData as allMockAssessments } from '@/app/(app)/assessments/page'; // Use existing mock data
 
 const mockProntuario: ProntuarioData = {
   identificacao: {
@@ -55,7 +60,7 @@ const mockProntuario: ProntuarioData = {
     demandaQueixa: 'Paciente relata sintomas de ansiedade generalizada, preocupação excessiva com o futuro, dificuldades de concentração, irritabilidade e insônia nos últimos 6 meses. Queixa-se também de sobrecarga no ambiente de trabalho e dificuldade em estabelecer limites.',
   },
   procedimentosAnalise: [
-    { dataAtendimento: new Date(Date.now() - 1000 * 60 * 60 * 24 * 21).toISOString(), descricaoAtuacao: 'Primeira consulta. Realizada anamnese detalhada, escuta ativa da queixa inicial. Identificados principais gatilhos de ansiedade. Explicado o processo terapêutico e combinado contrato terapêutico. Aplicada Escala Beck de Ansiedade (BAI) - Resultado: 28 (Ansiedade Moderada).' },
+    { dataAtendimento: new Date(Date.now() - 1000 * 60 * 60 * 24 * 21).toISOString(), descricaoAtuacao: 'Primeira consulta. Realizada anamnese detalhada, escuta ativa da queixa inicial. Identificados principais gatilhos de ansiedade. Explicado o processo terapêutico e combinado contrato terapêutico. Aplicada Escala Beck de Ansiedade (BAI) - Resultado: 25 (Ansiedade Moderada).' },
     { dataAtendimento: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(), descricaoAtuacao: 'Foco em psicoeducação sobre ansiedade e seus mecanismos. Introduzidas técnicas de respiração diafragmática e relaxamento progressivo. Paciente demonstrou boa receptividade e compreensão.' },
     { dataAtendimento: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(), descricaoAtuacao: 'Trabalho com reestruturação cognitiva de pensamentos disfuncionais relacionados ao trabalho e autoexigência. Paciente identificou padrões de pensamento catastróficos. Proposta de diário de pensamentos como tarefa de casa.' },
   ],
@@ -70,24 +75,53 @@ const mockProntuario: ProntuarioData = {
 
 const fetchPatientDetailsMock = async (id: string): Promise<Patient | null> => {
   await new Promise(resolve => setTimeout(resolve, 300)); 
-  const mockPatient: Patient = {
+  const mockPatientBase = {
     id,
-    name: id === '1' ? 'Ana Beatriz Silva' : id === '2' ? 'Bruno Almeida Costa' : 'Paciente Exemplo Detalhado',
     email: id === '1' ? 'ana.silva@example.com' : id === '2' ? 'bruno.costa@example.com' : 'paciente.detalhe@example.com',
     phone: id === '1' ? '(11) 98765-4321' : id === '2' ? '(21) 91234-5678' : '(XX) XXXXX-XXXX',
     dateOfBirth: id === '1' ? '1990-05-15' : id === '2' ? '1985-11-20' : '1995-01-01',
     address: 'Rua Fictícia, 123, Bairro Imaginário, Cidade Exemplo - UF',
-    sessionNotes: `Sessão de 22/07: Paciente demonstrou melhora significativa na gestão de pensamentos automáticos. Praticou as técnicas de respiração e relatou diminuição da insônia. Próxima sessão focará em estratégias de manutenção e prevenção de recaídas.`,
-    previousSessionNotes: [
-      { content: "Sessão de 15/07: Foco em reestruturação cognitiva de pensamentos automáticos negativos. Paciente identificou três padrões principais. Recomendações: Continuar o diário de pensamentos, praticar técnicas de respiração diafragmática duas vezes ao dia.", timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString() },
-      { content: "Paciente apresenta quadro de ansiedade generalizada, com picos de estresse relacionados ao trabalho. Demonstra boa adesão às técnicas propostas em sessões anteriores.", timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString() }
-    ],
-    prontuario: id === '1' ? { ...mockProntuario, signatureStatus: 'none' } : id === '2' ? { ...mockProntuario, nomeCompleto: 'Bruno Almeida Costa', signatureStatus: 'pending_govbr_signature', signatureDetails: { hash: `sha256-${Math.random().toString(36).substring(2,15)}`} } : undefined,
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(), 
     updatedAt: new Date().toISOString(),
   };
+  
+  let specificData: Partial<Patient> = {};
+  if (id === '1') {
+    specificData = {
+      name: 'Ana Beatriz Silva',
+      sessionNotes: `Sessão de 22/07: Paciente demonstrou melhora significativa na gestão de pensamentos automáticos. Praticou as técnicas de respiração e relatou diminuição da insônia. Próxima sessão focará em estratégias de manutenção e prevenção de recaídas.`,
+      previousSessionNotes: [
+        { content: "Sessão de 15/07: Foco em reestruturação cognitiva de pensamentos automáticos negativos. Paciente identificou três padrões principais. Recomendações: Continuar o diário de pensamentos, praticar técnicas de respiração diafragmática duas vezes ao dia.", timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString() },
+        { content: "Paciente apresenta quadro de ansiedade generalizada, com picos de estresse relacionados ao trabalho. Demonstra boa adesão às técnicas propostas em sessões anteriores.", timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString() }
+      ],
+      prontuario: { ...mockProntuario, signatureStatus: 'none' },
+      therapeuticPlan: {
+        id: 'tp1',
+        patientId: '1',
+        overallSummary: 'Foco em redução de sintomas ansiosos e melhoria da gestão do estresse laboral.',
+        goals: [
+          { id: 'g1', description: 'Identificar e questionar 3 pensamentos automáticos negativos por dia.', status: 'active', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20).toISOString(), targetDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).toISOString() },
+          { id: 'g2', description: 'Praticar técnica de respiração diafragmática por 5 minutos diariamente.', status: 'active', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString() },
+          { id: 'g3', description: 'Reduzir episódios de insônia para menos de 2 por semana.', status: 'achieved', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(), achievedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(), notes: 'Conseguido após 3 semanas de técnicas de higiene do sono e relaxamento.' },
+        ],
+        lastUpdatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
+      }
+    };
+  } else if (id === '2') {
+    specificData = {
+      name: 'Bruno Almeida Costa',
+      sessionNotes: `Sessão de 20/07: Paciente relata dificuldades em manter a rotina de exercícios. Exploramos barreiras e ajustamos o plano. Apresentou bom insight sobre procrastinação.`,
+      prontuario: { ...mockProntuario, identificacao: { ...mockProntuario.identificacao, nomeCompleto: 'Bruno Almeida Costa' }, signatureStatus: 'pending_govbr_signature', signatureDetails: { hash: `sha256-${Math.random().toString(36).substring(2,15)}`} },
+    };
+  } else {
+     specificData = {
+      name: 'Paciente Exemplo Detalhado',
+      sessionNotes: 'Nenhuma anotação recente.',
+    };
+  }
+
   if (id === 'notfound') return null;
-  return mockPatient;
+  return { ...mockPatientBase, ...specificData } as Patient;
 };
 
 const fetchPatientSessionsMock = async (patientId: string): Promise<Session[]> => {
@@ -146,8 +180,7 @@ const ProntuarioDisplay: React.FC<{
             <p><strong>Sexo:</strong> {identificacao.sexo}</p>
             <p><strong>CPF:</strong> {identificacao.cpf}</p>
             <p><strong>Data de Nasc.:</strong> {identificacao.dataNascimento ? format(parseISO(identificacao.dataNascimento), "dd/MM/yyyy", { locale: ptBR }) : 'N/A'}</p>
-            {/* ... other identification fields ... */}
-             <p><strong>Estado Civil:</strong> {identificacao.estadoCivil}</p>
+            <p><strong>Estado Civil:</strong> {identificacao.estadoCivil}</p>
             <p><strong>Raça/Cor:</strong> {identificacao.racaCor}</p>
             <p><strong>Possui filhos:</strong> {identificacao.possuiFilhos ? `Sim, ${identificacao.quantosFilhos || 0}` : 'Não'}</p>
             <p><strong>Situação profissional:</strong> {identificacao.situacaoProfissional}</p>
@@ -194,7 +227,6 @@ const ProntuarioDisplay: React.FC<{
         </section>
       )}
       
-      {/* Signature Section */}
       <input 
         type="file" 
         accept=".p7s,.pdf"
@@ -251,7 +283,6 @@ const ProntuarioDisplay: React.FC<{
   );
 };
 
-// Dialog for Prontuário Signature Details
 interface ProntuarioSignatureDetailsDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -274,7 +305,6 @@ function ProntuarioSignatureDetailsDialog({ isOpen, onOpenChange, details, patie
           <p><strong>Data da Assinatura (Simulada):</strong> {details.signedAt ? format(parseISO(details.signedAt), "dd/MM/yyyy HH:mm:ss", { locale: ptBR }) : 'N/A'}</p>
           <p><strong>Código de Verificação (Simulado):</strong> {details.verificationCode || 'N/A'}</p>
           {details.p7sFile && <p><strong>Arquivo de Assinatura (.p7s):</strong> {details.p7sFile}</p>}
-          {/* No link para documento assinado em prontuário, pois ele é parte do objeto Patient */}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Fechar</Button>
@@ -293,13 +323,14 @@ export default function PatientDetailPage() {
 
   const [patient, setPatient] = useState<Patient | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [patientAssessments, setPatientAssessments] = useState<Assessment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isPatientFormOpen, setIsPatientFormOpen] = useState(false);
   const [isSessionFormOpen, setIsSessionFormOpen] = useState(false);
   const [editingSession, setEditingSession] = useState<Session | null>(null);
   const [areNotesVisible, setAreNotesVisible] = useState(false);
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'notes' | 'prontuario'>('notes');
+  const [activeTab, setActiveTab] = useState<'evolution' | 'prontuario' | 'pti' | 'scales' | 'analysis'>('evolution');
   const [isProntuarioSigDetailsOpen, setIsProntuarioSigDetailsOpen] = useState(false);
 
 
@@ -311,24 +342,28 @@ export default function PatientDetailPage() {
         
         try {
           const cachedPatient = await cacheService.patients.getDetail(patientId);
-          if (isMounted && cachedPatient) {
-            setPatient(cachedPatient);
-          }
-        } catch (error) {
-          // console.warn(`Error loading patient ${patientId} from cache:`, error);
-        }
+          if (isMounted && cachedPatient) setPatient(cachedPatient);
 
-        try {
           const cachedSessions = await cacheService.patients.getSessions(patientId);
-          if (isMounted && cachedSessions) {
-            setSessions(cachedSessions.sort((a,b) => parseISO(b.startTime).getTime() - parseISO(a.startTime).getTime()));
+          if (isMounted && cachedSessions) setSessions(cachedSessions.sort((a,b) => parseISO(b.startTime).getTime() - parseISO(a.startTime).getTime()));
+          
+          // Load all assessments from cache to filter later
+          const cachedAllAssessments = await cacheService.assessments.getList();
+          if(isMounted && cachedAllAssessments) {
+            setPatientAssessments(cachedAllAssessments.filter(asm => asm.patientId === patientId && asm.status === 'completed'));
           }
+
         } catch (error) {
-          // console.warn(`Error loading sessions for patient ${patientId} from cache:`, error);
+          // console.warn(`Error loading patient data for ${patientId} from cache:`, error);
         }
 
         const patientData = await fetchPatientDetailsMock(patientId);
         const sessionsData = await fetchPatientSessionsMock(patientId);
+        
+        // For assessments, filter the global mock data for this patient.
+        // In a real app, you'd fetch assessments for this specific patient.
+        const assessmentsForPatient = allMockAssessments.filter(asm => asm.patientId === patientId && asm.status === 'completed');
+
 
         if (isMounted) {
           if (patientData) {
@@ -337,6 +372,10 @@ export default function PatientDetailPage() {
           }
           setSessions(sessionsData.sort((a,b) => parseISO(b.startTime).getTime() - parseISO(a.startTime).getTime()));
           await cacheService.patients.setSessions(patientId, sessionsData);
+          
+          setPatientAssessments(assessmentsForPatient);
+          // No specific cache for patient's assessments subset here, assuming assessments page handles master list cache
+
           setIsLoading(false);
         }
       };
@@ -421,6 +460,8 @@ export default function PatientDetailPage() {
       ...patient, 
       ...updatedData, 
       previousSessionNotes: previousNotes,
+      // For PTI, we'd need a separate form. For now, it's read-only from mock.
+      // therapeuticPlan: updatedData.therapeuticPlan || patient.therapeuticPlan, 
       updatedAt: new Date().toISOString() 
     };
     
@@ -504,15 +545,12 @@ export default function PatientDetailPage() {
             </div>
           </div>
           <CardContent className="p-6 space-y-6">
-            <div>
-              <Skeleton className="h-6 w-40 mb-2" />
-              <Skeleton className="h-5 w-full" />
-            </div>
+            <Skeleton className="h-8 w-1/3 mb-2" /> {/* For TabsList */}
+            <Skeleton className="h-6 w-40 mb-2" />
+            <Skeleton className="h-40 w-full" />
             <Separator />
-             <div>
-                <Skeleton className="h-6 w-1/2 mb-2" />
-                <Skeleton className="h-20 w-full" />
-            </div>
+            <Skeleton className="h-6 w-1/2 mb-2" />
+            <Skeleton className="h-64 w-full" /> {/* Placeholder for multiple sections */}
           </CardContent>
         </Card>
         <Card className="shadow-lg">
@@ -536,6 +574,9 @@ export default function PatientDetailPage() {
       </div>
     );
   }
+
+  const completedPatientAssessments = patientAssessments.filter(asm => asm.status === 'completed' && asm.results?.score !== undefined);
+
 
   return (
     <div className="space-y-6">
@@ -573,42 +614,40 @@ export default function PatientDetailPage() {
           </div>
           <Separator />
           
-          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'notes' | 'prontuario')}>
-            <div className="flex justify-between items-center mb-3">
-              <TabsList>
-                <TabsTrigger value="notes" className="font-headline text-sm px-3 py-1.5 h-auto">
-                  <FileText className="w-4 h-4 mr-2"/>Anotações de Sessão
-                </TabsTrigger>
-                <TabsTrigger value="prontuario" className="font-headline text-sm px-3 py-1.5 h-auto">
-                   <BookMarked className="w-4 h-4 mr-2"/>Prontuário Psicológico
-                </TabsTrigger>
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full">
+            <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+              <TabsList className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-1 w-full md:w-auto">
+                <TabsTrigger value="evolution" className="font-headline text-xs px-2 py-1.5 h-auto whitespace-nowrap"><FileText className="w-3.5 h-3.5 mr-1.5"/>Evolução Sessões</TabsTrigger>
+                <TabsTrigger value="prontuario" className="font-headline text-xs px-2 py-1.5 h-auto whitespace-nowrap"><BookMarked className="w-3.5 h-3.5 mr-1.5"/>Prontuário</TabsTrigger>
+                <TabsTrigger value="pti" className="font-headline text-xs px-2 py-1.5 h-auto whitespace-nowrap"><ListChecks className="w-3.5 h-3.5 mr-1.5"/>PTI</TabsTrigger>
+                <TabsTrigger value="scales" className="font-headline text-xs px-2 py-1.5 h-auto whitespace-nowrap"><FileSignature className="w-3.5 h-3.5 mr-1.5"/>Escalas</TabsTrigger>
+                <TabsTrigger value="analysis" className="font-headline text-xs px-2 py-1.5 h-auto whitespace-nowrap"><BarChart3 className="w-3.5 h-3.5 mr-1.5"/>Análise Gráfica</TabsTrigger>
               </TabsList>
-              <div className="flex gap-2">
-                {activeTab === 'notes' && patient.previousSessionNotes && patient.previousSessionNotes.length > 0 && (
+              <div className="flex gap-2 ml-auto">
+                { (activeTab === 'evolution' || activeTab === 'prontuario' || activeTab === 'pti') && patient.previousSessionNotes && patient.previousSessionNotes.length > 0 && activeTab === 'evolution' && (
                     <Button variant="outline" size="sm" onClick={() => setIsHistoryDialogOpen(true)} disabled={!areNotesVisible}>
-                        <History className="w-4 h-4 mr-2" /> Ver Histórico de Anotações
+                        <History className="w-4 h-4 mr-2" /> Histórico
                     </Button>
                 )}
                 <Button variant="outline" size="sm" onClick={() => setAreNotesVisible(!areNotesVisible)}>
                     {areNotesVisible ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
-                    {areNotesVisible ? "Ocultar Detalhes Clínicos" : "Visualizar Detalhes Clínicos"}
+                    {areNotesVisible ? "Ocultar Confidencial" : "Ver Confidencial"}
                 </Button>
               </div>
             </div>
 
-            {!areNotesVisible ? (
+            {!areNotesVisible && (activeTab === 'evolution' || activeTab === 'prontuario' || activeTab === 'pti' || activeTab === 'scales' || activeTab === 'analysis') ? (
               <Alert variant="default" className="bg-muted/40 border-primary/30 mt-2">
                 <Lock className="h-5 w-5 text-primary/80" />
                 <AlertTitle className="font-headline text-primary/90">Conteúdo Confidencial</AlertTitle>
                 <AlertDescription className="text-muted-foreground">
-                    Os detalhes clínicos são confidenciais. Clique em "Visualizar Detalhes Clínicos" para exibir o conteúdo.
-                    Lembre-se de ocultá-los ao se afastar. (Simulação de segurança)
+                    Os detalhes clínicos são confidenciais. Clique em "Ver Confidencial" para exibir.
                 </AlertDescription>
               </Alert>
             ) : (
               <>
-                <TabsContent value="notes">
-                  <h3 className="text-lg font-semibold font-headline mb-2">Anotações de Sessão</h3>
+                <TabsContent value="evolution">
+                  <h3 className="text-lg font-semibold font-headline mb-2">Evolução das Sessões</h3>
                    <ScrollArea className="h-40 w-full rounded-md border p-3 bg-muted/20 shadow-inner">
                        <pre className="whitespace-pre-wrap text-sm text-foreground font-body leading-relaxed">{patient.sessionNotes || "Nenhuma anotação registrada."}</pre>
                    </ScrollArea>
@@ -621,6 +660,15 @@ export default function PatientDetailPage() {
                       onUploadSignedFile={handleUploadSignedProntuario}
                       onViewSignatureDetails={() => setIsProntuarioSigDetailsOpen(true)}
                     />
+                </TabsContent>
+                <TabsContent value="pti">
+                    <PatientTherapeuticPlan plan={patient.therapeuticPlan} />
+                </TabsContent>
+                <TabsContent value="scales">
+                    <PatientAssessmentsSection patientName={patient.name} assessments={patientAssessments} />
+                </TabsContent>
+                <TabsContent value="analysis">
+                     <PatientEvolutionChart patientName={patient.name} completedAssessments={completedPatientAssessments} />
                 </TabsContent>
               </>
             )}
@@ -683,10 +731,10 @@ export default function PatientDetailPage() {
         onSave={handleSaveSession}
       />
 
-       <Dialog open={isHistoryDialogOpen && areNotesVisible && activeTab === 'notes'} onOpenChange={setIsHistoryDialogOpen}>
+       <Dialog open={isHistoryDialogOpen && areNotesVisible && activeTab === 'evolution'} onOpenChange={setIsHistoryDialogOpen}>
         <DialogContent className="sm:max-w-2xl max-h-[80vh]">
           <DialogHeader>
-            <DialogTitle className="font-headline">Histórico de Anotações de Sessão</DialogTitle>
+            <DialogTitle className="font-headline">Histórico de Evolução das Sessões</DialogTitle>
             <DialogDescription>
               Versões anteriores das anotações para {patient.name}. A mais recente está no topo.
             </DialogDescription>
@@ -706,7 +754,7 @@ export default function PatientDetailPage() {
             ) : (
               <div className="text-center py-6">
                 <Info className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
-                <p className="text-muted-foreground">Nenhum histórico de versões anteriores encontrado para as anotações de sessão.</p>
+                <p className="text-muted-foreground">Nenhum histórico de versões anteriores encontrado.</p>
               </div>
             )}
           </ScrollArea>
@@ -727,3 +775,4 @@ export default function PatientDetailPage() {
     </div>
   );
 }
+

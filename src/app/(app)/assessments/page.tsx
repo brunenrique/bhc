@@ -5,16 +5,60 @@ import { AssessmentResultsTable } from "@/features/assessments/components/Assess
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { Assessment } from "@/types";
+import type { Assessment, AssessmentResultDetails } from "@/types";
 import {ClipboardEdit, ListChecks, Loader2} from "lucide-react";
 import { useState, useCallback, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { cacheService } from "@/services/cacheService";
 
-const mockAssessmentsData: Assessment[] = [
-  { id: 'assess1', title: 'Escala Beck de Ansiedade', patientId: 'p1', patientName: 'Ana Silva', status: 'completed', formLink: 'mock-link-123', results: { score: 25, level: 'Moderado', summary: 'Paciente reportou sintomas consistentes com ansiedade moderada, incluindo preocupação excessiva e tensão física.' }, createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString() },
-  { id: 'assess2', title: 'Inventário de Depressão de Beck (BDI)', patientId: 'p2', patientName: 'Bruno Costa', status: 'sent', formLink: 'mock-link-456', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString() },
-  { id: 'assess3', title: 'Questionário de Qualidade de Vida (WHOQOL-BREF)', patientId: 'p1', patientName: 'Ana Silva', status: 'pending', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString() },
+export const mockAssessmentsData: Assessment[] = [
+  { 
+    id: 'assess1', 
+    title: 'Escala Beck de Ansiedade', 
+    patientId: 'p1', 
+    patientName: 'Ana Silva', 
+    status: 'completed', 
+    formLink: 'mock-link-123', 
+    results: { score: 25, level: 'Moderado', summary: 'Paciente reportou sintomas consistentes com ansiedade moderada, incluindo preocupação excessiva e tensão física.', answeredAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 9).toISOString() }, 
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString() 
+  },
+  { 
+    id: 'assess1b', 
+    title: 'Escala Beck de Ansiedade', 
+    patientId: 'p1', 
+    patientName: 'Ana Silva', 
+    status: 'completed', 
+    formLink: 'mock-link-123b', 
+    results: { score: 18, level: 'Leve', summary: 'Sintomas de ansiedade diminuíram, reportando melhora na qualidade do sono.', answeredAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString() }, 
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString() 
+  },
+  { 
+    id: 'assess2', 
+    title: 'Inventário de Depressão de Beck (BDI)', 
+    patientId: 'p2', 
+    patientName: 'Bruno Costa', 
+    status: 'sent', 
+    formLink: 'mock-link-456', 
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString() 
+  },
+   { 
+    id: 'assess2b_bdi_p1', 
+    title: 'Inventário de Depressão de Beck (BDI)', 
+    patientId: 'p1', 
+    patientName: 'Ana Silva', 
+    status: 'completed', 
+    formLink: 'mock-link-bdi-p1', 
+    results: { score: 12, level: 'Mínimo', summary: 'Sintomas depressivos mínimos.', answeredAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 8).toISOString() }, 
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 9).toISOString() 
+  },
+  { 
+    id: 'assess3', 
+    title: 'Questionário de Qualidade de Vida (WHOQOL-BREF)', 
+    patientId: 'p1', 
+    patientName: 'Ana Silva', 
+    status: 'pending', 
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString() 
+  },
 ];
 
 
@@ -42,14 +86,17 @@ export default function AssessmentsPage() {
       await new Promise(resolve => setTimeout(resolve, 300));
       
       if (isMounted) {
-        setAssessments(mockAssessmentsData); 
-        try {
-          await cacheService.assessments.setList(mockAssessmentsData);
-        } catch (error) {
-          // console.warn("Error saving assessments to cache:", error);
+        // Only set mock data if cache was empty, to preserve user actions during session
+        if (assessments.length === 0) {
+          setAssessments(mockAssessmentsData); 
+          try {
+            await cacheService.assessments.setList(mockAssessmentsData);
+          } catch (error) {
+            // console.warn("Error saving assessments to cache:", error);
+          }
         }
       }
-      // Check for completed assessments from localStorage after initial load
+      
       const keysToRemove: string[] = [];
       const updatedAssessmentsFromStorage = (isMounted && assessments.length > 0 ? assessments : mockAssessmentsData).map(assessment => {
         const completedKey = `assessment_completed_${assessment.id}`;
@@ -57,9 +104,9 @@ export default function AssessmentsPage() {
             const storedResults = localStorage.getItem(completedKey);
             if (storedResults) {
             try {
-                const results = JSON.parse(storedResults);
+                const results = JSON.parse(storedResults) as AssessmentResultDetails;
                 keysToRemove.push(completedKey);
-                if (isMounted) { // Only toast if component still mounted
+                if (isMounted) { 
                     toast({
                         title: "Avaliação Concluída",
                         description: `A avaliação "${assessment.title}" para ${assessment.patientName} foi marcada como concluída.`,
@@ -77,7 +124,7 @@ export default function AssessmentsPage() {
       if (isMounted) {
         if (keysToRemove.length > 0) {
             setAssessments(updatedAssessmentsFromStorage);
-            await cacheService.assessments.setList(updatedAssessmentsFromStorage); // Update cache
+            await cacheService.assessments.setList(updatedAssessmentsFromStorage); 
             if (typeof window !== 'undefined') {
                 keysToRemove.forEach(key => localStorage.removeItem(key));
             }
@@ -200,3 +247,4 @@ export default function AssessmentsPage() {
     </div>
   );
 }
+
