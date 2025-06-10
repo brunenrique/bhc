@@ -3,14 +3,13 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import React, { useEffect, useState, useCallback, useRef, ChangeEvent, useMemo } from 'react';
-import type { Patient, Session, PatientNoteVersion, ProntuarioData, DocumentSignatureStatus, DocumentSignatureDetails, Assessment } from '@/types';
+import type { Patient, Session, PatientNoteVersion, ProntuarioData, DocumentSignatureStatus, DocumentSignatureDetails, Assessment, User } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-// import { Textarea } from '@/components/ui/textarea'; // Replaced by RichTextEditor for display
-import { RichTextEditor } from '@/components/shared/RichTextEditor'; // For displaying notes
-import { ArrowLeft, Edit, Mail, Phone, CalendarDays, FileText, PlusCircle, Repeat, Eye, EyeOff, Lock, History, Info, BookMarked, Fingerprint, ShieldCheck, ShieldX, ShieldAlert, SendToBack, UploadCloud, ListChecks, BarChart3, FileSignature, CalendarCheck2, CalendarX2, UserCheck, UserX, AlertTriangle, CaseSensitive, Bot } from 'lucide-react';
+import { RichTextEditor } from '@/components/shared/RichTextEditor'; 
+import { ArrowLeft, Edit, Mail, Phone, CalendarDays, FileText as FileTextIconLucide, PlusCircle, Repeat, Eye, EyeOff, Lock, History, Info, BookMarked, Fingerprint, ShieldCheck, ShieldX, ShieldAlert, SendToBack, UploadCloud, ListChecks, BarChart3, FileSignature, CalendarCheck2, CalendarX2, UserCheck, UserX, AlertTriangle, CaseSensitive, Bot, FileText as FileTextIcon } from 'lucide-react';
 import { PatientFormDialog } from '@/features/patients/components/PatientFormDialog';
 import { SessionFormDialog } from '@/features/scheduling/components/SessionFormDialog';
 import { Separator } from '@/components/ui/separator';
@@ -28,6 +27,9 @@ import { PatientTherapeuticPlan } from '@/features/patients/components/PatientTh
 import { PatientAssessmentsSection } from '@/features/patients/components/PatientAssessmentsSection';
 import { PatientEvolutionChart } from '@/features/patients/components/PatientEvolutionChart';
 import { mockAssessmentsData as allMockAssessments } from '@/app/(app)/assessments/page'; 
+import { GenerateProntuarioDialog } from '@/features/patients/components/GenerateProntuarioDialog';
+import { useAuth } from '@/hooks/useAuth';
+
 
 const mockProntuarioAna: ProntuarioData = {
   identificacao: {
@@ -46,56 +48,40 @@ const mockProntuarioAna: ProntuarioData = {
     enderecoCasa: 'Rua das Palmeiras, 45, Apto 101, Centro, Cidade Alegre - CA',
     telefone: '(11) 98765-4321',
     contatoEmergencia: 'Maria Silva (Mãe) - (11) 98888-7777',
+    tipoMoradia: 'Apartamento',
   },
   entradaUnidade: {
     descricaoEntrada: 'Busca espontânea após recomendação de uma amiga. Relatou sentir-se ansiosa e com dificuldades para lidar com o estresse no trabalho.',
   },
-  finalidade: {
-    descricaoFinalidade: 'Acolhimento psicológico e escuta humanizada para desenvolvimento de estratégias de enfrentamento da ansiedade e estresse, visando melhoria da qualidade de vida e bem-estar emocional. Não tem como finalidade produzir diagnóstico psicológico.',
-  },
-  responsavelTecnica: {
-    nomePsi: 'Dr. Exemplo Silva',
-    crp: '06/123456',
-  },
-  descricaoDemanda: {
-    demandaQueixa: 'Paciente relata sintomas de ansiedade generalizada, preocupação excessiva com o futuro, dificuldades de concentração, irritabilidade e insônia nos últimos 6 meses. Queixa-se também de sobrecarga no ambiente de trabalho e dificuldade em estabelecer limites.',
-  },
-  procedimentosAnalise: [
-    { dataAtendimento: subDays(new Date(), 21).toISOString(), descricaoAtuacao: 'Primeira consulta. Realizada anamnese detalhada, escuta ativa da queixa inicial. Identificados principais gatilhos de ansiedade. Explicado o processo terapêutico e combinado contrato terapêutico. Aplicada Escala Beck de Ansiedade (BAI) - Resultado: 25 (Ansiedade Moderada).' },
-    { dataAtendimento: subDays(new Date(), 14).toISOString(), descricaoAtuacao: 'Foco em psicoeducação sobre ansiedade e seus mecanismos. Introduzidas técnicas de respiração diafragmática e relaxamento progressivo. Paciente demonstrou boa receptividade e compreensão.' },
-    { dataAtendimento: subDays(new Date(), 7).toISOString(), descricaoAtuacao: 'Trabalho com reestruturação cognitiva de pensamentos disfuncionais relacionados ao trabalho e autoexigência. Paciente identificou padrões de pensamento catastróficos. Proposta de diário de pensamentos como tarefa de casa.' },
-  ],
-  conclusaoEncaminhamento: {
-    condutaAdotada: 'Paciente segue em acompanhamento psicológico semanal. Apresenta evolução gradual na identificação e manejo dos sintomas de ansiedade. Demonstra maior autoconsciência e engajamento nas técnicas propostas. Recomenda-se continuidade do processo terapêutico para consolidação dos ganhos e desenvolvimento de novas habilidades de enfrentamento. Nenhuma necessidade de encaminhamento externo no momento.',
-  },
-  localAssinatura: 'Santana de Parnaíba',
-  dataDocumento: new Date().toISOString(),
+  // Campos como finalidade, responsavelTecnica, descricaoDemanda, procedimentosAnalise, conclusaoEncaminhamento
+  // são preenchidos pela IA ou pelo profissional no momento da GERAÇÃO do documento Google.
+  // Não precisam estar no mock estático do paciente se a ideia é gerar dinamicamente.
+  localAssinatura: 'Santana de Parnaíba', // Pode ser uma configuração da clínica
   signatureStatus: 'none',
 };
 
 const mockProntuarioBruno: ProntuarioData = {
-  ...mockProntuarioAna, // Base
   identificacao: {
-    ...mockProntuarioAna.identificacao,
     nomeCompleto: 'Bruno Almeida Costa',
     cpf: '987.654.321-11',
     dataNascimento: '1985-11-20',
+    sexo: 'Masculino',
     estadoCivil: 'Casado',
+    racaCor: 'Parda',
+    possuiFilhos: false,
+    situacaoProfissional: 'Autônomo',
     profissao: 'Engenheiro de Software',
+    escolaridade: 'Mestrado Completo',
     renda: 'R$ 8.500,00',
+    enderecoCasa: 'Av. Principal, 789, Bairro Novo, Capital Estadual - ES',
     telefone: '(21) 91234-5678',
+    contatoEmergencia: 'Juliana Costa (Esposa) - (21) 91234-0000',
+    tipoMoradia: 'Casa',
   },
-  descricaoDemanda: {
-    demandaQueixa: 'Paciente encaminhado pelo clínico geral devido a sintomas de estresse pós-traumático após um acidente de trânsito. Relata flashbacks, pesadelos e evitação de situações que lembram o ocorrido.',
+  entradaUnidade: {
+    descricaoEntrada: 'Encaminhado pelo clínico geral devido a sintomas de estresse pós-traumático.',
   },
-  procedimentosAnalise: [
-    { dataAtendimento: subDays(new Date(), 30).toISOString(), descricaoAtuacao: 'Primeira entrevista após encaminhamento. Foco na construção de vínculo terapêutico e coleta de informações sobre o evento traumático e sintomas atuais. Aplicado PCL-5 preliminar.' },
-    { dataAtendimento: subDays(new Date(), 23).toISOString(), descricaoAtuacao: 'Psicoeducação sobre TEPT. Introdução de técnicas de grounding e manejo de ansiedade aguda.' },
-    { dataAtendimento: subDays(new Date(), 16).toISOString(), descricaoAtuacao: 'Início do processamento do trauma utilizando técnicas de exposição narrativa gradual. Paciente relata desconforto, mas demonstra engajamento.' },
-  ],
-  conclusaoEncaminhamento: {
-    condutaAdotada: 'Paciente em acompanhamento para TEPT. Recomenda-se continuidade da terapia de exposição e reprocessamento. Avaliar necessidade de consulta psiquiátrica para manejo de sintomas mais intensos, se persistirem.'
-  },
+  localAssinatura: 'Santana de Parnaíba',
   signatureStatus: 'pending_govbr_signature', 
   signatureDetails: { hash: `sha256-bruno-${Math.random().toString(36).substring(2,15)}`}
 };
@@ -109,7 +95,7 @@ const fetchPatientDetailsMock = async (id: string): Promise<Patient | null> => {
     email: id === '1' ? 'ana.silva@example.com' : id === '2' ? 'bruno.costa@example.com' : 'paciente.detalhe@example.com',
     phone: id === '1' ? '(11) 98765-4321' : id === '2' ? '(21) 91234-5678' : '(XX) XXXXX-XXXX',
     dateOfBirth: id === '1' ? '1990-05-15' : id === '2' ? '1985-11-20' : '1995-01-01',
-    address: 'Rua Fictícia, 123, Bairro Imaginário, Cidade Exemplo - UF',
+    address: id === '1' ? 'Rua das Palmeiras, 45, Apto 101, Centro, Cidade Alegre - CA' : id === '2' ? 'Av. Principal, 789, Bairro Novo, Capital Estadual - ES' : 'Rua Fictícia, 123, Bairro Imaginário, Cidade Exemplo - UF',
     createdAt: subDays(baseDate, 30).toISOString(), 
     updatedAt: new Date().toISOString(),
   };
@@ -161,11 +147,11 @@ const fetchPatientDetailsMock = async (id: string): Promise<Patient | null> => {
       },
       caseStudyNotes: `<h1>Estudo de Caso - Bruno Almeida Costa</h1><p>Paciente com diagnóstico de <strong>TEPT</strong> após acidente de trânsito há 8 meses. Apresenta sintomas clássicos de revivescência (flashbacks, pesadelos), evitação fóbica e hipervigilância.</p><p>Boa rede de apoio familiar, mas com dificuldades de engajamento em atividades sociais que antes eram prazerosas.</p><h2>Tratamento atual:</h2><p>Focado em <em>Terapia de Exposição Prolongada</em> e <em>Reestruturação Cognitiva</em>. Observa-se melhora na capacidade de falar sobre o trauma, mas ainda com considerável sofrimento emocional durante as exposições.</p><h2>Questões a explorar:</h2><ul><li>Comorbidade com depressão leve a moderada.</li><li>Impacto dos sintomas no relacionamento conjugal.</li></ul><p>Considerar encaminhamento para avaliação psiquiátrica se os sintomas de hipervigilância e insônia não melhorarem com as intervenções atuais.</p>`
     };
-  } else { // Generic patient for other IDs
+  } else { 
      specificData = {
       name: `Paciente Exemplo ${id}`,
       sessionNotes: `<p>Sessão de ${format(subDays(baseDate,5), "dd/MM")}: Nenhuma anotação detalhada para este paciente mock.</p>`,
-      prontuario: {...mockProntuarioAna, identificacao: {...mockProntuarioAna.identificacao, nomeCompleto: `Paciente Exemplo ${id}`}},
+      prontuario: {...mockProntuarioAna, identificacao: {...mockProntuarioAna.identificacao, nomeCompleto: `Paciente Exemplo ${id}`}}, // Use a base and customize name
       caseStudyNotes: "<p>Nenhuma nota de estudo de caso para este paciente exemplo.</p>",
     };
   }
@@ -197,7 +183,7 @@ const fetchPatientSessionsMock = async (patientId: string): Promise<Session[]> =
       { id: 's4_bruno', patientId, psychologistId: 'psy2', psychologistName: "Dra. Modelo Souza", startTime: subDays(baseDate, 17).toISOString(), endTime: new Date(subDays(baseDate, 17).getTime() + 60*60*1000).toISOString(), status: 'completed'},
       { id: 's5_bruno_past_noshow', patientId, psychologistId: 'psy2', psychologistName: "Dra. Modelo Souza", startTime: subDays(baseDate, 24).toISOString(), endTime: new Date(subDays(baseDate, 24).getTime() + 60*60*1000).toISOString(), status: 'no-show'}
     );
-  } else { // Generic sessions for other patients
+  } else { 
     sessionsList.push(
       { id: `s1_gen_${patientId}`, patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo Silva", startTime: addDays(baseDate, 2).toISOString(), endTime: new Date(addDays(baseDate, 2).getTime() + 60*60*1000).toISOString(), status: 'scheduled', notes: 'Sessão de acompanhamento.'},
       { id: `s2_gen_${patientId}`, patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo Silva", startTime: subDays(baseDate, 5).toISOString(), endTime: new Date(subDays(baseDate, 5).getTime() + 60*60*1000).toISOString(), status: 'completed'}
@@ -217,10 +203,12 @@ const recurrenceLabels: Record<string, string> = {
 // Prontuário Display Component
 const ProntuarioDisplay: React.FC<{ 
   prontuarioData: ProntuarioData | undefined;
+  patientNameForTitle?: string; // For the GenerateProntuarioDialog title
   onInitiateSignature: () => void;
   onUploadSignedFile: (file: File) => void;
   onViewSignatureDetails: () => void;
-}> = ({ prontuarioData, onInitiateSignature, onUploadSignedFile, onViewSignatureDetails }) => {
+  onOpenGenerateDialog: () => void;
+}> = ({ prontuarioData, patientNameForTitle, onInitiateSignature, onUploadSignedFile, onViewSignatureDetails, onOpenGenerateDialog }) => {
   const prontuarioFileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUploadTrigger = () => {
@@ -235,126 +223,108 @@ const ProntuarioDisplay: React.FC<{
     }
   };
 
-  if (!prontuarioData) {
-    return <p className="text-muted-foreground p-4 text-center">Nenhum dado de prontuário disponível para este paciente.</p>;
-  }
-
-  const { 
-    identificacao, entradaUnidade, finalidade, responsavelTecnica, 
-    descricaoDemanda, procedimentosAnalise, conclusaoEncaminhamento,
-    localAssinatura, dataDocumento, signatureStatus, signatureDetails
-  } = prontuarioData;
+  // Show only static patient info from prontuario if it exists. Dynamic parts are for generation.
+  const { identificacao, entradaUnidade, localAssinatura, signatureStatus, signatureDetails } = prontuarioData || {};
 
   return (
+    <div className="space-y-4">
+       <Button onClick={onOpenGenerateDialog} variant="default" className="w-full sm:w-auto">
+        <FileTextIcon className="mr-2 h-4 w-4" /> Gerar Prontuário (Google Doc)
+      </Button>
+      <Separator />
     <ScrollArea className="h-[450px] w-full rounded-md border p-4 bg-muted/20 shadow-inner space-y-6">
-      {identificacao && (
-        <section>
-          <h4 className="text-lg font-semibold font-headline mb-2 border-b pb-1">Identificação</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2 text-sm">
-            <p><strong>Nome Completo:</strong> {identificacao.nomeCompleto}</p>
-            <p><strong>Sexo:</strong> {identificacao.sexo}</p>
-            <p><strong>CPF:</strong> {identificacao.cpf}</p>
-            <p><strong>Data de Nasc.:</strong> {identificacao.dataNascimento ? format(parseISO(identificacao.dataNascimento), "dd/MM/yyyy", { locale: ptBR }) : 'N/A'}</p>
-            <p><strong>Estado Civil:</strong> {identificacao.estadoCivil}</p>
-            <p><strong>Raça/Cor:</strong> {identificacao.racaCor}</p>
-            <p><strong>Possui filhos:</strong> {identificacao.possuiFilhos ? `Sim, ${identificacao.quantosFilhos || 0}` : 'Não'}</p>
-            <p><strong>Situação profissional:</strong> {identificacao.situacaoProfissional}</p>
-            <p><strong>Profissão:</strong> {identificacao.profissao}</p>
-            <p><strong>Escolaridade:</strong> {identificacao.escolaridade}</p>
-            <p><strong>Renda:</strong> {identificacao.renda}</p>
-            <p className="md:col-span-2"><strong>Endereço:</strong> {identificacao.enderecoCasa}</p>
-            <p><strong>Telefone:</strong> {identificacao.telefone}</p>
-            <p><strong>Contato emergência:</strong> {identificacao.contatoEmergencia}</p>
-          </div>
-        </section>
-      )}
+      {!prontuarioData || !identificacao ? (
+         <p className="text-muted-foreground p-4 text-center">Nenhum dado de identificação do prontuário disponível. Use "Gerar Prontuário" para criar um novo.</p>
+      ) : (
+        <>
+          {identificacao && (
+            <section>
+              <h4 className="text-lg font-semibold font-headline mb-2 border-b pb-1">Identificação (Dados Base)</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                <p><strong>Nome Completo:</strong> {identificacao.nomeCompleto}</p>
+                <p><strong>Sexo:</strong> {identificacao.sexo}</p>
+                <p><strong>CPF:</strong> {identificacao.cpf}</p>
+                <p><strong>Data de Nasc.:</strong> {identificacao.dataNascimento ? format(parseISO(identificacao.dataNascimento), "dd/MM/yyyy", { locale: ptBR }) : 'N/A'}</p>
+                <p><strong>Estado Civil:</strong> {identificacao.estadoCivil}</p>
+                <p><strong>Raça/Cor:</strong> {identificacao.racaCor}</p>
+                <p><strong>Possui filhos:</strong> {identificacao.possuiFilhos ? `Sim, ${identificacao.quantosFilhos || 0}` : 'Não'}</p>
+                <p><strong>Situação profissional:</strong> {identificacao.situacaoProfissional}</p>
+                <p><strong>Profissão:</strong> {identificacao.profissao}</p>
+                <p><strong>Escolaridade:</strong> {identificacao.escolaridade}</p>
+                <p><strong>Renda:</strong> {identificacao.renda}</p>
+                <p className="md:col-span-2"><strong>Endereço:</strong> {identificacao.enderecoCasa}</p>
+                <p><strong>Tipo de Moradia:</strong> {identificacao.tipoMoradia}</p>
+                <p><strong>Telefone:</strong> {identificacao.telefone}</p>
+                <p><strong>Contato emergência:</strong> {identificacao.contatoEmergencia}</p>
+              </div>
+            </section>
+          )}
 
-      {entradaUnidade && ( <section><h4 className="text-lg font-semibold font-headline mb-2 border-b pb-1">1.1. Entrada na Unidade</h4><p className="text-sm whitespace-pre-wrap">{entradaUnidade.descricaoEntrada}</p></section> )}
-      {finalidade && ( <section><h4 className="text-lg font-semibold font-headline mb-2 border-b pb-1">1.2. Finalidade</h4><p className="text-sm whitespace-pre-wrap">{finalidade.descricaoFinalidade}</p></section> )}
-      {responsavelTecnica && ( <section><h4 className="text-lg font-semibold font-headline mb-2 border-b pb-1">1.3. Responsável Técnica</h4><p className="text-sm"><strong>Nome:</strong> {responsavelTecnica.nomePsi}</p><p className="text-sm"><strong>CRP:</strong> {responsavelTecnica.crp}</p></section> )}
-      {descricaoDemanda && ( <section><h4 className="text-lg font-semibold font-headline mb-2 border-b pb-1">Descrição da demanda/queixa</h4><p className="text-sm whitespace-pre-wrap">{descricaoDemanda.demandaQueixa}</p></section> )}
-      {procedimentosAnalise && procedimentosAnalise.length > 0 && (
-        <section>
-          <h4 className="text-lg font-semibold font-headline mb-2 border-b pb-1">Procedimento/Análise</h4>
-          <ul className="space-y-3">
-            {procedimentosAnalise.map((item, index) => (
-              <li key={index} className="text-sm border-l-2 border-primary pl-3 py-1">
-                <p><strong>Data:</strong> {format(parseISO(item.dataAtendimento), "dd/MM/yyyy", { locale: ptBR })}</p>
-                <p className="whitespace-pre-wrap mt-1">{item.descricaoAtuacao}</p>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-      {conclusaoEncaminhamento && ( <section><h4 className="text-lg font-semibold font-headline mb-2 border-b pb-1">Conclusão/Encaminhamento</h4><p className="text-sm whitespace-pre-wrap">{conclusaoEncaminhamento.condutaAdotada}</p></section> )}
-      
-      <section className="text-xs text-muted-foreground italic pt-4 border-t mt-4">
-        <p>Obs: Este documento não poderá ser utilizado para fins diferentes do apontado na finalidade acima, possui caráter sigiloso e trata-se de documento extrajudicial e não responsabilizo-me pelo uso dado ao relatório por parte da pessoa, grupo ou instituição, após a sua entrega em entrevista devolutiva.</p>
-      </section>
+          {entradaUnidade && ( <section><h4 className="text-lg font-semibold font-headline mb-2 border-b pb-1">Entrada na Unidade</h4><p className="text-sm whitespace-pre-wrap">{entradaUnidade.descricaoEntrada}</p></section> )}
+          
+          {/* The following sections are now part of the generated document, not stored directly in patient.prontuario */}
+          {/* finalidade, responsavelTecnica, descricaoDemanda, procedimentosAnalise, conclusaoEncaminhamento, dataDocumento */}
+          
+          <section className="text-xs text-muted-foreground italic pt-4 border-t mt-4">
+            <p>Obs: O prontuário gerado no Google Docs é o documento oficial. Este espaço exibe os dados base utilizados na geração.</p>
+          </section>
 
-      {localAssinatura && dataDocumento && responsavelTecnica && (
-        <section className="pt-6 text-center text-sm">
-          <p>{localAssinatura}, {format(parseISO(dataDocumento), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}.</p>
-          <div className="mt-12 border-t-2 border-foreground w-64 mx-auto pt-1">
-            <p>{responsavelTecnica.nomePsi}</p>
-            <p>Psicóloga(o) {responsavelTecnica.crp}</p>
-          </div>
-        </section>
+          {/* In-app signature simulation for the *concept* of a prontuario, if needed, or can be removed if Google Doc is the sole signed artifact */}
+          <input 
+            type="file" 
+            accept=".p7s,.pdf"
+            ref={prontuarioFileInputRef} 
+            onChange={handleFileChange}
+            className="hidden"
+          />
+          <Separator className="my-4" />
+          <section className="space-y-3">
+            <h4 className="text-md font-semibold font-headline">Assinatura Digital do Prontuário (Simulado GOV.BR - para referência interna)</h4>
+            {(!signatureStatus || signatureStatus === 'none') && (
+              <Button onClick={onInitiateSignature} variant="outline">
+                <Fingerprint className="mr-2 h-4 w-4 text-blue-500" /> Iniciar Assinatura (Referência)
+              </Button>
+            )}
+            {signatureStatus === 'pending_govbr_signature' && (
+              <div className="p-3 border rounded-md bg-amber-50 border-amber-200 space-y-2">
+                <div className="flex items-center text-amber-700">
+                  <SendToBack className="mr-2 h-5 w-5" />
+                  <p className="font-medium">Assinatura (Referência) Pendente</p>
+                </div>
+                <p className="text-xs text-amber-600">
+                  Após assinar o Google Doc, se desejar, pode fazer upload do arquivo .p7s ou PDF assinado aqui para referência.
+                </p>
+                <p className="text-xs text-amber-600 font-mono truncate">Hash (simulado): {signatureDetails?.hash || 'N/A'}</p>
+                <Button onClick={handleFileUploadTrigger} variant="secondary" size="sm">
+                  <UploadCloud className="mr-2 h-4 w-4" /> Upload Ref. Assinada
+                </Button>
+              </div>
+            )}
+            {signatureStatus === 'signed' && (
+              <div className="p-3 border rounded-md bg-green-50 border-green-200 space-y-2">
+                 <div className="flex items-center text-green-700">
+                  <ShieldCheck className="mr-2 h-5 w-5" />
+                  <p className="font-medium">Referência de Prontuário Assinado</p>
+                </div>
+                <Button onClick={onViewSignatureDetails} variant="link" size="sm" className="p-0 h-auto text-green-700">
+                  <Eye className="mr-1 h-4 w-4" /> Ver Detalhes da Assinatura (Referência)
+                </Button>
+              </div>
+            )}
+             {signatureStatus === 'verification_failed' && (
+              <div className="p-3 border rounded-md bg-red-50 border-red-200 text-red-700">
+                <div className="flex items-center">
+                  <ShieldX className="mr-2 h-5 w-5" />
+                  <p className="font-medium">Falha na Verificação (Referência)</p>
+                </div>
+                <p className="text-xs mt-1">O arquivo de assinatura fornecido não pôde ser validado (simulado).</p>
+              </div>
+            )}
+          </section>
+        </>
       )}
-      
-      <input 
-        type="file" 
-        accept=".p7s,.pdf"
-        ref={prontuarioFileInputRef} 
-        onChange={handleFileChange}
-        className="hidden"
-      />
-      <Separator className="my-4" />
-      <section className="space-y-3">
-        <h4 className="text-md font-semibold font-headline">Assinatura Digital do Prontuário (Simulado GOV.BR)</h4>
-        {(!signatureStatus || signatureStatus === 'none') && (
-          <Button onClick={onInitiateSignature} variant="outline">
-            <Fingerprint className="mr-2 h-4 w-4 text-blue-500" /> Iniciar Assinatura Digital
-          </Button>
-        )}
-        {signatureStatus === 'pending_govbr_signature' && (
-          <div className="p-3 border rounded-md bg-amber-50 border-amber-200 space-y-2">
-            <div className="flex items-center text-amber-700">
-              <SendToBack className="mr-2 h-5 w-5" />
-              <p className="font-medium">Assinatura Pendente</p>
-            </div>
-            <p className="text-xs text-amber-600">
-              O processo de assinatura foi iniciado. Acesse o portal GOV.BR para assinar.
-              Após assinar, faça o upload do arquivo .p7s ou PDF assinado abaixo.
-            </p>
-            <p className="text-xs text-amber-600 font-mono truncate">Hash (simulado): {signatureDetails?.hash || 'N/A'}</p>
-            <Button onClick={handleFileUploadTrigger} variant="secondary" size="sm">
-              <UploadCloud className="mr-2 h-4 w-4" /> Upload Prontuário Assinado
-            </Button>
-          </div>
-        )}
-        {signatureStatus === 'signed' && (
-          <div className="p-3 border rounded-md bg-green-50 border-green-200 space-y-2">
-             <div className="flex items-center text-green-700">
-              <ShieldCheck className="mr-2 h-5 w-5" />
-              <p className="font-medium">Prontuário Assinado Digitalmente</p>
-            </div>
-            <Button onClick={onViewSignatureDetails} variant="link" size="sm" className="p-0 h-auto text-green-700">
-              <Eye className="mr-1 h-4 w-4" /> Ver Detalhes da Assinatura
-            </Button>
-          </div>
-        )}
-         {signatureStatus === 'verification_failed' && (
-          <div className="p-3 border rounded-md bg-red-50 border-red-200 text-red-700">
-            <div className="flex items-center">
-              <ShieldX className="mr-2 h-5 w-5" />
-              <p className="font-medium">Falha na Verificação da Assinatura</p>
-            </div>
-            <p className="text-xs mt-1">O arquivo de assinatura fornecido não pôde ser validado (simulado).</p>
-          </div>
-        )}
-      </section>
     </ScrollArea>
+    </div>
   );
 };
 
@@ -371,7 +341,7 @@ function ProntuarioSignatureDetailsDialog({ isOpen, onOpenChange, details, patie
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-headline flex items-center"><Fingerprint className="mr-2 h-5 w-5 text-primary"/>Detalhes da Assinatura do Prontuário</DialogTitle>
+          <DialogTitle className="font-headline flex items-center"><Fingerprint className="mr-2 h-5 w-5 text-primary"/>Detalhes da Assinatura (Referência)</DialogTitle>
           <DialogDescription>Para o paciente: {patientName}</DialogDescription>
         </DialogHeader>
         <div className="py-4 space-y-2 text-sm">
@@ -395,6 +365,7 @@ export default function PatientDetailPage() {
   const params = useParams();
   const patientId = params.id as string;
   const { toast } = useToast();
+  const { user: currentUser } = useAuth();
 
   const [patient, setPatient] = useState<Patient | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -407,6 +378,7 @@ export default function PatientDetailPage() {
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'evolution' | 'prontuario' | 'case_study' | 'pti' | 'scales' | 'analysis'>('evolution');
   const [isProntuarioSigDetailsOpen, setIsProntuarioSigDetailsOpen] = useState(false);
+  const [isGenerateProntuarioDialogOpen, setIsGenerateProntuarioDialogOpen] = useState(false);
 
 
   useEffect(() => {
@@ -474,9 +446,9 @@ export default function PatientDetailPage() {
     };
     await updatePatientStateAndCache({ ...patient, prontuario: updatedProntuario, updatedAt: new Date().toISOString() });
     toast({
-      title: "Assinatura do Prontuário Iniciada (Simulado)",
-      description: `Prontuário preparado. Por favor, 'vá ao portal GOV.BR' para assinar e depois faça o upload do arquivo .p7s ou PDF assinado. Hash (simulado): ${mockHash}`,
-      duration: 9000,
+      title: "Assinatura do Prontuário (Referência) Iniciada",
+      description: `Para fins de referência interna, o prontuário foi marcado como pendente de assinatura.`,
+      duration: 7000,
     });
   }, [patient, updatePatientStateAndCache, toast]);
 
@@ -489,7 +461,7 @@ export default function PatientDetailPage() {
 
     if (!isValidExtension) {
       newStatus = 'verification_failed';
-      toast({ title: "Falha na Verificação", description: "Arquivo de assinatura inválido para o prontuário. Use .p7s ou .pdf.", variant: "destructive" });
+      toast({ title: "Falha na Verificação (Referência)", description: "Arquivo de assinatura inválido. Use .p7s ou .pdf.", variant: "destructive" });
     } else {
       newDetails = {
         ...patient.prontuario.signatureDetails,
@@ -498,7 +470,7 @@ export default function PatientDetailPage() {
         verificationCode: `GOVBR-PRONT-${Date.now().toString().slice(-6)}`,
         p7sFile: signedFile.name.endsWith('.p7s') ? signedFile.name : undefined,
       };
-      toast({ title: "Prontuário Assinado (Simulado)", description: `Prontuário de ${patient.name} foi marcado como assinado.`, className: "bg-primary text-primary-foreground" });
+      toast({ title: "Referência de Prontuário Assinado (Simulado)", description: `Referência de assinatura para ${patient.name} foi marcada como concluída.`, className: "bg-primary text-primary-foreground" });
     }
     
     const updatedProntuario: ProntuarioData = { ...patient.prontuario, signatureStatus: newStatus, signatureDetails: newDetails };
@@ -525,7 +497,7 @@ export default function PatientDetailPage() {
 
     if (newNotes !== undefined && newNotes !== currentNotes && (typeof currentNotes === 'string' && currentNotes.trim() !== "" && currentNotes.trim() !== "<p></p>")) {
       const newVersion: PatientNoteVersion = {
-        content: currentNotes, // Store the HTML content
+        content: currentNotes, 
         timestamp: patient.updatedAt || new Date().toISOString(),
       };
       previousNotes = [newVersion, ...previousNotes].slice(0, 5); 
@@ -631,7 +603,7 @@ export default function PatientDetailPage() {
             </div>
           </div>
           <CardContent className="p-6 space-y-6">
-            <Skeleton className="h-8 w-full mb-2" /> {/* For TabsList with more tabs */}
+            <Skeleton className="h-8 w-full mb-2" /> 
             <Skeleton className="h-6 w-40 mb-2" />
             <Skeleton className="h-40 w-full" />
             <Separator />
@@ -703,7 +675,7 @@ export default function PatientDetailPage() {
           <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full">
             <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
               <TabsList className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-6 gap-1 w-full md:w-auto">
-                <TabsTrigger value="evolution" className="font-headline text-xs px-2 py-1.5 h-auto whitespace-nowrap"><FileText className="w-3.5 h-3.5 mr-1.5"/>Evolução Sessões</TabsTrigger>
+                <TabsTrigger value="evolution" className="font-headline text-xs px-2 py-1.5 h-auto whitespace-nowrap"><FileTextIconLucide className="w-3.5 h-3.5 mr-1.5"/>Evolução Sessões</TabsTrigger>
                 <TabsTrigger value="prontuario" className="font-headline text-xs px-2 py-1.5 h-auto whitespace-nowrap"><BookMarked className="w-3.5 h-3.5 mr-1.5"/>Prontuário</TabsTrigger>
                 <TabsTrigger value="case_study" className="font-headline text-xs px-2 py-1.5 h-auto whitespace-nowrap"><CaseSensitive className="w-3.5 h-3.5 mr-1.5"/>Estudo de Caso</TabsTrigger>
                 <TabsTrigger value="pti" className="font-headline text-xs px-2 py-1.5 h-auto whitespace-nowrap"><ListChecks className="w-3.5 h-3.5 mr-1.5"/>PTI</TabsTrigger>
@@ -737,9 +709,9 @@ export default function PatientDetailPage() {
                   <h3 className="text-lg font-semibold font-headline mb-2">Evolução das Sessões</h3>
                   <RichTextEditor
                       initialContent={patient.sessionNotes || "<p></p>"}
-                      onUpdate={() => {}} // Read-only, no update needed here
+                      onUpdate={() => {}} 
                       editable={false}
-                      editorClassName="h-auto max-h-[600px] overflow-y-auto bg-transparent p-0 rounded-none"
+                      editorClassName="h-auto max-h-[600px] overflow-y-auto bg-transparent p-0 rounded-none shadow-none border-none"
                       pageClassName="min-h-[200px] shadow-none border"
                   />
                 </TabsContent>
@@ -747,9 +719,11 @@ export default function PatientDetailPage() {
                    <h3 className="text-lg font-semibold font-headline mb-2">Prontuário Psicológico</h3>
                    <ProntuarioDisplay 
                       prontuarioData={patient.prontuario} 
+                      patientNameForTitle={patient.name}
                       onInitiateSignature={handleInitiateProntuarioSignature}
                       onUploadSignedFile={handleUploadSignedProntuario}
                       onViewSignatureDetails={() => setIsProntuarioSigDetailsOpen(true)}
+                      onOpenGenerateDialog={() => setIsGenerateProntuarioDialogOpen(true)}
                     />
                 </TabsContent>
                  <TabsContent value="case_study">
@@ -762,9 +736,9 @@ export default function PatientDetailPage() {
                       <CardContent>
                          <RichTextEditor
                             initialContent={patient.caseStudyNotes || "<p></p>"}
-                            onUpdate={() => {}} // Read-only
+                            onUpdate={() => {}} 
                             editable={false}
-                            editorClassName="h-auto max-h-[400px] overflow-y-auto bg-transparent p-0 rounded-none"
+                            editorClassName="h-auto max-h-[400px] overflow-y-auto bg-transparent p-0 rounded-none shadow-none border-none"
                             pageClassName="min-h-[200px] shadow-none border"
                           />
                       </CardContent>
@@ -941,6 +915,14 @@ export default function PatientDetailPage() {
             onOpenChange={setIsProntuarioSigDetailsOpen}
             details={patient.prontuario.signatureDetails}
             patientName={patient.name}
+        />
+      )}
+      {patient && currentUser && (
+        <GenerateProntuarioDialog
+          isOpen={isGenerateProntuarioDialogOpen && areNotesVisible && activeTab === 'prontuario'}
+          onOpenChange={setIsGenerateProntuarioDialogOpen}
+          patient={patient}
+          currentUser={currentUser}
         />
       )}
     </div>

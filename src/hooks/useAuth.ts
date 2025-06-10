@@ -1,3 +1,4 @@
+
 // src/hooks/useAuth.ts
 "use client";
 
@@ -13,6 +14,7 @@ const mockUser: User = {
   name: 'Dr. Exemplo Silva',
   role: 'psychologist',
   avatarUrl: 'https://placehold.co/100x100.png',
+  crp: '06/123456', // Added mock CRP
 };
 
 const authAtom = atom<User | null>(null);
@@ -37,7 +39,13 @@ export function useAuth() {
     setIsLoading(true);
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 500));
-    const loggedInUser: User = { ...mockUser, email, role, name: role === 'admin' ? 'Admin User' : role === 'secretary' ? 'Secretary User' : 'Psychologist User' };
+    const loggedInUser: User = { 
+      ...mockUser, 
+      email, 
+      role, 
+      name: role === 'admin' ? 'Admin User' : role === 'secretary' ? 'Secretária Exemplo' : 'Dr. Exemplo Silva',
+      crp: role === 'psychologist' ? mockUser.crp : undefined, // Assign CRP only if psychologist
+    };
     setUser(loggedInUser);
     localStorage.setItem('psiguard_user', JSON.stringify(loggedInUser));
     setIsLoading(false);
@@ -56,7 +64,13 @@ export function useAuth() {
   const register = async (name: string, email: string, pass: string, role: UserRole) => {
     setIsLoading(true);
     await new Promise(resolve => setTimeout(resolve, 500));
-    const newUser: User = { id: `mock-new-${Date.now()}`, email, name, role };
+    const newUser: User = { 
+      id: `mock-new-${Date.now()}`, 
+      email, 
+      name, 
+      role, 
+      crp: role === 'psychologist' ? '06/000000' : undefined 
+    };
     setUser(newUser);
     localStorage.setItem('psiguard_user', JSON.stringify(newUser));
     setIsLoading(false);

@@ -7,6 +7,7 @@ export interface User {
   name: string;
   role: UserRole;
   avatarUrl?: string;
+  crp?: string; // Added for psychologist's CRP
 }
 
 export interface PatientNoteVersion {
@@ -38,7 +39,9 @@ export interface ProntuarioIdentificacao {
   profissao?: string;
   escolaridade?: string;
   renda?: string;
-  enderecoCasa?: string;
+  enderecoCasa?: string; // Full address string
+  // "Casa" from template likely means "Tipo de Moradia", might need specific field or be part of address.
+  tipoMoradia?: string; 
   telefone?: string;
   contatoEmergencia?: string;
 }
@@ -48,37 +51,46 @@ export interface ProntuarioEntradaUnidade {
 }
 
 export interface ProntuarioFinalidade {
-  descricaoFinalidade?: string;
+  // This is static in the template, so likely not part of dynamic data.
+  // descricaoFinalidade?: string; 
 }
 
 export interface ProntuarioResponsavelTecnica {
-  nomePsi?: string;
-  crp?: string;
+  // Will come from the logged-in psychologist, not stored per patient prontuario data.
+  // nomePsi?: string;
+  // crp?: string;
 }
 
 export interface ProntuarioDescricaoDemanda {
-  demandaQueixa?: string;
+  // This will be dynamic input for generation
+  // demandaQueixa?: string;
 }
 
 export interface ProntuarioProcedimentoAnaliseEntry {
-  dataAtendimento: string; // ISO Date string
-  descricaoAtuacao: string;
+  // This will be dynamic input for generation
+  // dataAtendimento: string; // ISO Date string
+  // descricaoAtuacao: string;
 }
 
 export interface ProntuarioConclusaoEncaminhamento {
-  condutaAdotada?: string;
+  // This will be dynamic input for generation
+  // condutaAdotada?: string;
 }
 
+// This ProntuarioData now primarily holds the patient's identification details
+// that are relatively static and used to pre-fill the generation prompt.
+// The session-specific parts (demanda, procedimento, conclusao) will be entered
+// at the time of generation.
 export interface ProntuarioData {
   identificacao?: ProntuarioIdentificacao;
-  entradaUnidade?: ProntuarioEntradaUnidade;
-  finalidade?: ProntuarioFinalidade;
-  responsavelTecnica?: ProntuarioResponsavelTecnica;
-  descricaoDemanda?: ProntuarioDescricaoDemanda;
-  procedimentosAnalise?: ProntuarioProcedimentoAnaliseEntry[];
-  conclusaoEncaminhamento?: ProntuarioConclusaoEncaminhamento;
-  localAssinatura?: string;
-  dataDocumento?: string; // ISO Date string for when the prontuario was "finalized"
+  entradaUnidade?: ProntuarioEntradaUnidade; 
+  // finalidade, responsavelTecnica, descricaoDemanda, procedimentosAnalise, conclusaoEncaminhamento
+  // are more part of the *generated document structure* than stored patient data if generation is the primary flow.
+  // However, entradaUnidade might be static patient info.
+  localAssinatura?: string; // e.g., "Santana de Parnaíba" - could be clinic setting
+  // dataDocumento will be set at generation time.
+  // signatureStatus and signatureDetails are for the *in-app* signing simulation.
+  // If the Google Doc is the "official" signed prontuario, these might be less relevant here.
   signatureStatus?: DocumentSignatureStatus;
   signatureDetails?: DocumentSignatureDetails;
 }
@@ -106,15 +118,15 @@ export interface Patient {
   name: string;
   email?: string;
   phone?: string;
-  dateOfBirth?: string; // ISO Date string (YYYY-MM-DD)
-  address?: string;
-  sessionNotes?: string; // To be renamed to "Evolução das Sessões" in UI
+  dateOfBirth?: string; // ISO Date string (YYYY-MM-DD) - Consider moving to ProntuarioIdentificacao
+  address?: string; // Consider moving to ProntuarioIdentificacao
+  sessionNotes?: string; 
   previousSessionNotes?: PatientNoteVersion[];
-  prontuario?: ProntuarioData;
+  prontuario?: ProntuarioData; // Holds static patient info for the prontuario
   therapeuticPlan?: TherapeuticPlan; 
-  caseStudyNotes?: string; // New field for Case Study notes
-  createdAt: string; // ISO Date string
-  updatedAt: string; // ISO Date string
+  caseStudyNotes?: string; 
+  createdAt: string; 
+  updatedAt: string; 
 }
 
 
@@ -123,15 +135,15 @@ export type SessionRecurrence = "none" | "daily" | "weekly" | "monthly";
 export interface Session {
   id: string;
   patientId: string;
-  patientName?: string; // For display convenience
+  patientName?: string; 
   psychologistId: string;
-  psychologistName?: string; // For display convenience
+  psychologistName?: string; 
   startTime: string; // ISO Date string
   endTime: string; // ISO Date string
   status: "scheduled" | "completed" | "cancelled" | "no-show";
   recurring?: SessionRecurrence | null;
-  notes?: string; // Potentially encrypted
-  isPendingSync?: boolean; // For offline mode
+  notes?: string; 
+  isPendingSync?: boolean; 
 }
 
 export interface AssessmentResultDetails {
@@ -143,20 +155,20 @@ export interface AssessmentResultDetails {
 }
 export interface Assessment {
   id:string;
-  title: string; // This can serve as instrumentName
+  title: string; 
   patientId: string;
   patientName?: string;
-  formLink?: string; // Tokenized link
+  formLink?: string; 
   status: "pending" | "sent" | "completed";
-  results?: AssessmentResultDetails; // Structure of results can vary
+  results?: AssessmentResultDetails; 
   createdAt: string; // ISO Date string
 }
 
 export interface DocumentResource {
   id: string;
   name: string;
-  type: "pdf" | "doc" | "docx" | "txt" | "png" | "jpg" | "jpeg" | "other"; // Expanded
-  url: string; // Link to the stored file (original, unsigned)
+  type: "pdf" | "doc" | "docx" | "txt" | "png" | "jpg" | "jpeg" | "other"; 
+  url: string; 
   uploadedAt: string; // ISO Date string
   size?: number; // in bytes
   category?: string;
@@ -180,9 +192,55 @@ export interface Chat {
   avatarUrl?: string; 
 }
 
-// Data point for evolution chart
 export interface EvolutionDataPoint {
-  date: string; // ISO Date string (from assessment createdAt)
+  date: string; 
   score: number;
-  instrumentName: string; // Title of the assessment
+  instrumentName: string; 
+}
+
+// Data structure for sending to Google Apps Script
+export interface ProntuarioGenerationDataDynamic {
+  'Descrição da Demanda/Queixa': string;
+  'Descrição do Procedimento/Análise': string; // For a single session context
+  'Descrição da Conclusão/Encaminhamento': string;
+}
+
+export interface ProntuarioGenerationDataPsicologo {
+  'Nome do Psicólogo': string;
+  'CRP do Psicólogo': string;
+}
+export interface ProntuarioGenerationDataData {
+  'Dia de Emissão': string;
+  'Mês de Emissão': string;
+  'Ano de Emissão': string;
+  'Data do Atendimento': string; // Date of the session being documented
+}
+
+// This maps to the placeholder keys in your PROMPT_TEMPLATE for patient info
+export interface ProntuarioGenerationDataPaciente {
+  'Nome Completo do Paciente'?: string;
+  'Sexo do Paciente'?: string;
+  'CPF do Paciente'?: string;
+  'Data de Nasc. do Paciente'?: string;
+  'Estado Civil do Paciente'?: string;
+  'Raça/Cor do Paciente'?: string;
+  'Status Filhos'?: string; // e.g., "Sim" or "Não"
+  'Quantidade de Filhos'?: string; // e.g., "1" or "0"
+  'Situação Profissional do Paciente'?: string;
+  'Profissão do Paciente'?: string;
+  'Escolaridade do Paciente'?: string;
+  'Renda do Paciente'?: string;
+  'Endereço do Paciente'?: string; // Was 'Endereço:', if this is house address use patient.prontuario.identificacao.enderecoCasa
+  'Tipo de Moradia'?: string; // Was 'Casa:'
+  'Telefone do Paciente'?: string;
+  'Contato de Emergência'?: string;
+  'Descrição da Entrada na Unidade'?: string; // From patient.prontuario.entradaUnidade.descricaoEntrada
+}
+
+
+export interface ProntuarioAppsScriptPayload {
+  paciente: ProntuarioGenerationDataPaciente;
+  dinamico: ProntuarioGenerationDataDynamic;
+  psicologo: ProntuarioGenerationDataPsicologo;
+  data: ProntuarioGenerationDataData;
 }
