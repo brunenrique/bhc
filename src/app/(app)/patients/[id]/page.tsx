@@ -163,7 +163,7 @@ const fetchPatientDetailsMock = async (id: string): Promise<Patient | null> => {
       prontuario: {
         ...mockProntuarioAna, 
         identificacao: {...mockProntuarioAna.identificacao, nomeCompleto: `Paciente Exemplo ${id}`},
-        procedimentosAnalise: [], // Ensure it's initialized
+        procedimentosAnalise: [], 
         signatureStatus: 'none',
         }, 
       caseStudyNotes: "<p>Nenhuma nota de estudo de caso para este paciente exemplo.</p>",
@@ -217,7 +217,7 @@ const recurrenceLabels: Record<string, string> = {
 const SignatureStatusIndicator: React.FC<{ status?: DocumentSignatureStatus }> = ({ status }) => {
   switch (status) {
     case 'pending_govbr_signature':
-      return <Badge variant="outline" className="text-blue-600 border-blue-500 bg-blue-500/10"><SendToBack className="mr-1.5 h-3.5 w-3.5" />Pendente Assinatura</Badge>;
+      return <Badge variant="outline" className="text-blue-600 border-blue-500 bg-blue-500/10"><Fingerprint className="mr-1.5 h-3.5 w-3.5" />Pendente Assinatura</Badge>;
     case 'signed':
       return <Badge variant="secondary" className="text-green-600 border-green-500 bg-green-500/10"><ShieldCheck className="mr-1.5 h-3.5 w-3.5" />Assinado</Badge>;
     case 'verification_failed':
@@ -232,7 +232,7 @@ interface ProntuarioSignatureDetailsDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   details: DocumentSignatureDetails | undefined;
-  documentName: string; // e.g., "Prontuário de Nome do Paciente"
+  documentName: string; 
 }
 
 function ProntuarioSignatureDetailsDialog({ isOpen, onOpenChange, details, documentName }: ProntuarioSignatureDetailsDialogProps) {
@@ -250,7 +250,6 @@ function ProntuarioSignatureDetailsDialog({ isOpen, onOpenChange, details, docum
           <p><strong>Data da Assinatura (Simulada):</strong> {details.signedAt ? format(parseISO(details.signedAt), "dd/MM/yyyy HH:mm:ss", { locale: ptBR }) : 'N/A'}</p>
           <p><strong>Código de Verificação (Simulado):</strong> {details.verificationCode || 'N/A'}</p>
           {details.p7sFile && <p><strong>Arquivo de Assinatura (.p7s):</strong> {details.p7sFile}</p>}
-          {/* For internal prontuário, there's no direct "signed document link" unless we generate a PDF for it first */}
         </div>
         <UIDialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Fechar</Button>
@@ -261,7 +260,6 @@ function ProntuarioSignatureDetailsDialog({ isOpen, onOpenChange, details, docum
 }
 
 
-// Prontuário Display Component (Internal to PatientDetailPage)
 const ProntuarioDisplay: React.FC<{ 
   patient: Patient;
   currentUser: User | null;
@@ -425,7 +423,6 @@ export default function PatientDetailPage() {
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'evolution' | 'prontuario' | 'case_study' | 'pti' | 'scales' | 'analysis'>('evolution');
   
-  // State for Prontuário Signature Details Dialog
   const [isProntuarioSignatureDetailsOpen, setIsProntuarioSignatureDetailsOpen] = useState(false);
 
 
@@ -464,7 +461,6 @@ export default function PatientDetailPage() {
 
         if (isMounted) {
           if (fetchedPatientData) {
-            // Ensure prontuario and its sub-fields are initialized if not present in mock
             const ensuredPatientData = {
                 ...fetchedPatientData,
                 prontuario: {
@@ -476,7 +472,7 @@ export default function PatientDetailPage() {
                     localAssinatura: "Santana de Parnaíba",
                     signatureStatus: 'none',
                     signatureDetails: {},
-                    ...(fetchedPatientData.prontuario || {}), // Spread existing prontuario data
+                    ...(fetchedPatientData.prontuario || {}), 
                 }
             };
             setPatient(ensuredPatientData);
@@ -512,18 +508,16 @@ export default function PatientDetailPage() {
     const newNotesFromForm = updatedDataFromForm.sessionNotes;
     let previousNotesHistory = patient.previousSessionNotes || [];
 
-    // Update history of main sessionNotes (Evolução das Sessões)
     if (newNotesFromForm !== undefined && newNotesFromForm !== currentNotes && (typeof currentNotes === 'string' && currentNotes.trim() !== "" && currentNotes.trim() !== "<p></p>")) {
       const newVersion: PatientNoteVersion = {
         content: currentNotes, 
         timestamp: patient.updatedAt || new Date().toISOString(),
       };
-      previousNotesHistory = [newVersion, ...previousNotesHistory].slice(0, 10); // Keep last 10 general notes
+      previousNotesHistory = [newVersion, ...previousNotesHistory].slice(0, 10); 
     }
     
-    // Prepare the prontuario for update, especially `procedimentosAnalise`
     let updatedProntuario = { ...(patient.prontuario || { procedimentosAnalise: [], signatureStatus: 'none' }) };
-    if (updatedDataFromForm.prontuario) { // If form data includes prontuario changes (like demandaQueixa)
+    if (updatedDataFromForm.prontuario) { 
         updatedProntuario = {
             ...updatedProntuario,
             ...updatedDataFromForm.prontuario,
@@ -532,10 +526,6 @@ export default function PatientDetailPage() {
         };
     }
 
-
-    // Append new sessionNotes to prontuario.procedimentosAnalise if it's meaningfully new content
-    // This logic is now primarily handled within PatientFormDialog before calling onSave
-    // Here, we just ensure that prontuario.procedimentosAnalise from the form (which includes the new entry) is used.
     if (updatedDataFromForm.prontuario?.procedimentosAnalise) {
         updatedProntuario.procedimentosAnalise = updatedDataFromForm.prontuario.procedimentosAnalise;
     }
@@ -544,7 +534,7 @@ export default function PatientDetailPage() {
     const updatedPatient = { 
       ...patient, 
       ...updatedDataFromForm, 
-      sessionNotes: newNotesFromForm, // This is the "current" evolution note
+      sessionNotes: newNotesFromForm, 
       previousSessionNotes: previousNotesHistory,
       prontuario: updatedProntuario,
       updatedAt: new Date().toISOString() 
@@ -634,7 +624,6 @@ export default function PatientDetailPage() {
     return { nextScheduled, completedCount, noShowCount, cancelledCount };
   }, [sessions]);
 
-  // --- Prontuário Actions ---
   const handleInitiateProntuarioSignature = useCallback(async () => {
     if (!patient || !patient.prontuario) return;
     const mockHash = `sha256-prontuario-${patient.id}-${Date.now()}`;
@@ -689,7 +678,6 @@ export default function PatientDetailPage() {
   }, [patient]);
 
   const handleExportProntuarioToPDF = useCallback(() => {
-    // This is a mock. Real PDF generation is complex.
     toast({
       title: "Exportar para PDF (Simulado)",
       description: `O prontuário de ${patient?.name} seria exportado para PDF.`,
@@ -818,9 +806,7 @@ export default function PatientDetailPage() {
                   <h3 className="text-lg font-semibold font-headline mb-2">Evolução das Sessões (Nota Atual)</h3>
                    <RichTextEditor
                       initialContent={patient.sessionNotes || "<p></p>"}
-                      onUpdate={(content) => {
-                        // For display, no direct update here. Editing via PatientFormDialog.
-                      }}
+                      onUpdate={(content) => {}}
                       editable={false} 
                       editorClassName="h-auto max-h-[600px] overflow-y-auto bg-transparent p-0 rounded-none shadow-none border-none"
                       pageClassName="min-h-[200px] shadow-none border" 
@@ -985,8 +971,8 @@ export default function PatientDetailPage() {
         onOpenChange={setIsSessionFormOpen}
         session={editingSession}
         onSave={handleSaveSession}
-        // patientData is used to prefill patient name if creating new session from this page
-        patientData={{ id: patient.id, name: patient.name }}
+        // @ts-ignore - patient might be null, handle in component if needed
+        patientData={patient ? { id: patient.id, name: patient.name } : undefined}
       />
 
        <Dialog open={isHistoryDialogOpen && areNotesVisible && activeTab === 'evolution'} onOpenChange={setIsHistoryDialogOpen}>
