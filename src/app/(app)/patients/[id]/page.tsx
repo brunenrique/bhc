@@ -13,7 +13,7 @@ import { PatientFormDialog } from '@/features/patients/components/PatientFormDia
 import { SessionFormDialog } from '@/features/scheduling/components/SessionFormDialog';
 import { Separator } from '@/components/ui/separator';
 import Image from 'next/image';
-import { format, parseISO, addDays, addWeeks, addMonths, isFuture } from 'date-fns';
+import { format, parseISO, addDays, addWeeks, addMonths, isFuture, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -25,10 +25,9 @@ import { useToast } from '@/hooks/use-toast';
 import { PatientTherapeuticPlan } from '@/features/patients/components/PatientTherapeuticPlan';
 import { PatientAssessmentsSection } from '@/features/patients/components/PatientAssessmentsSection';
 import { PatientEvolutionChart } from '@/features/patients/components/PatientEvolutionChart';
-// Mock assessments data - in a real app, this would be fetched or filtered from a global store/cache
 import { mockAssessmentsData as allMockAssessments } from '@/app/(app)/assessments/page'; 
 
-const mockProntuario: ProntuarioData = {
+const mockProntuarioAna: ProntuarioData = {
   identificacao: {
     nomeCompleto: 'Ana Beatriz Silva',
     sexo: 'Feminino',
@@ -60,9 +59,9 @@ const mockProntuario: ProntuarioData = {
     demandaQueixa: 'Paciente relata sintomas de ansiedade generalizada, preocupação excessiva com o futuro, dificuldades de concentração, irritabilidade e insônia nos últimos 6 meses. Queixa-se também de sobrecarga no ambiente de trabalho e dificuldade em estabelecer limites.',
   },
   procedimentosAnalise: [
-    { dataAtendimento: new Date(Date.now() - 1000 * 60 * 60 * 24 * 21).toISOString(), descricaoAtuacao: 'Primeira consulta. Realizada anamnese detalhada, escuta ativa da queixa inicial. Identificados principais gatilhos de ansiedade. Explicado o processo terapêutico e combinado contrato terapêutico. Aplicada Escala Beck de Ansiedade (BAI) - Resultado: 25 (Ansiedade Moderada).' },
-    { dataAtendimento: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(), descricaoAtuacao: 'Foco em psicoeducação sobre ansiedade e seus mecanismos. Introduzidas técnicas de respiração diafragmática e relaxamento progressivo. Paciente demonstrou boa receptividade e compreensão.' },
-    { dataAtendimento: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(), descricaoAtuacao: 'Trabalho com reestruturação cognitiva de pensamentos disfuncionais relacionados ao trabalho e autoexigência. Paciente identificou padrões de pensamento catastróficos. Proposta de diário de pensamentos como tarefa de casa.' },
+    { dataAtendimento: subDays(new Date(), 21).toISOString(), descricaoAtuacao: 'Primeira consulta. Realizada anamnese detalhada, escuta ativa da queixa inicial. Identificados principais gatilhos de ansiedade. Explicado o processo terapêutico e combinado contrato terapêutico. Aplicada Escala Beck de Ansiedade (BAI) - Resultado: 25 (Ansiedade Moderada).' },
+    { dataAtendimento: subDays(new Date(), 14).toISOString(), descricaoAtuacao: 'Foco em psicoeducação sobre ansiedade e seus mecanismos. Introduzidas técnicas de respiração diafragmática e relaxamento progressivo. Paciente demonstrou boa receptividade e compreensão.' },
+    { dataAtendimento: subDays(new Date(), 7).toISOString(), descricaoAtuacao: 'Trabalho com reestruturação cognitiva de pensamentos disfuncionais relacionados ao trabalho e autoexigência. Paciente identificou padrões de pensamento catastróficos. Proposta de diário de pensamentos como tarefa de casa.' },
   ],
   conclusaoEncaminhamento: {
     condutaAdotada: 'Paciente segue em acompanhamento psicológico semanal. Apresenta evolução gradual na identificação e manejo dos sintomas de ansiedade. Demonstra maior autoconsciência e engajamento nas técnicas propostas. Recomenda-se continuidade do processo terapêutico para consolidação dos ganhos e desenvolvimento de novas habilidades de enfrentamento. Nenhuma necessidade de encaminhamento externo no momento.',
@@ -72,51 +71,97 @@ const mockProntuario: ProntuarioData = {
   signatureStatus: 'none',
 };
 
+const mockProntuarioBruno: ProntuarioData = {
+  ...mockProntuarioAna,
+  identificacao: {
+    ...mockProntuarioAna.identificacao,
+    nomeCompleto: 'Bruno Almeida Costa',
+    cpf: '987.654.321-11',
+    dataNascimento: '1985-11-20',
+    estadoCivil: 'Casado',
+    profissao: 'Engenheiro de Software',
+    renda: 'R$ 8.500,00',
+    telefone: '(21) 91234-5678',
+  },
+  descricaoDemanda: {
+    demandaQueixa: 'Paciente encaminhado pelo clínico geral devido a sintomas de estresse pós-traumático após um acidente de trânsito. Relata flashbacks, pesadelos e evitação de situações que lembram o ocorrido.',
+  },
+  procedimentosAnalise: [
+    { dataAtendimento: subDays(new Date(), 30).toISOString(), descricaoAtuacao: 'Primeira entrevista após encaminhamento. Foco na construção de vínculo terapêutico e coleta de informações sobre o evento traumático e sintomas atuais. Aplicado PCL-5 preliminar.' },
+    { dataAtendimento: subDays(new Date(), 23).toISOString(), descricaoAtuacao: 'Psicoeducação sobre TEPT. Introdução de técnicas de grounding e manejo de ansiedade aguda.' },
+    { dataAtendimento: subDays(new Date(), 16).toISOString(), descricaoAtuacao: 'Início do processamento do trauma utilizando técnicas de exposição narrativa gradual. Paciente relata desconforto, mas demonstra engajamento.' },
+  ],
+  conclusaoEncaminhamento: {
+    condutaAdotada: 'Paciente em acompanhamento para TEPT. Recomenda-se continuidade da terapia de exposição e reprocessamento. Avaliar necessidade de consulta psiquiátrica para manejo de sintomas mais intensos, se persistirem.'
+  },
+  signatureStatus: 'pending_govbr_signature', 
+  signatureDetails: { hash: `sha256-bruno-${Math.random().toString(36).substring(2,15)}`}
+};
+
 
 const fetchPatientDetailsMock = async (id: string): Promise<Patient | null> => {
   await new Promise(resolve => setTimeout(resolve, 300)); 
+  const baseDate = new Date();
   const mockPatientBase = {
     id,
     email: id === '1' ? 'ana.silva@example.com' : id === '2' ? 'bruno.costa@example.com' : 'paciente.detalhe@example.com',
     phone: id === '1' ? '(11) 98765-4321' : id === '2' ? '(21) 91234-5678' : '(XX) XXXXX-XXXX',
     dateOfBirth: id === '1' ? '1990-05-15' : id === '2' ? '1985-11-20' : '1995-01-01',
     address: 'Rua Fictícia, 123, Bairro Imaginário, Cidade Exemplo - UF',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(), 
+    createdAt: subDays(baseDate, 30).toISOString(), 
     updatedAt: new Date().toISOString(),
   };
   
   let specificData: Partial<Patient> = {};
-  if (id === '1') {
+  if (id === '1') { // Ana Silva
     specificData = {
       name: 'Ana Beatriz Silva',
-      sessionNotes: `Sessão de 22/07: Paciente demonstrou melhora significativa na gestão de pensamentos automáticos. Praticou as técnicas de respiração e relatou diminuição da insônia. Próxima sessão focará em estratégias de manutenção e prevenção de recaídas.`,
+      sessionNotes: `Sessão de ${format(subDays(baseDate,1), "dd/MM")}: Paciente demonstrou melhora significativa na gestão de pensamentos automáticos. Praticou as técnicas de respiração e relatou diminuição da insônia. Próxima sessão focará em estratégias de manutenção e prevenção de recaídas.`,
       previousSessionNotes: [
-        { content: "Sessão de 15/07: Foco em reestruturação cognitiva de pensamentos automáticos negativos. Paciente identificou três padrões principais. Recomendações: Continuar o diário de pensamentos, praticar técnicas de respiração diafragmática duas vezes ao dia.", timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString() },
-        { content: "Paciente apresenta quadro de ansiedade generalizada, com picos de estresse relacionados ao trabalho. Demonstra boa adesão às técnicas propostas em sessões anteriores.", timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString() }
+        { content: `Sessão de ${format(subDays(baseDate,8), "dd/MM")}: Foco em reestruturação cognitiva de pensamentos automáticos negativos. Paciente identificou três padrões principais. Recomendações: Continuar o diário de pensamentos, praticar técnicas de respiração diafragmática duas vezes ao dia.`, timestamp: subDays(baseDate, 8).toISOString() },
+        { content: `Sessão de ${format(subDays(baseDate,15), "dd/MM")}: Paciente apresenta quadro de ansiedade generalizada, com picos de estresse relacionados ao trabalho. Demonstra boa adesão às técnicas propostas em sessões anteriores.`, timestamp: subDays(baseDate, 15).toISOString() },
+        { content: `Sessão de ${format(subDays(baseDate,22), "dd/MM")}: Anamnese e estabelecimento de contrato terapêutico. Queixa principal: ansiedade e insônia.`, timestamp: subDays(baseDate, 22).toISOString() }
       ],
-      prontuario: { ...mockProntuario, signatureStatus: 'none' },
+      prontuario: mockProntuarioAna,
       therapeuticPlan: {
-        id: 'tp1',
+        id: 'tp1_ana',
         patientId: '1',
-        overallSummary: 'Foco em redução de sintomas ansiosos e melhoria da gestão do estresse laboral.',
+        overallSummary: 'Foco em redução de sintomas ansiosos e melhoria da gestão do estresse laboral e qualidade do sono.',
         goals: [
-          { id: 'g1', description: 'Identificar e questionar 3 pensamentos automáticos negativos por dia.', status: 'active', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20).toISOString(), targetDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).toISOString() },
-          { id: 'g2', description: 'Praticar técnica de respiração diafragmática por 5 minutos diariamente.', status: 'active', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString() },
-          { id: 'g3', description: 'Reduzir episódios de insônia para menos de 2 por semana.', status: 'achieved', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(), achievedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(), notes: 'Conseguido após 3 semanas de técnicas de higiene do sono e relaxamento.' },
+          { id: 'g1_ana', description: 'Identificar e questionar 3 pensamentos automáticos negativos por dia.', status: 'active', createdAt: subDays(baseDate, 20).toISOString(), targetDate: addDays(baseDate, 30).toISOString() },
+          { id: 'g2_ana', description: 'Praticar técnica de respiração diafragmática por 5 minutos diariamente.', status: 'active', createdAt: subDays(baseDate, 14).toISOString() },
+          { id: 'g3_ana', description: 'Reduzir episódios de insônia para menos de 2 por semana.', status: 'achieved', createdAt: subDays(baseDate, 30).toISOString(), achievedAt: subDays(baseDate, 5).toISOString(), notes: 'Conseguido após 3 semanas de técnicas de higiene do sono e relaxamento.' },
+          { id: 'g4_ana', description: 'Desenvolver e aplicar uma estratégia de comunicação assertiva no trabalho.', status: 'on_hold', createdAt: subDays(baseDate, 7).toISOString(), notes: 'Pausado para focar em reestruturação cognitiva primeiro.'},
         ],
-        lastUpdatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
+        lastUpdatedAt: subDays(baseDate, 2).toISOString(),
       }
     };
-  } else if (id === '2') {
+  } else if (id === '2') { // Bruno Costa
     specificData = {
       name: 'Bruno Almeida Costa',
-      sessionNotes: `Sessão de 20/07: Paciente relata dificuldades em manter a rotina de exercícios. Exploramos barreiras e ajustamos o plano. Apresentou bom insight sobre procrastinação.`,
-      prontuario: { ...mockProntuario, identificacao: { ...mockProntuario.identificacao, nomeCompleto: 'Bruno Almeida Costa' }, signatureStatus: 'pending_govbr_signature', signatureDetails: { hash: `sha256-${Math.random().toString(36).substring(2,15)}`} },
+      sessionNotes: `Sessão de ${format(subDays(baseDate,3), "dd/MM")}: Paciente relata dificuldades em manter a rotina de exercícios físicos, que é parte do plano de manejo do TEPT. Exploramos barreiras e ajustamos o plano. Apresentou bom insight sobre procrastinação e evitação.`,
+      previousSessionNotes: [
+        { content: `Sessão de ${format(subDays(baseDate,10), "dd/MM")}: Trabalhando na exposição gradual a lembranças do evento traumático. Paciente demonstrou ansiedade, mas conseguiu permanecer na tarefa com apoio.`, timestamp: subDays(baseDate, 10).toISOString()},
+        { content: `Sessão de ${format(subDays(baseDate,17), "dd/MM")}: Foco em psicoeducação sobre TEPT e técnicas de regulação emocional.`, timestamp: subDays(baseDate, 17).toISOString()},
+      ],
+      prontuario: mockProntuarioBruno,
+      therapeuticPlan: {
+        id: 'tp2_bruno',
+        patientId: '2',
+        overallSummary: 'Tratamento para TEPT, com foco em redução de sintomas de revivescência, hipervigilância e evitação.',
+        goals: [
+          { id: 'g1_bruno', description: 'Reduzir a frequência de flashbacks para menos de 1 por dia.', status: 'active', createdAt: subDays(baseDate, 28).toISOString(), targetDate: addDays(baseDate, 15).toISOString() },
+          { id: 'g2_bruno', description: 'Conseguir visitar o local do acidente (ou similar) sem crise de pânico.', status: 'active', createdAt: subDays(baseDate, 14).toISOString(), targetDate: addDays(baseDate, 45).toISOString(), notes: 'Exposição gradual planejada.' },
+          { id: 'g3_bruno', description: 'Melhorar a qualidade do sono (pelo menos 6 horas contínuas).', status: 'on_hold', createdAt: subDays(baseDate, 21).toISOString(), notes: 'Aguardando melhora dos pesadelos.'},
+        ],
+        lastUpdatedAt: subDays(baseDate, 3).toISOString(),
+      }
     };
-  } else {
+  } else { // Generic patient for other IDs
      specificData = {
-      name: 'Paciente Exemplo Detalhado',
-      sessionNotes: 'Nenhuma anotação recente.',
+      name: `Paciente Exemplo ${id}`,
+      sessionNotes: `Sessão de ${format(subDays(baseDate,5), "dd/MM")}: Nenhuma anotação detalhada para este paciente mock.`,
+      prontuario: {...mockProntuarioAna, identificacao: {...mockProntuarioAna.identificacao, nomeCompleto: `Paciente Exemplo ${id}`}},
     };
   }
 
@@ -127,14 +172,34 @@ const fetchPatientDetailsMock = async (id: string): Promise<Patient | null> => {
 const fetchPatientSessionsMock = async (patientId: string): Promise<Session[]> => {
   await new Promise(resolve => setTimeout(resolve, 200)); 
   let baseDate = new Date();
-  return [
-    { id: 's1', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo", startTime: addDays(baseDate, -7).toISOString(), endTime: addDays(baseDate, -7).setHours(baseDate.getHours()+1).toString(), status: 'completed', recurring: 'weekly'},
-    { id: 's2', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo", startTime: addDays(baseDate, 2).toISOString(), endTime: addDays(baseDate, 2).setHours(baseDate.getHours()+1).toString(), status: 'scheduled', notes: 'Foco em técnicas de relaxamento.', recurring: 'none'},
-    { id: 's3', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo", startTime: addDays(baseDate, -14).toISOString(), endTime: addDays(baseDate, -14).setHours(baseDate.getHours()+1).toString(), status: 'completed'},
-    { id: 's4', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo", startTime: addDays(baseDate, -21).toISOString(), endTime: addDays(baseDate, -21).setHours(baseDate.getHours()+1).toString(), status: 'no-show'},
-    { id: 's5', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo", startTime: addDays(baseDate, -28).toISOString(), endTime: addDays(baseDate, -28).setHours(baseDate.getHours()+1).toString(), status: 'cancelled'},
-     { id: 's6', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo", startTime: addDays(baseDate, 7).toISOString(), endTime: addDays(baseDate, 7).setHours(baseDate.getHours()+1).toString(), status: 'scheduled', notes: 'Sessão futura de acompanhamento.'},
-  ].sort((a,b) => parseISO(b.startTime).getTime() - parseISO(a.startTime).getTime());
+  const sessionsList: Session[] = [];
+
+  if (patientId === '1') { // Ana Silva
+    sessionsList.push(
+      { id: 's1_ana', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo Silva", startTime: subDays(baseDate, 1).toISOString(), endTime: new Date(subDays(baseDate, 1).getTime() + 60*60*1000).toISOString(), status: 'completed', recurring: 'weekly', notes: 'Discussão sobre pensamentos automáticos.'},
+      { id: 's2_ana', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo Silva", startTime: addDays(baseDate, 6).toISOString(), endTime: new Date(addDays(baseDate, 6).getTime() + 60*60*1000).toISOString(), status: 'scheduled', recurring: 'weekly', notes: 'Manutenção e prevenção de recaídas.'},
+      { id: 's3_ana', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo Silva", startTime: subDays(baseDate, 8).toISOString(), endTime: new Date(subDays(baseDate, 8).getTime() + 60*60*1000).toISOString(), status: 'completed'},
+      { id: 's4_ana', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo Silva", startTime: subDays(baseDate, 15).toISOString(), endTime: new Date(subDays(baseDate, 15).getTime() + 60*60*1000).toISOString(), status: 'completed'},
+      { id: 's5_ana', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo Silva", startTime: subDays(baseDate, 22).toISOString(), endTime: new Date(subDays(baseDate, 22).getTime() + 60*60*1000).toISOString(), status: 'completed'},
+      { id: 's6_ana_past_noshow', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo Silva", startTime: subDays(baseDate, 29).toISOString(), endTime: new Date(subDays(baseDate, 29).getTime() + 60*60*1000).toISOString(), status: 'no-show'},
+      { id: 's7_ana_past_cancelled', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo Silva", startTime: subDays(baseDate, 36).toISOString(), endTime: new Date(subDays(baseDate, 36).getTime() + 60*60*1000).toISOString(), status: 'cancelled'}
+    );
+  } else if (patientId === '2') { // Bruno Costa
+     sessionsList.push(
+      { id: 's1_bruno', patientId, psychologistId: 'psy2', psychologistName: "Dra. Modelo Souza", startTime: subDays(baseDate, 3).toISOString(), endTime: new Date(subDays(baseDate, 3).getTime() + 60*60*1000).toISOString(), status: 'completed', notes: 'Discussão sobre barreiras para exercícios.'},
+      { id: 's2_bruno', patientId, psychologistId: 'psy2', psychologistName: "Dra. Modelo Souza", startTime: addDays(baseDate, 4).toISOString(), endTime: new Date(addDays(baseDate, 4).getTime() + 60*60*1000).toISOString(), status: 'scheduled', notes: 'Próxima etapa da exposição narrativa.'},
+      { id: 's3_bruno', patientId, psychologistId: 'psy2', psychologistName: "Dra. Modelo Souza", startTime: subDays(baseDate, 10).toISOString(), endTime: new Date(subDays(baseDate, 10).getTime() + 60*60*1000).toISOString(), status: 'completed'},
+      { id: 's4_bruno', patientId, psychologistId: 'psy2', psychologistName: "Dra. Modelo Souza", startTime: subDays(baseDate, 17).toISOString(), endTime: new Date(subDays(baseDate, 17).getTime() + 60*60*1000).toISOString(), status: 'completed'},
+      { id: 's5_bruno_past_noshow', patientId, psychologistId: 'psy2', psychologistName: "Dra. Modelo Souza", startTime: subDays(baseDate, 24).toISOString(), endTime: new Date(subDays(baseDate, 24).getTime() + 60*60*1000).toISOString(), status: 'no-show'}
+    );
+  } else { // Generic sessions for other patients
+    sessionsList.push(
+      { id: `s1_gen_${patientId}`, patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo Silva", startTime: addDays(baseDate, 2).toISOString(), endTime: new Date(addDays(baseDate, 2).getTime() + 60*60*1000).toISOString(), status: 'scheduled', notes: 'Sessão de acompanhamento.'},
+      { id: `s2_gen_${patientId}`, patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo Silva", startTime: subDays(baseDate, 5).toISOString(), endTime: new Date(subDays(baseDate, 5).getTime() + 60*60*1000).toISOString(), status: 'completed'}
+    );
+  }
+  
+  return sessionsList.sort((a,b) => parseISO(b.startTime).getTime() - parseISO(a.startTime).getTime());
 }
 
 const recurrenceLabels: Record<string, string> = {
@@ -345,6 +410,10 @@ export default function PatientDetailPage() {
       const loadPatientData = async () => {
         setIsLoading(true);
         
+        let fetchedPatientData: Patient | null = null;
+        let fetchedSessionsData: Session[] = [];
+        let fetchedAssessmentsData: Assessment[] = [];
+
         try {
           const cachedPatient = await cacheService.patients.getDetail(patientId);
           if (isMounted && cachedPatient) setPatient(cachedPatient);
@@ -355,27 +424,30 @@ export default function PatientDetailPage() {
           const cachedAllAssessments = await cacheService.assessments.getList();
           if(isMounted && cachedAllAssessments) {
             setPatientAssessments(cachedAllAssessments.filter(asm => asm.patientId === patientId && asm.status === 'completed'));
+          } else if (isMounted) { // If cache for assessments is empty, use allMockAssessments
+             setPatientAssessments(allMockAssessments.filter(asm => asm.patientId === patientId && asm.status === 'completed'));
           }
 
         } catch (error) {
           // console.warn(`Error loading patient data for ${patientId} from cache:`, error);
         }
 
-        const patientData = await fetchPatientDetailsMock(patientId);
-        const sessionsData = await fetchPatientSessionsMock(patientId);
-        
-        const assessmentsForPatient = allMockAssessments.filter(asm => asm.patientId === patientId && asm.status === 'completed');
+        // Simulate fetching data if not fully loaded from cache or to "refresh"
+        fetchedPatientData = await fetchPatientDetailsMock(patientId);
+        fetchedSessionsData = await fetchPatientSessionsMock(patientId);
+        fetchedAssessmentsData = allMockAssessments.filter(asm => asm.patientId === patientId && asm.status === 'completed');
 
 
         if (isMounted) {
-          if (patientData) {
-            setPatient(patientData);
-            await cacheService.patients.setDetail(patientId, patientData);
+          if (fetchedPatientData) {
+            setPatient(fetchedPatientData);
+            await cacheService.patients.setDetail(patientId, fetchedPatientData);
           }
-          setSessions(sessionsData.sort((a,b) => parseISO(b.startTime).getTime() - parseISO(a.startTime).getTime()));
-          await cacheService.patients.setSessions(patientId, sessionsData);
+          setSessions(fetchedSessionsData.sort((a,b) => parseISO(b.startTime).getTime() - parseISO(a.startTime).getTime()));
+          await cacheService.patients.setSessions(patientId, fetchedSessionsData);
           
-          setPatientAssessments(assessmentsForPatient);
+          setPatientAssessments(fetchedAssessmentsData);
+          // No need to cache allMockAssessments again here as assessments page handles its own cache
 
           setIsLoading(false);
         }
@@ -586,7 +658,7 @@ export default function PatientDetailPage() {
     );
   }
 
-  const completedPatientAssessments = patientAssessments.filter(asm => asm.status === 'completed' && asm.results?.score !== undefined);
+  const completedPatientAssessments = patientAssessments.filter(asm => asm.status === 'completed' && typeof asm.results?.score === 'number');
 
 
   return (

@@ -13,52 +13,81 @@ import { cacheService } from "@/services/cacheService";
 
 export const mockAssessmentsData: Assessment[] = [
   { 
-    id: 'assess1', 
+    id: 'assess_beck_ana_1', 
     title: 'Escala Beck de Ansiedade', 
-    patientId: 'p1', 
-    patientName: 'Ana Silva', 
+    patientId: '1', 
+    patientName: 'Ana Beatriz Silva', 
     status: 'completed', 
     formLink: 'mock-link-123', 
-    results: { score: 25, level: 'Moderado', summary: 'Paciente reportou sintomas consistentes com ansiedade moderada, incluindo preocupação excessiva e tensão física.', answeredAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 9).toISOString() }, 
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString() 
+    results: { score: 25, level: 'Moderado', summary: 'Paciente reportou sintomas consistentes com ansiedade moderada, incluindo preocupação excessiva e tensão física. Respondido via simulação.', answeredAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 21).toISOString(), detailedAnswers: [{question: "Como se sente sobre o futuro?", answer:"Preocupada"}] }, 
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 22).toISOString() 
   },
   { 
-    id: 'assess1b', 
+    id: 'assess_beck_ana_2', 
     title: 'Escala Beck de Ansiedade', 
-    patientId: 'p1', 
-    patientName: 'Ana Silva', 
+    patientId: '1', 
+    patientName: 'Ana Beatriz Silva', 
     status: 'completed', 
     formLink: 'mock-link-123b', 
-    results: { score: 18, level: 'Leve', summary: 'Sintomas de ansiedade diminuíram, reportando melhora na qualidade do sono.', answeredAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString() }, 
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString() 
+    results: { score: 18, level: 'Leve', summary: 'Sintomas de ansiedade diminuíram, reportando melhora na qualidade do sono. Respondido via simulação.', answeredAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(), detailedAnswers: [{question: "Como se sente sobre o futuro?", answer:"Um pouco melhor"}] }, 
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 8).toISOString() 
   },
   { 
-    id: 'assess2', 
+    id: 'assess_bdi_bruno_1', 
     title: 'Inventário de Depressão de Beck (BDI)', 
-    patientId: 'p2', 
-    patientName: 'Bruno Costa', 
+    patientId: '2', 
+    patientName: 'Bruno Almeida Costa', 
     status: 'sent', 
     formLink: 'mock-link-456', 
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString() 
   },
    { 
-    id: 'assess2b_bdi_p1', 
+    id: 'assess_bdi_ana_1', 
     title: 'Inventário de Depressão de Beck (BDI)', 
-    patientId: 'p1', 
-    patientName: 'Ana Silva', 
+    patientId: '1', 
+    patientName: 'Ana Beatriz Silva', 
     status: 'completed', 
     formLink: 'mock-link-bdi-p1', 
-    results: { score: 12, level: 'Mínimo', summary: 'Sintomas depressivos mínimos.', answeredAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 8).toISOString() }, 
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 9).toISOString() 
+    results: { score: 12, level: 'Mínimo', summary: 'Sintomas depressivos mínimos. Respondido via simulação.', answeredAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString() , detailedAnswers: [{question: "Como está seu apetite?", answer:"Normal"}]}, 
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 15).toISOString() 
   },
   { 
-    id: 'assess3', 
+    id: 'assess_whoqol_ana_1', 
     title: 'Questionário de Qualidade de Vida (WHOQOL-BREF)', 
-    patientId: 'p1', 
-    patientName: 'Ana Silva', 
+    patientId: '1', 
+    patientName: 'Ana Beatriz Silva', 
     status: 'pending', 
+    formLink: 'mock-link-whoqol-p1',
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString() 
   },
+  {
+    id: 'assess_stai_carla_1',
+    title: 'Inventário de Ansiedade Traço-Estado (STAI)',
+    patientId: '3',
+    patientName: 'Carla Dias Oliveira',
+    status: 'sent',
+    formLink: 'mock-link-stai-p3',
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString()
+  },
+  {
+    id: 'assess_pcl5_bruno_1',
+    title: 'Lista de Verificação de Sintomas de TEPT (PCL-5)',
+    patientId: '2',
+    patientName: 'Bruno Almeida Costa',
+    status: 'completed',
+    formLink: 'mock-link-pcl5-p2',
+    results: { score: 45, level: 'Elevado', summary: 'Indicadores significativos de TEPT. Respondido via simulação.', answeredAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(), detailedAnswers: [{question: "Reviveu o evento?", answer:"Frequentemente"}] },
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 11).toISOString()
+  },
+  {
+    id: 'assess_custom_carla_1',
+    title: 'Questionário de Hábitos de Sono',
+    patientId: '3',
+    patientName: 'Carla Dias Oliveira',
+    status: 'pending',
+    formLink: 'mock-link-custom-p3',
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString()
+  }
 ];
 
 
@@ -75,53 +104,53 @@ export default function AssessmentsPage() {
       setIsLoading(true);
       try {
         const cachedData = await cacheService.assessments.getList();
-        if (isMounted && cachedData) {
+        if (isMounted && cachedData && cachedData.length > 0) {
           setAssessments(cachedData);
-        }
-      } catch (error) {
-        // console.warn("Error loading assessments from cache:", error);
-      }
-
-      // Simulate fetching fresh data
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      if (isMounted) {
-        // Only set mock data if cache was empty, to preserve user actions during session
-        if (assessments.length === 0) {
+        } else if (isMounted) {
           setAssessments(mockAssessmentsData); 
           try {
             await cacheService.assessments.setList(mockAssessmentsData);
           } catch (error) {
-            // console.warn("Error saving assessments to cache:", error);
+            // console.warn("Error saving initial assessments to cache:", error);
           }
         }
-      }
-      
-      const keysToRemove: string[] = [];
-      const updatedAssessmentsFromStorage = (isMounted && assessments.length > 0 ? assessments : mockAssessmentsData).map(assessment => {
-        const completedKey = `assessment_completed_${assessment.id}`;
-        if (typeof window !== 'undefined') {
-            const storedResults = localStorage.getItem(completedKey);
-            if (storedResults) {
-            try {
-                const results = JSON.parse(storedResults) as AssessmentResultDetails;
-                keysToRemove.push(completedKey);
-                if (isMounted) { 
-                    toast({
-                        title: "Avaliação Concluída",
-                        description: `A avaliação "${assessment.title}" para ${assessment.patientName} foi marcada como concluída.`,
-                    });
-                }
-                return { ...assessment, status: 'completed', results } as Assessment;
-            } catch (e) {
-                // console.error("Failed to parse results from localStorage", e);
-            }
-            }
+      } catch (error) {
+        // console.warn("Error loading assessments from cache:", error);
+        if (isMounted) {
+          setAssessments(mockAssessmentsData); // Fallback to mock if cache read fails
         }
-        return assessment;
-      });
+      }
 
+      // Simulate fetching fresh data - not strictly needed if cache is king for demo
+      // await new Promise(resolve => setTimeout(resolve, 300));
+      
       if (isMounted) {
+        const keysToRemove: string[] = [];
+        const currentAssessments = assessments.length > 0 ? assessments : mockAssessmentsData;
+        
+        const updatedAssessmentsFromStorage = currentAssessments.map(assessment => {
+          const completedKey = `assessment_completed_${assessment.id}`;
+          if (typeof window !== 'undefined') {
+              const storedResults = localStorage.getItem(completedKey);
+              if (storedResults) {
+              try {
+                  const results = JSON.parse(storedResults) as AssessmentResultDetails;
+                  keysToRemove.push(completedKey);
+                  if (isMounted) { 
+                      toast({
+                          title: "Avaliação Concluída",
+                          description: `A avaliação "${assessment.title}" para ${assessment.patientName} foi marcada como concluída.`,
+                      });
+                  }
+                  return { ...assessment, status: 'completed', results } as Assessment;
+              } catch (e) {
+                  // console.error("Failed to parse results from localStorage", e);
+              }
+              }
+          }
+          return assessment;
+        });
+
         if (keysToRemove.length > 0) {
             setAssessments(updatedAssessmentsFromStorage);
             await cacheService.assessments.setList(updatedAssessmentsFromStorage); 
@@ -140,9 +169,9 @@ export default function AssessmentsPage() {
 
   const handleCreateOrUpdateAssessment = useCallback(async (data: Partial<Assessment>) => {
     const patientNameMap: Record<string, string> = {
-      p1: 'Ana Silva',
-      p2: 'Bruno Costa',
-      p3: 'Carla Dias',
+      '1': 'Ana Beatriz Silva',
+      '2': 'Bruno Almeida Costa',
+      '3': 'Carla Dias Oliveira',
     };
     let updatedAssessments;
 

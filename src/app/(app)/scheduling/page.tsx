@@ -6,14 +6,18 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle, Loader2, WifiOff, Wifi } from "lucide-react";
 import { useState, useCallback, useEffect, useMemo } from "react";
 import type { Session } from "@/types";
-import { addDays, addWeeks, addMonths, parseISO } from 'date-fns';
+import { addDays, addWeeks, addMonths, parseISO, subDays } from 'date-fns';
 import { cacheService } from '@/services/cacheService';
 import { useToast } from "@/hooks/use-toast";
 
 const initialMockSessions: Session[] = [
-  { id: '1', patientId: 'p1', patientName: 'Ana Silva', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo', startTime: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString(), endTime: new Date(new Date(new Date().setDate(new Date().getDate() + 1)).setHours(new Date().getHours() + 1)).toISOString(), status: 'scheduled', recurring: 'weekly' },
-  { id: '2', patientId: 'p2', patientName: 'Bruno Costa', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo', startTime: new Date(new Date().setDate(new Date().getDate() + 2)).toISOString(), endTime: new Date(new Date(new Date().setDate(new Date().getDate() + 2)).setHours(new Date().getHours() + 1)).toISOString(), status: 'completed', recurring: 'none' },
-  { id: '3', patientId: 'p1', patientName: 'Ana Silva', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo', startTime: new Date(new Date().setHours(new Date().getHours() - 2)).toISOString(), endTime: new Date(new Date().setHours(new Date().getHours() - 1)).toISOString(), status: 'scheduled', recurring: 'none' },
+  { id: 'sched1_ana_fut', patientId: '1', patientName: 'Ana Beatriz Silva', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: new Date(new Date().setDate(new Date().getDate() + 2)).toISOString(), endTime: new Date(new Date(new Date().setDate(new Date().getDate() + 2)).setHours(new Date().getHours() + 1)).toISOString(), status: 'scheduled', recurring: 'weekly' },
+  { id: 'sched2_bruno_past_comp', patientId: '2', patientName: 'Bruno Almeida Costa', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: subDays(new Date(), 5).toISOString(), endTime: new Date(subDays(new Date(), 5).getTime() + 60*60*1000).toISOString(), status: 'completed', recurring: 'none', notes: "Sessão focada em TEPT." },
+  { id: 'sched3_ana_today', patientId: '1', patientName: 'Ana Beatriz Silva', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: new Date(new Date().setHours(new Date().getHours() - 2)).toISOString(), endTime: new Date(new Date().setHours(new Date().getHours() - 1)).toISOString(), status: 'completed', recurring: 'none', notes: "Revisão de técnicas de relaxamento." },
+  { id: 'sched4_carla_fut', patientId: '3', patientName: 'Carla Dias Oliveira', psychologistId: 'psy2', psychologistName: 'Dra. Modelo Souza', startTime: addDays(new Date(), 3).toISOString(), endTime: new Date(addDays(new Date(), 3).getTime() + 60*60*1000).toISOString(), status: 'scheduled' },
+  { id: 'sched5_bruno_fut_recur', patientId: '2', patientName: 'Bruno Almeida Costa', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: addDays(new Date(), 7).toISOString(), endTime: new Date(addDays(new Date(), 7).getTime() + 60*60*1000).toISOString(), status: 'scheduled', recurring: 'weekly', notes: "Continuação TEPT" },
+  { id: 'sched6_ana_past_noshow', patientId: '1', patientName: 'Ana Beatriz Silva', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: subDays(new Date(), 10).toISOString(), endTime: new Date(subDays(new Date(), 10).getTime() + 60*60*1000).toISOString(), status: 'no-show' },
+  { id: 'sched7_carla_past_cancel', patientId: '3', patientName: 'Carla Dias Oliveira', psychologistId: 'psy2', psychologistName: 'Dra. Modelo Souza', startTime: subDays(new Date(), 12).toISOString(), endTime: new Date(subDays(new Date(), 12).getTime() + 60*60*1000).toISOString(), status: 'cancelled', notes: "Paciente remarcou." },
 ];
 
 export default function SchedulingPage() {
@@ -22,10 +26,9 @@ export default function SchedulingPage() {
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [currentDate, setCurrentDate] = useState<Date | undefined>(new Date());
   const [isLoading, setIsLoading] = useState(true);
-  const [isOnline, setIsOnline] = useState(true); // Manage online status locally for sync logic
+  const [isOnline, setIsOnline] = useState(true); 
   const { toast } = useToast();
 
-  // Effect for managing online/offline status and initial load
   useEffect(() => {
     let isMounted = true;
 
@@ -37,7 +40,7 @@ export default function SchedulingPage() {
 
     window.addEventListener('online', updateOnlineStatus);
     window.addEventListener('offline', updateOnlineStatus);
-    updateOnlineStatus(); // Initial check
+    updateOnlineStatus(); 
 
     const loadSessions = async () => {
       setIsLoading(true);
@@ -46,7 +49,6 @@ export default function SchedulingPage() {
         const pendingSessions = await cacheService.pendingSessions.getList();
         let combinedSessions = cachedSessions || [];
         if (pendingSessions) {
-          // Merge pending sessions, giving preference to pending if IDs match
           const pendingSessionIds = new Set(pendingSessions.map(s => s.id));
           combinedSessions = combinedSessions.filter(s => !pendingSessionIds.has(s.id));
           combinedSessions = [...combinedSessions, ...pendingSessions];
@@ -54,16 +56,18 @@ export default function SchedulingPage() {
         
         if (isMounted && combinedSessions.length > 0) {
           setSessions(combinedSessions.sort((a, b) => parseISO(a.startTime).getTime() - parseISO(b.startTime).getTime()));
-        } else if (isMounted && initialMockSessions.length > 0 && !cachedSessions && !pendingSessions) {
-           // Only use initial mocks if cache is completely empty
+        } else if (isMounted && initialMockSessions.length > 0 && (!cachedSessions || cachedSessions.length === 0) && (!pendingSessions || pendingSessions.length === 0) ) {
            const sortedMockSessions = initialMockSessions.sort((a, b) => parseISO(a.startTime).getTime() - parseISO(b.startTime).getTime());
            setSessions(sortedMockSessions);
            await cacheService.sessions.setList(sortedMockSessions);
         }
       } catch (error) {
         // console.warn("Error loading sessions from cache:", error);
+        if (isMounted) { // Fallback to initial mocks if cache read completely fails
+             const sortedMockSessions = initialMockSessions.sort((a, b) => parseISO(a.startTime).getTime() - parseISO(b.startTime).getTime());
+             setSessions(sortedMockSessions);
+        }
       }
-      // No need to simulate fetch for initial mock data if cache is primary source now
       if (isMounted) {
         setIsLoading(false);
       }
@@ -78,13 +82,11 @@ export default function SchedulingPage() {
     };
   }, []);
 
-  // Effect for syncing pending sessions when online status changes to true
   useEffect(() => {
     const syncPendingSessions = async () => {
       if (isOnline) {
         const pending = await cacheService.pendingSessions.getList();
         if (pending && pending.length > 0) {
-          // console.log("Attempting to sync pending sessions:", pending);
           let currentMainSessions = await cacheService.sessions.getList() || [];
           
           for (const pendingSession of pending) {
@@ -95,7 +97,6 @@ export default function SchedulingPage() {
             } else {
               currentMainSessions.push(syncedSession);
             }
-            // Visually update immediately
             setSessions(prev => {
                 const existingIdx = prev.findIndex(s => s.id === syncedSession.id);
                 if (existingIdx > -1) {
@@ -137,24 +138,38 @@ export default function SchedulingPage() {
   }, []);
 
   const handleSaveSession = useCallback(async (sessionData: Partial<Session>) => {
-    const isCurrentlyOnline = navigator.onLine; // Check current status at time of save
-    setIsOnline(isCurrentlyOnline); // Update local state for UI consistency
+    const isCurrentlyOnline = navigator.onLine; 
+    setIsOnline(isCurrentlyOnline); 
 
     let sessionToSave: Session;
     let updatedSessionsList: Session[];
+    const patientNameMap: Record<string, string> = {
+      '1': 'Ana Beatriz Silva',
+      '2': 'Bruno Almeida Costa',
+      '3': 'Carla Dias Oliveira',
+    };
+     const psychologistNameMap: Record<string, string> = {
+      psy1: 'Dr. Exemplo Silva',
+      psy2: 'Dra. Modelo Souza',
+    };
 
-    if (selectedSession && sessionData.id) { // Editing existing session
-      sessionToSave = { ...selectedSession, ...sessionData } as Session;
+
+    if (selectedSession && sessionData.id) { 
+      sessionToSave = { 
+        ...selectedSession, 
+        ...sessionData,
+        patientName: sessionData.patientId ? patientNameMap[sessionData.patientId] || selectedSession.patientName : selectedSession.patientName,
+        psychologistName: sessionData.psychologistId ? psychologistNameMap[sessionData.psychologistId] || selectedSession.psychologistName : selectedSession.psychologistName,
+      } as Session;
       updatedSessionsList = sessions.map(s => (s.id === sessionToSave.id ? sessionToSave : s));
-    } else { // Creating new session
+    } else { 
       const mainNewSession = { 
         ...sessionData, 
         id: `sess-${Date.now()}`, 
-        patientName: sessionData.patientId === 'p1' ? 'Ana Silva' : sessionData.patientId === 'p2' ? 'Bruno Costa' : 'Novo Paciente',
-        psychologistName: sessionData.psychologistId === 'psy1' ? 'Dr. Exemplo' : 'Outro Psicólogo',
+        patientName: sessionData.patientId ? patientNameMap[sessionData.patientId] : 'Novo Paciente',
+        psychologistName: sessionData.psychologistId ? psychologistNameMap[sessionData.psychologistId] : 'Psicólogo Desconhecido',
       } as Session;
       
-      // Handle recurrence only for new sessions
       const sessionsToAdd = [mainNewSession];
       if (mainNewSession.recurring && mainNewSession.recurring !== 'none' && mainNewSession.startTime) {
         const baseStartTime = parseISO(mainNewSession.startTime);
@@ -182,16 +197,16 @@ export default function SchedulingPage() {
           });
         }
       }
-      // For simplicity, we'll only handle the first session of recurrence for offline.
-      // Proper offline recurrence would be more complex.
-      sessionToSave = sessionsToAdd[0];
+      sessionToSave = sessionsToAdd[0]; // The first session in the series is what we initially work with for pending status
       updatedSessionsList = [...sessions.filter(s => s.id !== sessionToSave.id), ...sessionsToAdd];
-
     }
     
+    const finalSessionsToSave = updatedSessionsList.map(s => 
+      s.id === sessionToSave.id ? { ...s, isPendingSync: !isCurrentlyOnline } : s
+    );
+    
     if (!isCurrentlyOnline) {
-      sessionToSave.isPendingSync = true;
-      await cacheService.pendingSessions.addOrUpdate(sessionToSave);
+      await cacheService.pendingSessions.addOrUpdate({ ...sessionToSave, isPendingSync: true });
       toast({
         title: "Offline: Salvo Localmente",
         description: "A sessão foi salva localmente e será sincronizada quando houver conexão.",
@@ -199,17 +214,15 @@ export default function SchedulingPage() {
         className: "border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
       });
     } else {
-      sessionToSave.isPendingSync = false; // Ensure it's marked as synced
-      const allSessionsToCache = updatedSessionsList.map(s => s.id === sessionToSave.id ? sessionToSave : s);
-      await cacheService.sessions.setList(allSessionsToCache.sort((a, b) => parseISO(a.startTime).getTime() - parseISO(b.startTime).getTime()));
+      await cacheService.sessions.setList(finalSessionsToSave.sort((a, b) => parseISO(a.startTime).getTime() - parseISO(b.startTime).getTime()));
        toast({
-        title: session ? "Sessão Atualizada" : "Sessão Agendada",
+        title: selectedSession ? "Sessão Atualizada" : "Sessão Agendada",
         description: "Os detalhes da sessão foram salvos.",
         className: "bg-primary text-primary-foreground"
       });
     }
 
-    setSessions(updatedSessionsList.sort((a, b) => parseISO(a.startTime).getTime() - parseISO(b.startTime).getTime()));
+    setSessions(finalSessionsToSave.sort((a, b) => parseISO(a.startTime).getTime() - parseISO(b.startTime).getTime()));
     setIsFormOpen(false);
     setSelectedSession(null); 
   }, [selectedSession, sessions, toast]);
@@ -255,3 +268,4 @@ export default function SchedulingPage() {
     </div>
   );
 }
+

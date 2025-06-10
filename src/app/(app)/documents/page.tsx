@@ -8,11 +8,13 @@ import { cacheService } from "@/services/cacheService";
 import { useToast } from "@/hooks/use-toast"; // Import useToast
 
 const mockDocumentsData: DocumentResource[] = [
-  { id: 'doc1', name: 'Formulário de Consentimento.pdf', type: 'pdf', url: '#', uploadedAt: new Date(Date.now() - 1000*60*60*24*5).toISOString(), size: 120 * 1024, category: 'Formulários Clínicos', signatureStatus: 'none' },
-  { id: 'doc2', name: 'Termos de Serviço Psicologia.docx', type: 'docx', url: '#', uploadedAt: new Date(Date.now() - 1000*60*60*24*10).toISOString(), size: 85 * 1024, category: 'Documentos Legais', signatureStatus: 'none' },
-  { id: 'doc3', name: 'Guia de Relaxamento.pdf', type: 'pdf', url: '#', uploadedAt: new Date(Date.now() - 1000*60*60*24*2).toISOString(), size: 250 * 1024, category: 'Recursos para Pacientes', signatureStatus: 'signed', signatureDetails: { hash: 'mockhash123', signerInfo: 'CPF 123.456.789-00 (Mock)', signedAt: new Date(Date.now() - 1000*60*60*24*1).toISOString(), verificationCode: 'VERIFY-ABC-123', signedDocumentLink: '#' } },
-  { id: 'doc4', name: 'Anotações Importantes.txt', type: 'txt', url: '#', uploadedAt: new Date(Date.now() - 1000*60*60*24*1).toISOString(), size: 5 * 1024, category: 'Notas Internas', signatureStatus: 'none' },
-  { id: 'doc5', name: 'Planilha de Acompanhamento.pdf', type: 'pdf', url: '#', uploadedAt: new Date(Date.now() - 1000*60*60*24*3).toISOString(), size: 150 * 1024, category: 'Recursos para Pacientes', signatureStatus: 'pending_govbr_signature', signatureDetails: { hash: 'mockhash456' } },
+  { id: 'doc1', name: 'Formulário de Consentimento Informado - Ana Silva.pdf', type: 'pdf', url: '#', uploadedAt: new Date(Date.now() - 1000*60*60*24*5).toISOString(), size: 120 * 1024, category: 'Formulários Clínicos', signatureStatus: 'signed', signatureDetails: { hash: 'mockhash_consent_ana', signerInfo: 'Ana Silva (Paciente Mock)', signedAt: new Date(Date.now() - 1000*60*60*24*4).toISOString(), verificationCode: 'VERIFY-CONSENT-ANA-123', signedDocumentLink: '#' } },
+  { id: 'doc2', name: 'Termos de Serviço Psicologia Clínica.docx', type: 'docx', url: '#', uploadedAt: new Date(Date.now() - 1000*60*60*24*10).toISOString(), size: 85 * 1024, category: 'Documentos Legais', signatureStatus: 'none' },
+  { id: 'doc3', name: 'Relatório Psicológico - Bruno Costa.pdf', type: 'pdf', url: '#', uploadedAt: new Date(Date.now() - 1000*60*60*24*2).toISOString(), size: 250 * 1024, category: 'Relatórios e Encaminhamentos', signatureStatus: 'pending_govbr_signature', signatureDetails: { hash: 'mockhash_report_bruno' } },
+  { id: 'doc4', name: 'Anotações Confidenciais Reunião Equipe.txt', type: 'txt', url: '#', uploadedAt: new Date(Date.now() - 1000*60*60*24*1).toISOString(), size: 5 * 1024, category: 'Notas Internas', signatureStatus: 'none' },
+  { id: 'doc5', name: 'Planilha de Acompanhamento Financeiro.pdf', type: 'pdf', url: '#', uploadedAt: new Date(Date.now() - 1000*60*60*24*3).toISOString(), size: 150 * 1024, category: 'Administrativo', signatureStatus: 'none' },
+  { id: 'doc6', name: 'Guia de Relaxamento para Pacientes.pdf', type: 'pdf', url: '#', uploadedAt: new Date(Date.now() - 1000*60*60*24*15).toISOString(), size: 300 * 1024, category: 'Recursos para Pacientes', signatureStatus: 'none' },
+  { id: 'doc7', name: 'Contrato Terapêutico - Carla Dias.pdf', type: 'pdf', url: '#', uploadedAt: new Date(Date.now() - 1000*60*60*24*8).toISOString(), size: 95 * 1024, category: 'Contratos', signatureStatus: 'verification_failed', signatureDetails: { hash: 'mockhash_contract_carla_fail', signerInfo: 'Tentativa por Carla Dias (Mock)', signedAt: new Date(Date.now() - 1000*60*60*24*7).toISOString()} },
 ];
 
 
@@ -28,20 +30,9 @@ export default function DocumentsPage() {
       setIsLoading(true);
       try {
         const cachedDocs = await cacheService.documents.getList();
-        if (isMounted && cachedDocs) {
+        if (isMounted && cachedDocs && cachedDocs.length > 0) {
           setDocuments(cachedDocs);
-        }
-      } catch (error) {
-        // console.warn("Error loading documents from cache:", error);
-      }
-
-      // Simulate fetching fresh data
-      await new Promise(resolve => setTimeout(resolve, 300)); 
-      
-      if (isMounted) {
-        // If no cached data, or cached data is empty, use mock.
-        // Otherwise, assume cache is king for this demo unless explicitly refreshed.
-        if (!documents.length) {
+        } else if (isMounted) {
             setDocuments(mockDocumentsData); 
             try {
               await cacheService.documents.setList(mockDocumentsData);
@@ -49,6 +40,14 @@ export default function DocumentsPage() {
               // console.warn("Error saving initial documents to cache:", error);
             }
         }
+      } catch (error) {
+        // console.warn("Error loading documents from cache:", error);
+         if (isMounted) {
+            setDocuments(mockDocumentsData); // Fallback if cache read fails
+         }
+      }
+      
+      if (isMounted) {
         setIsLoading(false);
       }
     };
@@ -175,3 +174,4 @@ export default function DocumentsPage() {
     </div>
   );
 }
+
