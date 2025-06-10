@@ -1,21 +1,22 @@
+
 "use client";
 import dynamic from 'next/dynamic';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from '@/hooks/useAuth';
 import { BarChart3, PieChart, Users, CalendarCheck, AlertTriangle } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
-// Dynamically import chart components
-const WeeklySessionsChart = dynamic(() => import('@/components/dashboard/WeeklySessionsChart').then(mod => mod.WeeklySessionsChart), { 
+const WeeklySessionsChart = dynamic(() => import('@/features/dashboard/components/WeeklySessionsChart').then(mod => mod.WeeklySessionsChart), { 
   ssr: false,
-  loading: () => <div className="h-64 flex items-center justify-center"><p>Carregando gráfico...</p></div> 
+  loading: () => <Skeleton className="h-[350px] w-full" />
 });
-const OccupancyRateChart = dynamic(() => import('@/components/dashboard/OccupancyRateChart').then(mod => mod.OccupancyRateChart), { 
+const OccupancyRateChart = dynamic(() => import('@/features/dashboard/components/OccupancyRateChart').then(mod => mod.OccupancyRateChart), { 
   ssr: false,
-  loading: () => <div className="h-64 flex items-center justify-center"><p>Carregando gráfico...</p></div> 
+  loading: () => <Skeleton className="h-[350px] w-full rounded-full" />
 });
-const CommonIssuesChart = dynamic(() => import('@/components/dashboard/CommonIssuesChart').then(mod => mod.CommonIssuesChart), { 
+const CommonIssuesChart = dynamic(() => import('@/features/dashboard/components/CommonIssuesChart').then(mod => mod.CommonIssuesChart), { 
   ssr: false,
-  loading: () => <div className="h-64 flex items-center justify-center"><p>Carregando gráfico...</p></div> 
+  loading: () => <Skeleton className="h-[350px] w-full" />
 });
 
 
@@ -44,7 +45,6 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold font-headline">{stat.value}</div>
-              {/* <p className="text-xs text-muted-foreground">+20.1% from last month</p> */}
             </CardContent>
           </Card>
         ))}

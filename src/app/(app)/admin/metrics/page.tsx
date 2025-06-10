@@ -7,11 +7,11 @@ import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cacheService } from '@/services/cacheService';
 
-const SessionsCreatedPerWeekChart = dynamic(() => import('@/components/admin/metrics/SessionsCreatedPerWeekChart').then(mod => mod.SessionsCreatedPerWeekChart), {
+const SessionsCreatedPerWeekChart = dynamic(() => import('@/features/admin/components/metrics/SessionsCreatedPerWeekChart').then(mod => mod.SessionsCreatedPerWeekChart), {
   ssr: false,
   loading: () => <Skeleton className="h-[350px] w-full" />
 });
-const SessionsPerPsychologistChart = dynamic(() => import('@/components/admin/metrics/SessionsPerPsychologistChart').then(mod => mod.SessionsPerPsychologistChart), {
+const SessionsPerPsychologistChart = dynamic(() => import('@/features/admin/components/metrics/SessionsPerPsychologistChart').then(mod => mod.SessionsPerPsychologistChart), {
   ssr: false,
   loading: () => <Skeleton className="h-[350px] w-full" />
 });
@@ -43,7 +43,7 @@ export default function AdminMetricsPage() {
           setMetricsData(cachedSummary);
         }
       } catch (error) {
-        console.warn("Error loading admin metrics summary from cache:", error);
+        // console.warn("Error loading admin metrics summary from cache:", error);
       }
 
       // Simulate fetching fresh data
@@ -59,7 +59,7 @@ export default function AdminMetricsPage() {
         try {
           await cacheService.adminMetrics.setSummary(metricsData.totalPatients ? metricsData : mockAdminMetricsData);
         } catch (error) {
-          console.warn("Error saving admin metrics summary to cache:", error);
+          // console.warn("Error saving admin metrics summary to cache:", error);
         }
         setIsLoadingSummary(false);
       }
@@ -67,6 +67,7 @@ export default function AdminMetricsPage() {
 
     loadMetricsSummary();
     return () => { isMounted = false; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // metricsData removed from deps to avoid re-fetch loop with mock generation
 
   return (

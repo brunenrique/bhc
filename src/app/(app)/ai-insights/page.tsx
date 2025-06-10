@@ -1,4 +1,5 @@
-import { SessionInsightGeneratorClient } from "@/components/ai-insights/SessionInsightGeneratorClient";
+
+import { SessionInsightGeneratorClient } from "@/features/ai/components/SessionInsightGeneratorClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Brain } from "lucide-react";
 

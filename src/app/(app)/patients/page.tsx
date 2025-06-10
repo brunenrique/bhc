@@ -1,7 +1,7 @@
 
 "use client";
-import { PatientListTable } from "@/components/patients/PatientListTable";
-import { PatientFormDialog } from "@/components/patients/PatientFormDialog";
+import { PatientListTable } from "@/features/patients/components/PatientListTable";
+import { PatientFormDialog } from "@/features/patients/components/PatientFormDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PlusCircle, Search, Loader2 } from "lucide-react";
@@ -32,19 +32,17 @@ export default function PatientsPage() {
           setPatients(cachedPatients);
         }
       } catch (error) {
-        console.warn("Error loading patients from cache:", error);
+        // console.warn("Error loading patients from cache:", error);
       }
 
-      // Simulate fetching fresh data
-      // In a real app, this would be an API call
-      await new Promise(resolve => setTimeout(resolve, 300)); // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 300)); 
       
       if (isMounted) {
-        setPatients(mockPatients); // Set "fresh" mock data
+        setPatients(mockPatients); 
         try {
           await cacheService.patients.setList(mockPatients);
         } catch (error) {
-          console.warn("Error saving patients to cache:", error);
+          // console.warn("Error saving patients to cache:", error);
         }
         setIsLoading(false);
       }
@@ -67,19 +65,19 @@ export default function PatientsPage() {
   const handleDeletePatient = useCallback(async (patientId: string) => {
     const updatedPatients = patients.filter(p => p.id !== patientId);
     setPatients(updatedPatients);
-    await cacheService.patients.setList(updatedPatients); // Update cache
+    await cacheService.patients.setList(updatedPatients); 
   }, [patients]);
 
   const handleSavePatient = useCallback(async (patientData: Partial<Patient>) => {
     let updatedPatients;
-    if (selectedPatient && patientData.id) { // Editing existing
+    if (selectedPatient && patientData.id) { 
       updatedPatients = patients.map(p => p.id === patientData.id ? {...p, ...patientData, updatedAt: new Date().toISOString()} as Patient : p);
-    } else { // Creating new
+    } else { 
       const newPatient = { ...patientData, id: `mock-${Date.now()}`, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } as Patient;
       updatedPatients = [newPatient, ...patients];
     }
     setPatients(updatedPatients);
-    await cacheService.patients.setList(updatedPatients); // Update cache
+    await cacheService.patients.setList(updatedPatients); 
     setIsFormOpen(false);
   }, [selectedPatient, patients]);
 
@@ -87,7 +85,7 @@ export default function PatientsPage() {
     patients.filter(p => 
       p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (p.email && p.email.toLowerCase().includes(searchTerm.toLowerCase()))
-    ).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()), // Sort by newest first
+    ).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()), 
     [patients, searchTerm]
   );
 

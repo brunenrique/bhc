@@ -1,7 +1,7 @@
 
 "use client";
-import { AssessmentCreator } from "@/components/assessments/AssessmentCreator";
-import { AssessmentResultsTable } from "@/components/assessments/AssessmentResultsTable";
+import { AssessmentCreator } from "@/features/assessments/components/AssessmentCreator";
+import { AssessmentResultsTable } from "@/features/assessments/components/AssessmentResultsTable";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -35,7 +35,7 @@ export default function AssessmentsPage() {
           setAssessments(cachedData);
         }
       } catch (error) {
-        console.warn("Error loading assessments from cache:", error);
+        // console.warn("Error loading assessments from cache:", error);
       }
 
       // Simulate fetching fresh data
@@ -46,7 +46,7 @@ export default function AssessmentsPage() {
         try {
           await cacheService.assessments.setList(mockAssessmentsData);
         } catch (error) {
-          console.warn("Error saving assessments to cache:", error);
+          // console.warn("Error saving assessments to cache:", error);
         }
       }
       // Check for completed assessments from localStorage after initial load
@@ -67,7 +67,7 @@ export default function AssessmentsPage() {
                 }
                 return { ...assessment, status: 'completed', results } as Assessment;
             } catch (e) {
-                console.error("Failed to parse results from localStorage", e);
+                // console.error("Failed to parse results from localStorage", e);
             }
             }
         }
@@ -89,7 +89,7 @@ export default function AssessmentsPage() {
     loadAssessments();
     return () => { isMounted = false; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Toast is a stable function from useToast
+  }, []); 
 
   const handleCreateOrUpdateAssessment = useCallback(async (data: Partial<Assessment>) => {
     const patientNameMap: Record<string, string> = {

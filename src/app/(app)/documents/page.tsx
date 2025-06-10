@@ -1,6 +1,6 @@
 
 "use client";
-import { DocumentManager } from "@/components/documents/DocumentManager";
+import { DocumentManager } from "@/features/documents/components/DocumentManager";
 import type { DocumentResource } from "@/types";
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { Loader2 } from "lucide-react";
@@ -30,7 +30,7 @@ export default function DocumentsPage() {
           setDocuments(cachedDocs);
         }
       } catch (error) {
-        console.warn("Error loading documents from cache:", error);
+        // console.warn("Error loading documents from cache:", error);
       }
 
       // Simulate fetching fresh data
@@ -41,7 +41,7 @@ export default function DocumentsPage() {
         try {
           await cacheService.documents.setList(mockDocumentsData);
         } catch (error) {
-          console.warn("Error saving documents to cache:", error);
+          // console.warn("Error saving documents to cache:", error);
         }
         setIsLoading(false);
       }

@@ -1,7 +1,7 @@
 
 "use client";
-import { SessionCalendar } from "@/components/scheduling/SessionCalendar";
-import { SessionFormDialog } from "@/components/scheduling/SessionFormDialog";
+import { SessionCalendar } from "@/features/scheduling/components/SessionCalendar";
+import { SessionFormDialog } from "@/features/scheduling/components/SessionFormDialog";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Loader2 } from "lucide-react";
 import { useState, useCallback, useEffect } from "react";
@@ -32,10 +32,9 @@ export default function SchedulingPage() {
           setSessions(cachedSessions.sort((a, b) => parseISO(a.startTime).getTime() - parseISO(b.startTime).getTime()));
         }
       } catch (error) {
-        console.warn("Error loading sessions from cache:", error);
+        // console.warn("Error loading sessions from cache:", error);
       }
 
-      // Simulate fetching fresh data
       await new Promise(resolve => setTimeout(resolve, 300));
       
       if (isMounted) {
@@ -44,7 +43,7 @@ export default function SchedulingPage() {
         try {
           await cacheService.sessions.setList(sortedMockSessions);
         } catch (error) {
-          console.warn("Error saving sessions to cache:", error);
+          // console.warn("Error saving sessions to cache:", error);
         }
         setIsLoading(false);
       }
@@ -111,7 +110,7 @@ export default function SchedulingPage() {
     }
     const sortedSessions = updatedSessions.sort((a, b) => parseISO(a.startTime).getTime() - parseISO(b.startTime).getTime());
     setSessions(sortedSessions);
-    await cacheService.sessions.setList(sortedSessions); // Update cache
+    await cacheService.sessions.setList(sortedSessions); 
 
     setIsFormOpen(false);
     setSelectedSession(null); 

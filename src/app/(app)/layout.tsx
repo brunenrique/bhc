@@ -19,8 +19,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Moon, Sun } from 'lucide-react'; 
 import { useTheme } from 'next-themes'; 
-import { FloatingChatButton } from '@/components/chat/FloatingChatButton';
-import { SimulatedNotificationManager } from '@/components/notifications/SimulatedNotificationManager';
+import { FloatingChatButton } from '@/features/chat/components/FloatingChatButton';
+import { SimulatedNotificationManager } from '@/features/notifications/components/SimulatedNotificationManager';
 import { OfflineIndicator } from '@/components/layout/OfflineIndicator';
 
 
@@ -54,7 +54,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }, [isAuthenticated, isLoading, router]);
 
   if (isLoading || !isAuthenticated) {
-    // You can render a global loading spinner here
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -73,7 +72,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <SidebarContent className="p-2">
           <SidebarNav />
         </SidebarContent>
-        <SidebarFooter className="p-2 border-t border-sidebar-border flex items-center justify-center"> {/* Flex added for centering */}
+        <SidebarFooter className="p-2 border-t border-sidebar-border flex items-center justify-center"> 
           <ThemeToggle /> 
         </SidebarFooter>
       </Sidebar>
@@ -82,13 +81,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <div className="md:hidden">
             <SidebarTrigger />
           </div>
-          {/* Alterado para ser apenas um espaçador flexível */}
           <div className="flex-1">
-            {/* Search or other header elements can go here in the future */}
           </div>
           <UserNav />
         </header>
-        <main className="flex-1 p-4 md:p-6 lg:p-8 pt-12 md:pt-6 lg:pt-8"> {/* Added padding-top to prevent overlap with offline indicator */}
+        <main className="flex-1 p-4 md:p-6 lg:p-8 pt-12 md:pt-6 lg:pt-8"> 
           {children}
         </main>
       </SidebarInset>

@@ -7,8 +7,8 @@ import type { Session, Patient, PatientNoteVersion } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Edit, Mail, Phone, CalendarDays, FileText, PlusCircle, Repeat, Eye, EyeOff, Lock, History, Info } from 'lucide-react';
-import { PatientFormDialog } from '@/components/patients/PatientFormDialog';
-import { SessionFormDialog } from '@/components/scheduling/SessionFormDialog';
+import { PatientFormDialog } from '@/features/patients/components/PatientFormDialog';
+import { SessionFormDialog } from '@/features/scheduling/components/SessionFormDialog';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
@@ -22,7 +22,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 
 const fetchPatientDetailsMock = async (id: string): Promise<Patient | null> => {
-  await new Promise(resolve => setTimeout(resolve, 300)); // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 300)); 
   const mockPatient: Patient = {
     id,
     name: id === '1' ? 'Ana Beatriz Silva' : id === '2' ? 'Bruno Almeida Costa' : 'Paciente Exemplo Detalhado',
@@ -43,7 +43,7 @@ const fetchPatientDetailsMock = async (id: string): Promise<Patient | null> => {
 };
 
 const fetchPatientSessionsMock = async (patientId: string): Promise<Session[]> => {
-  await new Promise(resolve => setTimeout(resolve, 200)); // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 200)); 
   return [
     { id: 's1', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo", startTime: new Date(Date.now() - 1000*60*60*24*7).toISOString(), endTime: new Date(Date.now() - 1000*60*60*24*7 + 1000*60*60).toISOString(), status: 'completed', notes: 'Sessão produtiva, paciente demonstrou progresso.', recurring: 'weekly'},
     { id: 's2', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo", startTime: new Date(Date.now() - 1000*60*60*24*2).toISOString(), endTime: new Date(Date.now() - 1000*60*60*24*2 + 1000*60*60).toISOString(), status: 'scheduled', notes: 'Foco em técnicas de relaxamento.', recurring: 'none'},
@@ -77,27 +77,24 @@ export default function PatientDetailPage() {
       const loadPatientData = async () => {
         setIsLoading(true);
         
-        // Try to load patient details from cache
         try {
           const cachedPatient = await cacheService.patients.getDetail(patientId);
           if (isMounted && cachedPatient) {
             setPatient(cachedPatient);
           }
         } catch (error) {
-          console.warn(`Error loading patient ${patientId} from cache:`, error);
+          // console.warn(`Error loading patient ${patientId} from cache:`, error);
         }
 
-        // Try to load patient sessions from cache
         try {
           const cachedSessions = await cacheService.patients.getSessions(patientId);
           if (isMounted && cachedSessions) {
             setSessions(cachedSessions.sort((a,b) => parseISO(b.startTime).getTime() - parseISO(a.startTime).getTime()));
           }
         } catch (error) {
-          console.warn(`Error loading sessions for patient ${patientId} from cache:`, error);
+          // console.warn(`Error loading sessions for patient ${patientId} from cache:`, error);
         }
 
-        // Fetch "fresh" data
         const patientData = await fetchPatientDetailsMock(patientId);
         const sessionsData = await fetchPatientSessionsMock(patientId);
 
@@ -138,7 +135,7 @@ export default function PatientDetailPage() {
         content: currentNotes,
         timestamp: patient.updatedAt || new Date().toISOString(),
       };
-      previousNotes = [newVersion, ...previousNotes].slice(0, 5); // Keep last 5 versions
+      previousNotes = [newVersion, ...previousNotes].slice(0, 5); 
     }
 
     const updatedPatient = { 
@@ -149,7 +146,7 @@ export default function PatientDetailPage() {
     };
     
     setPatient(updatedPatient);
-    await cacheService.patients.setDetail(patient.id, updatedPatient); // Update cache
+    await cacheService.patients.setDetail(patient.id, updatedPatient); 
     setIsPatientFormOpen(false);
   }, [patient]);
 
@@ -206,7 +203,7 @@ export default function PatientDetailPage() {
     
     const sortedSessions = updatedSessions.sort((a, b) => parseISO(b.startTime).getTime() - parseISO(a.startTime).getTime());
     setSessions(sortedSessions);
-    await cacheService.patients.setSessions(patientId, sortedSessions); // Update cache
+    await cacheService.patients.setSessions(patientId, sortedSessions); 
 
     setIsSessionFormOpen(false);
     setEditingSession(null);
@@ -216,7 +213,7 @@ export default function PatientDetailPage() {
   if (isLoading && !patient) {
     return (
       <div className="space-y-6">
-        <Skeleton className="h-8 w-32 mb-4" /> {/* Back button */}
+        <Skeleton className="h-8 w-32 mb-4" /> 
         <Card className="shadow-xl overflow-hidden">
           <div className="bg-gradient-to-r from-primary/10 to-accent/10 p-6 md:flex md:items-center md:gap-6">
             <Skeleton className="h-32 w-32 rounded-full mx-auto md:mx-0" />
