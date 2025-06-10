@@ -124,7 +124,7 @@ export default function ClinicalAnalysisPage() {
 
           <div className="space-y-8 mt-8">
             <ChartContainer
-              title="Perfil Demográfico dos Pacientes (Filtrado)"
+              title="Perfil Demográfico dos Pacientes"
               description="Distribuição demográfica dos pacientes com base nos filtros aplicados."
               className="shadow-md hover:shadow-lg transition-shadow"
             >
