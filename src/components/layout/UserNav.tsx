@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -12,14 +13,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
-import { LogOut, Settings, UserCircle, User as UserIconLucide } from "lucide-react";
+import { LogOut, Settings, UserCircle, User as UserIconLucide, BookOpenText } from "lucide-react"; // Added BookOpenText
 import Link from "next/link";
 
 export function UserNav() {
   const { user, logout } = useAuth();
 
   if (!user) {
-    return null; // Or a login button if preferred in this position
+    return null; 
   }
 
   const getInitials = (name: string) => {
@@ -59,9 +60,15 @@ export function UserNav() {
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-             <Link href="/settings"> {/* Could be a dedicated settings page too */}
+             <Link href="/settings"> 
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Configurações</span>
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild> 
+            <Link href="/guide">
+              <BookOpenText className="mr-2 h-4 w-4" />
+              <span>Guia de Uso</span>
             </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>
@@ -74,3 +81,4 @@ export function UserNav() {
     </DropdownMenu>
   );
 }
+
