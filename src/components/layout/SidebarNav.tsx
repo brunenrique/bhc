@@ -15,16 +15,18 @@ import {
   Users,
   ClipboardList,
   FileText,
-  Brain, // Using Brain for AI Insights, Sparkles could also work
+  Brain, 
   Settings,
+  AreaChart, // Icon for Admin Metrics
   LucideIcon,
 } from "lucide-react";
+// import { useAuth } from '@/hooks/useAuth'; // For role-based navigation
 
 interface NavItem {
   href: string;
   label: string;
   icon: LucideIcon;
-  roles?: string[]; // Optional: for role-based visibility
+  roles?: string[]; 
 }
 
 const navItems: NavItem[] = [
@@ -34,32 +36,34 @@ const navItems: NavItem[] = [
   { href: "/assessments", label: "Avaliações", icon: ClipboardList },
   { href: "/documents", label: "Documentos", icon: FileText },
   { href: "/ai-insights", label: "Insights IA", icon: Brain },
+  { href: "/admin/metrics", label: "Métricas Admin", icon: AreaChart, roles: ['admin'] }, // Added admin metrics link
   { href: "/settings", label: "Configurações", icon: Settings },
 ];
 
 export function SidebarNav() {
   const pathname = usePathname();
-  // const { user } = useAuth(); // For role-based navigation if needed
+  // const { user } = useAuth(); 
 
   return (
     <SidebarMenu>
       {navItems.map((item) => {
-        // Basic role check example (can be expanded)
-        // if (item.roles && user && !item.roles.includes(user.role)) {
-        //   return null;
+        // Basic role check example (can be expanded or moved to a helper)
+        // if (item.roles && (!user || !item.roles.includes(user.role))) {
+        //   return null; 
         // }
-        const isActive = pathname === item.href || (pathname.startsWith(item.href) && item.href !== "/dashboard" && item.href !== "/");
+        const isActive = pathname === item.href || 
+                         (pathname.startsWith(item.href) && item.href !== "/" && item.href !== "/dashboard" && !navItems.some(other => other.href !== item.href && pathname.startsWith(other.href) && other.href.length > item.href.length));
         
         return (
           <SidebarMenuItem key={item.href}>
-            <Link href={item.href}>
+            <Link href={item.href} legacyBehavior passHref>
               <SidebarMenuButton
-                asChild={false} // Ensure it's a button for proper styling and interaction
+                as="a" // Use <a> tag for proper navigation with Link
                 isActive={isActive}
                 tooltip={item.label}
                 className={cn(
                   "w-full justify-start",
-                  isActive && "bg-sidebar-accent text-sidebar-accent-foreground"
+                  // isActive && "bg-sidebar-accent text-sidebar-accent-foreground" // isActive is now handled by data-active attribute
                 )}
               >
                 <item.icon className="mr-2 h-5 w-5 flex-shrink-0" />
