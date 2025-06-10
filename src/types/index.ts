@@ -56,4 +56,6 @@ export interface DocumentResource {
   url: string; // Link to the stored file
   uploadedAt: string; // ISO Date string
   size?: number; // in bytes
+  category?: string;
 }
+

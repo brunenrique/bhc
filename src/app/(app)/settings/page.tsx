@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -9,9 +10,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
 import { Loader2, Save, UserCircle } from "lucide-react";
 import { Switch } from "@/components/ui/switch"; // Assuming you have a Switch component
+import { useToast } from "@/hooks/use-toast";
 
 export default function SettingsPage() {
   const { user, isLoading: authLoading } = useAuth();
+  const { toast } = useToast();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   // Add more settings states as needed, e.g., notifications
@@ -35,10 +38,13 @@ export default function SettingsPage() {
     e.preventDefault();
     setIsSaving(true);
     // Simulate API call to save settings
-    console.log("Saving settings:", { name, email, enableNotifications });
+    // console.log("Saving settings:", { name, email, enableNotifications });
     await new Promise(resolve => setTimeout(resolve, 1500));
     setIsSaving(false);
-    // Optionally show a toast message for success/failure
+    toast({
+        title: "Configurações Salvas",
+        description: "Suas preferências foram atualizadas com sucesso.",
+    });
   };
 
   if (authLoading) {
@@ -124,3 +130,4 @@ export default function SettingsPage() {
     </div>
   );
 }
+

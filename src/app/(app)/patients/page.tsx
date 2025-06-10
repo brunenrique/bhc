@@ -1,3 +1,4 @@
+
 "use client";
 import { PatientListTable } from "@/components/patients/PatientListTable";
 import { PatientFormDialog } from "@/components/patients/PatientFormDialog";
@@ -30,13 +31,10 @@ export default function PatientsPage() {
   }, []);
 
   const handleDeletePatient = useCallback((patientId: string) => {
-    // Add delete logic: call API, update state
-    console.log("Deleting patient:", patientId);
     setPatients(prev => prev.filter(p => p.id !== patientId));
   }, []);
 
   const handleSavePatient = useCallback((patientData: Partial<Patient>) => {
-    console.log("Saving patient:", patientData);
     if (selectedPatient && patientData.id) { // Editing existing
       setPatients(prev => prev.map(p => p.id === patientData.id ? {...p, ...patientData} as Patient : p));
     } else { // Creating new
@@ -92,3 +90,4 @@ export default function PatientsPage() {
     </div>
   );
 }
+
