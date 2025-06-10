@@ -3,10 +3,10 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
-import type { Session, Patient, PatientNoteVersion } from '@/types';
+import type { Patient, Session, PatientNoteVersion, ProntuarioData } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Edit, Mail, Phone, CalendarDays, FileText, PlusCircle, Repeat, Eye, EyeOff, Lock, History, Info } from 'lucide-react';
+import { ArrowLeft, Edit, Mail, Phone, CalendarDays, FileText, PlusCircle, Repeat, Eye, EyeOff, Lock, History, Info, BookMarked } from 'lucide-react';
 import { PatientFormDialog } from '@/features/patients/components/PatientFormDialog';
 import { SessionFormDialog } from '@/features/scheduling/components/SessionFormDialog';
 import { Separator } from '@/components/ui/separator';
@@ -16,9 +16,53 @@ import { format, parseISO, addDays, addWeeks, addMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { cacheService } from '@/services/cacheService';
 import { Skeleton } from '@/components/ui/skeleton';
+
+const mockProntuario: ProntuarioData = {
+  identificacao: {
+    nomeCompleto: 'Ana Beatriz Silva',
+    sexo: 'Feminino',
+    cpf: '123.456.789-00',
+    dataNascimento: '1990-05-15',
+    estadoCivil: 'Solteira',
+    racaCor: 'Branca',
+    possuiFilhos: true,
+    quantosFilhos: 1,
+    situacaoProfissional: 'Empregada',
+    profissao: 'Designer Gráfica',
+    escolaridade: 'Superior Completo',
+    renda: 'R$ 5.000,00',
+    enderecoCasa: 'Rua das Palmeiras, 45, Apto 101, Centro, Cidade Alegre - CA',
+    telefone: '(11) 98765-4321',
+    contatoEmergencia: 'Maria Silva (Mãe) - (11) 98888-7777',
+  },
+  entradaUnidade: {
+    descricaoEntrada: 'Busca espontânea após recomendação de uma amiga. Relatou sentir-se ansiosa e com dificuldades para lidar com o estresse no trabalho.',
+  },
+  finalidade: {
+    descricaoFinalidade: 'Acolhimento psicológico e escuta humanizada para desenvolvimento de estratégias de enfrentamento da ansiedade e estresse, visando melhoria da qualidade de vida e bem-estar emocional. Não tem como finalidade produzir diagnóstico psicológico.',
+  },
+  responsavelTecnica: {
+    nomePsi: 'Dr. Exemplo Silva',
+    crp: '06/123456',
+  },
+  descricaoDemanda: {
+    demandaQueixa: 'Paciente relata sintomas de ansiedade generalizada, preocupação excessiva com o futuro, dificuldades de concentração, irritabilidade e insônia nos últimos 6 meses. Queixa-se também de sobrecarga no ambiente de trabalho e dificuldade em estabelecer limites.',
+  },
+  procedimentosAnalise: [
+    { dataAtendimento: new Date(Date.now() - 1000 * 60 * 60 * 24 * 21).toISOString(), descricaoAtuacao: 'Primeira consulta. Realizada anamnese detalhada, escuta ativa da queixa inicial. Identificados principais gatilhos de ansiedade. Explicado o processo terapêutico e combinado contrato terapêutico. Aplicada Escala Beck de Ansiedade (BAI) - Resultado: 28 (Ansiedade Moderada).' },
+    { dataAtendimento: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(), descricaoAtuacao: 'Foco em psicoeducação sobre ansiedade e seus mecanismos. Introduzidas técnicas de respiração diafragmática e relaxamento progressivo. Paciente demonstrou boa receptividade e compreensão.' },
+    { dataAtendimento: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(), descricaoAtuacao: 'Trabalho com reestruturação cognitiva de pensamentos disfuncionais relacionados ao trabalho e autoexigência. Paciente identificou padrões de pensamento catastróficos. Proposta de diário de pensamentos como tarefa de casa.' },
+  ],
+  conclusaoEncaminhamento: {
+    condutaAdotada: 'Paciente segue em acompanhamento psicológico semanal. Apresenta evolução gradual na identificação e manejo dos sintomas de ansiedade. Demonstra maior autoconsciência e engajamento nas técnicas propostas. Recomenda-se continuidade do processo terapêutico para consolidação dos ganhos e desenvolvimento de novas habilidades de enfrentamento. Nenhuma necessidade de encaminhamento externo no momento.',
+  },
+  localAssinatura: 'Santana de Parnaíba',
+  dataDocumento: new Date().toISOString(),
+};
 
 
 const fetchPatientDetailsMock = async (id: string): Promise<Patient | null> => {
@@ -35,6 +79,7 @@ const fetchPatientDetailsMock = async (id: string): Promise<Patient | null> => {
       { content: "Sessão de 15/07: Foco em reestruturação cognitiva de pensamentos automáticos negativos. Paciente identificou três padrões principais. Recomendações: Continuar o diário de pensamentos, praticar técnicas de respiração diafragmática duas vezes ao dia.", timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString() },
       { content: "Paciente apresenta quadro de ansiedade generalizada, com picos de estresse relacionados ao trabalho. Demonstra boa adesão às técnicas propostas em sessões anteriores.", timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString() }
     ],
+    prontuario: id === '1' ? mockProntuario : undefined, // Add mock prontuario for patient 1
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(), 
     updatedAt: new Date().toISOString(),
   };
@@ -45,7 +90,7 @@ const fetchPatientDetailsMock = async (id: string): Promise<Patient | null> => {
 const fetchPatientSessionsMock = async (patientId: string): Promise<Session[]> => {
   await new Promise(resolve => setTimeout(resolve, 200)); 
   return [
-    { id: 's1', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo", startTime: new Date(Date.now() - 1000*60*60*24*7).toISOString(), endTime: new Date(Date.now() - 1000*60*60*24*7 + 1000*60*60).toISOString(), status: 'completed', notes: 'Sessão produtiva, paciente demonstrou progresso.', recurring: 'weekly'},
+    { id: 's1', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo", startTime: new Date(Date.now() - 1000*60*60*24*7).toISOString(), endTime: new Date(Date.now() - 1000*60*60*24*7 + 1000*60*60).toISOString(), status: 'completed', recurring: 'weekly'},
     { id: 's2', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo", startTime: new Date(Date.now() - 1000*60*60*24*2).toISOString(), endTime: new Date(Date.now() - 1000*60*60*24*2 + 1000*60*60).toISOString(), status: 'scheduled', notes: 'Foco em técnicas de relaxamento.', recurring: 'none'},
   ].sort((a,b) => parseISO(b.startTime).getTime() - parseISO(a.startTime).getTime());
 }
@@ -56,6 +101,110 @@ const recurrenceLabels: Record<string, string> = {
   monthly: "Mensal",
   none: "Não se repete"
 };
+
+// Prontuário Display Component
+const ProntuarioDisplay: React.FC<{ prontuarioData: ProntuarioData | undefined }> = ({ prontuarioData }) => {
+  if (!prontuarioData) {
+    return <p className="text-muted-foreground p-4 text-center">Nenhum dado de prontuário disponível para este paciente.</p>;
+  }
+
+  const { 
+    identificacao, entradaUnidade, finalidade, responsavelTecnica, 
+    descricaoDemanda, procedimentosAnalise, conclusaoEncaminhamento,
+    localAssinatura, dataDocumento 
+  } = prontuarioData;
+
+  return (
+    <ScrollArea className="h-[400px] w-full rounded-md border p-4 bg-muted/20 shadow-inner space-y-6">
+      {identificacao && (
+        <section>
+          <h4 className="text-lg font-semibold font-headline mb-2 border-b pb-1">Identificação</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2 text-sm">
+            <p><strong>Nome Completo:</strong> {identificacao.nomeCompleto}</p>
+            <p><strong>Sexo:</strong> {identificacao.sexo}</p>
+            <p><strong>CPF:</strong> {identificacao.cpf}</p>
+            <p><strong>Data de Nasc.:</strong> {identificacao.dataNascimento ? format(parseISO(identificacao.dataNascimento), "dd/MM/yyyy", { locale: ptBR }) : 'N/A'}</p>
+            <p><strong>Estado Civil:</strong> {identificacao.estadoCivil}</p>
+            <p><strong>Raça/Cor:</strong> {identificacao.racaCor}</p>
+            <p><strong>Possui filhos:</strong> {identificacao.possuiFilhos ? `Sim, ${identificacao.quantosFilhos || 0}` : 'Não'}</p>
+            <p><strong>Situação profissional:</strong> {identificacao.situacaoProfissional}</p>
+            <p><strong>Profissão:</strong> {identificacao.profissao}</p>
+            <p><strong>Escolaridade:</strong> {identificacao.escolaridade}</p>
+            <p><strong>Renda:</strong> {identificacao.renda}</p>
+            <p className="md:col-span-2"><strong>Endereço:</strong> {identificacao.enderecoCasa}</p>
+            <p><strong>Telefone:</strong> {identificacao.telefone}</p>
+            <p><strong>Contato emergência:</strong> {identificacao.contatoEmergencia}</p>
+          </div>
+        </section>
+      )}
+
+      {entradaUnidade && (
+        <section>
+          <h4 className="text-lg font-semibold font-headline mb-2 border-b pb-1">1.1. Entrada na Unidade</h4>
+          <p className="text-sm whitespace-pre-wrap">{entradaUnidade.descricaoEntrada}</p>
+        </section>
+      )}
+
+      {finalidade && (
+        <section>
+          <h4 className="text-lg font-semibold font-headline mb-2 border-b pb-1">1.2. Finalidade</h4>
+          <p className="text-sm whitespace-pre-wrap">{finalidade.descricaoFinalidade}</p>
+        </section>
+      )}
+      
+      {responsavelTecnica && (
+        <section>
+          <h4 className="text-lg font-semibold font-headline mb-2 border-b pb-1">1.3. Responsável Técnica</h4>
+          <p className="text-sm"><strong>Nome:</strong> {responsavelTecnica.nomePsi}</p>
+          <p className="text-sm"><strong>CRP:</strong> {responsavelTecnica.crp}</p>
+        </section>
+      )}
+
+      {descricaoDemanda && (
+        <section>
+          <h4 className="text-lg font-semibold font-headline mb-2 border-b pb-1">Descrição da demanda/queixa</h4>
+          <p className="text-sm whitespace-pre-wrap">{descricaoDemanda.demandaQueixa}</p>
+        </section>
+      )}
+
+      {procedimentosAnalise && procedimentosAnalise.length > 0 && (
+        <section>
+          <h4 className="text-lg font-semibold font-headline mb-2 border-b pb-1">Procedimento/Análise</h4>
+          <ul className="space-y-3">
+            {procedimentosAnalise.map((item, index) => (
+              <li key={index} className="text-sm border-l-2 border-primary pl-3 py-1">
+                <p><strong>Data:</strong> {format(parseISO(item.dataAtendimento), "dd/MM/yyyy", { locale: ptBR })}</p>
+                <p className="whitespace-pre-wrap mt-1">{item.descricaoAtuacao}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {conclusaoEncaminhamento && (
+        <section>
+          <h4 className="text-lg font-semibold font-headline mb-2 border-b pb-1">Conclusão/Encaminhamento</h4>
+          <p className="text-sm whitespace-pre-wrap">{conclusaoEncaminhamento.condutaAdotada}</p>
+        </section>
+      )}
+      
+      <section className="text-xs text-muted-foreground italic pt-4 border-t mt-4">
+        <p>Obs: Este documento não poderá ser utilizado para fins diferentes do apontado na finalidade acima, possui caráter sigiloso e trata-se de documento extrajudicial e não responsabilizo-me pelo uso dado ao relatório por parte da pessoa, grupo ou instituição, após a sua entrega em entrevista devolutiva.</p>
+      </section>
+
+      {localAssinatura && dataDocumento && responsavelTecnica && (
+        <section className="pt-6 text-center text-sm">
+          <p>{localAssinatura}, {format(parseISO(dataDocumento), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}.</p>
+          <div className="mt-12 border-t-2 border-foreground w-64 mx-auto pt-1">
+            <p>{responsavelTecnica.nomePsi}</p>
+            <p>Psicóloga(o) {responsavelTecnica.crp}</p>
+          </div>
+        </section>
+      )}
+    </ScrollArea>
+  );
+};
+
 
 export default function PatientDetailPage() {
   const router = useRouter();
@@ -70,6 +219,8 @@ export default function PatientDetailPage() {
   const [editingSession, setEditingSession] = useState<Session | null>(null);
   const [areNotesVisible, setAreNotesVisible] = useState(false);
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'notes' | 'prontuario'>('notes');
+
 
   useEffect(() => {
     let isMounted = true;
@@ -155,10 +306,10 @@ export default function PatientDetailPage() {
       psy1: 'Dr. Exemplo Silva',
       psy2: 'Dra. Modelo Souza',
     };
-    let updatedSessions;
+    let updatedSessionsList;
 
     if (editingSession && sessionData.id) {
-      updatedSessions = sessions.map(s => (s.id === sessionData.id ? { 
+      updatedSessionsList = sessions.map(s => (s.id === sessionData.id ? { 
           ...s, 
           ...sessionData,
           psychologistName: sessionData.psychologistId ? psychologistNameMap[sessionData.psychologistId] || s.psychologistName : s.psychologistName,
@@ -198,10 +349,10 @@ export default function PatientDetailPage() {
           });
         }
       }
-      updatedSessions = [...sessions, ...sessionsToAdd];
+      updatedSessionsList = [...sessions, ...sessionsToAdd];
     }
     
-    const sortedSessions = updatedSessions.sort((a, b) => parseISO(b.startTime).getTime() - parseISO(a.startTime).getTime());
+    const sortedSessions = updatedSessionsList.sort((a, b) => parseISO(b.startTime).getTime() - parseISO(a.startTime).getTime());
     setSessions(sortedSessions);
     await cacheService.patients.setSessions(patientId, sortedSessions); 
 
@@ -293,44 +444,61 @@ export default function PatientDetailPage() {
             <p className="text-muted-foreground">{patient.address || "Não informado"}</p>
           </div>
           <Separator />
-          <div>
-            <div className="flex justify-between items-center mb-2">
-                <h3 className="text-xl font-headline font-semibold flex items-center">
-                    <FileText className="w-5 h-5 mr-2 text-primary"/> Histórico / Anotações Confidenciais
-                </h3>
-                <div className="flex gap-2">
-                    {patient.previousSessionNotes && patient.previousSessionNotes.length > 0 && (
-                        <Button variant="outline" size="sm" onClick={() => setIsHistoryDialogOpen(true)} disabled={!areNotesVisible && !(patient.previousSessionNotes && patient.previousSessionNotes.length > 0)}>
-                            <History className="w-4 h-4 mr-2" /> Ver Versões Anteriores
-                        </Button>
-                    )}
-                    <Button variant="outline" size="sm" onClick={() => setAreNotesVisible(!areNotesVisible)}>
-                        {areNotesVisible ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
-                        {areNotesVisible ? "Ocultar" : "Visualizar"}
+          
+          {/* Clinical Records Section */}
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'notes' | 'prontuario')}>
+            <div className="flex justify-between items-center mb-3">
+              <TabsList>
+                <TabsTrigger value="notes" className="font-headline text-sm px-3 py-1.5 h-auto">
+                  <FileText className="w-4 h-4 mr-2"/>Anotações de Sessão
+                </TabsTrigger>
+                <TabsTrigger value="prontuario" className="font-headline text-sm px-3 py-1.5 h-auto">
+                   <BookMarked className="w-4 h-4 mr-2"/>Prontuário Psicológico
+                </TabsTrigger>
+              </TabsList>
+              <div className="flex gap-2">
+                {activeTab === 'notes' && patient.previousSessionNotes && patient.previousSessionNotes.length > 0 && (
+                    <Button variant="outline" size="sm" onClick={() => setIsHistoryDialogOpen(true)} disabled={!areNotesVisible}>
+                        <History className="w-4 h-4 mr-2" /> Ver Histórico de Anotações
                     </Button>
-                </div>
+                )}
+                <Button variant="outline" size="sm" onClick={() => setAreNotesVisible(!areNotesVisible)}>
+                    {areNotesVisible ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
+                    {areNotesVisible ? "Ocultar Detalhes" : "Visualizar Detalhes"}
+                </Button>
+              </div>
             </div>
-            {areNotesVisible ? (
-                <ScrollArea className="h-40 w-full rounded-md border p-3 bg-muted/20 shadow-inner">
-                    <pre className="whitespace-pre-wrap text-sm text-foreground font-body leading-relaxed">{patient.sessionNotes || "Nenhuma anotação registrada."}</pre>
-                </ScrollArea>
+
+            {!areNotesVisible ? (
+              <Alert variant="default" className="bg-muted/40 border-primary/30 mt-2">
+                <Lock className="h-5 w-5 text-primary/80" />
+                <AlertTitle className="font-headline text-primary/90">Conteúdo Confidencial</AlertTitle>
+                <AlertDescription className="text-muted-foreground">
+                    Os detalhes clínicos são confidenciais. Clique em "Visualizar Detalhes" para exibir o conteúdo.
+                    Lembre-se de ocultá-los ao se afastar. (Simulação de segurança)
+                </AlertDescription>
+              </Alert>
             ) : (
-                 <Alert variant="default" className="bg-muted/40 border-primary/30">
-                    <Lock className="h-5 w-5 text-primary/80" />
-                    <AlertTitle className="font-headline text-primary/90">Conteúdo Confidencial</AlertTitle>
-                    <AlertDescription className="text-muted-foreground">
-                        As anotações de sessão e seu histórico são confidenciais. Clique em "Visualizar" para exibir o conteúdo.
-                        Lembre-se de ocultá-las ao se afastar. (Simulação de segurança)
-                    </AlertDescription>
-                </Alert>
+              <>
+                <TabsContent value="notes">
+                  <h3 className="text-lg font-semibold font-headline mb-2">Anotações de Sessão</h3>
+                   <ScrollArea className="h-40 w-full rounded-md border p-3 bg-muted/20 shadow-inner">
+                       <pre className="whitespace-pre-wrap text-sm text-foreground font-body leading-relaxed">{patient.sessionNotes || "Nenhuma anotação registrada."}</pre>
+                   </ScrollArea>
+                </TabsContent>
+                <TabsContent value="prontuario">
+                   <h3 className="text-lg font-semibold font-headline mb-2">Prontuário Psicológico</h3>
+                   <ProntuarioDisplay prontuarioData={patient.prontuario} />
+                </TabsContent>
+              </>
             )}
-          </div>
+          </Tabs>
         </CardContent>
       </Card>
 
       <Card className="shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-xl font-headline">Histórico de Sessões</CardTitle>
+            <CardTitle className="text-xl font-headline">Histórico de Sessões Agendadas</CardTitle>
             <Button onClick={handleNewSession} size="sm">
                 <PlusCircle className="mr-2 h-4 w-4" /> Nova Sessão
             </Button>
@@ -383,7 +551,7 @@ export default function PatientDetailPage() {
         onSave={handleSaveSession}
       />
 
-       <Dialog open={isHistoryDialogOpen && areNotesVisible} onOpenChange={setIsHistoryDialogOpen}>
+       <Dialog open={isHistoryDialogOpen && areNotesVisible && activeTab === 'notes'} onOpenChange={setIsHistoryDialogOpen}>
         <DialogContent className="sm:max-w-2xl max-h-[80vh]">
           <DialogHeader>
             <DialogTitle className="font-headline">Histórico de Anotações de Sessão</DialogTitle>
@@ -394,7 +562,7 @@ export default function PatientDetailPage() {
           <ScrollArea className="max-h-[60vh] pr-3">
             {patient.previousSessionNotes && patient.previousSessionNotes.length > 0 ? (
               <ul className="space-y-4">
-                {patient.previousSessionNotes.map((noteVersion, index) => (
+                {patient.previousSessionNotes.map((noteVersion) => (
                   <li key={noteVersion.timestamp} className="border rounded-md p-3 bg-muted/20">
                     <p className="text-xs text-muted-foreground mb-1">
                       Salvo em: {format(parseISO(noteVersion.timestamp), "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR })}
@@ -406,7 +574,7 @@ export default function PatientDetailPage() {
             ) : (
               <div className="text-center py-6">
                 <Info className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
-                <p className="text-muted-foreground">Nenhum histórico de versões anteriores encontrado.</p>
+                <p className="text-muted-foreground">Nenhum histórico de versões anteriores encontrado para as anotações de sessão.</p>
               </div>
             )}
           </ScrollArea>
@@ -419,3 +587,4 @@ export default function PatientDetailPage() {
     </div>
   );
 }
+

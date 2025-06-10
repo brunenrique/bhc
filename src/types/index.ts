@@ -9,6 +9,69 @@ export interface User {
   avatarUrl?: string;
 }
 
+export interface PatientNoteVersion {
+  content: string;
+  timestamp: string; // ISO Date string
+}
+
+export interface ProntuarioIdentificacao {
+  nomeCompleto?: string;
+  sexo?: string;
+  cpf?: string;
+  dataNascimento?: string; // ISO Date string
+  estadoCivil?: string;
+  racaCor?: string;
+  possuiFilhos?: boolean;
+  quantosFilhos?: number;
+  situacaoProfissional?: string;
+  profissao?: string;
+  escolaridade?: string;
+  renda?: string;
+  enderecoCasa?: string;
+  telefone?: string;
+  contatoEmergencia?: string;
+}
+
+export interface ProntuarioEntradaUnidade {
+  descricaoEntrada?: string;
+}
+
+export interface ProntuarioFinalidade {
+  descricaoFinalidade?: string;
+}
+
+export interface ProntuarioResponsavelTecnica {
+  nomePsi?: string;
+  crp?: string;
+}
+
+export interface ProntuarioDescricaoDemanda {
+  demandaQueixa?: string;
+}
+
+export interface ProntuarioProcedimentoAnaliseEntry {
+  dataAtendimento: string; // ISO Date string
+  descricaoAtuacao: string;
+}
+
+export interface ProntuarioConclusaoEncaminhamento {
+  condutaAdotada?: string;
+}
+
+export interface ProntuarioData {
+  identificacao?: ProntuarioIdentificacao;
+  entradaUnidade?: ProntuarioEntradaUnidade;
+  finalidade?: ProntuarioFinalidade;
+  responsavelTecnica?: ProntuarioResponsavelTecnica;
+  descricaoDemanda?: ProntuarioDescricaoDemanda;
+  procedimentosAnalise?: ProntuarioProcedimentoAnaliseEntry[];
+  conclusaoEncaminhamento?: ProntuarioConclusaoEncaminhamento;
+  localAssinatura?: string;
+  dataDocumento?: string; // ISO Date string for when the prontuario was "finalized"
+  // The signature part is mostly static text in the template, psi name/crp can be from responsavelTecnica
+}
+
+
 export interface Patient {
   id: string;
   name: string;
@@ -18,14 +81,11 @@ export interface Patient {
   address?: string;
   sessionNotes?: string;
   previousSessionNotes?: PatientNoteVersion[];
+  prontuario?: ProntuarioData; // New field for structured record
   createdAt: string; // ISO Date string
   updatedAt: string; // ISO Date string
 }
 
-export interface PatientNoteVersion {
-  content: string;
-  timestamp: string; // ISO Date string
-}
 
 export type SessionRecurrence = "none" | "daily" | "weekly" | "monthly";
 
