@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   LayoutDashboard, CalendarDays, Users, ClipboardList, FileText, Settings, MessageSquare, ListTodo, Info, HelpCircle, BookOpenText,
   Edit, PlusCircle, Search, Download, Fingerprint, UploadCloud, Eye, Trash2, UserCheck, UserX, CalendarX2, CalendarCheck2, FileSignature, BarChart3, CaseSensitive, Bot,
-  FileText as FileTextIconLucide, BookMarked, ShieldCheck, ShieldX, ShieldAlert, Edit3, Save, Send, Mail, CalendarPlus2, MoreHorizontal,
+  FileText as FileTextIconLucide, BookMarked, ShieldCheck, ShieldX, ShieldAlert, Edit3, Save, Send, Mail, CalendarPlus2, MoreHorizontal, ListChecks,
 } from "lucide-react";
 // Removed: import Image from "next/image"; // Not used in current guide content
 
