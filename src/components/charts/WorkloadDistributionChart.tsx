@@ -7,7 +7,8 @@ import { ChartPlaceholder } from "@/components/ui/dashboard/ChartPlaceholder";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BarChart3 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
-import { CartesianGrid, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import * as RechartsPrimitive from 'recharts'; // For Cell
 
 interface WorkloadDistributionChartProps {
   sessions: Session[];
@@ -133,5 +134,3 @@ export function WorkloadDistributionChart({ sessions }: WorkloadDistributionChar
     </ChartContainer>
   );
 }
-// Need to import Cell from 'recharts' as RechartsPrimitive.Cell
-import * as RechartsPrimitive from "recharts";
