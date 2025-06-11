@@ -106,6 +106,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <main className="flex-1 p-4 md:p-6 lg:p-8 pt-12 md:pt-6 lg:pt-8"> 
           {children}
         </main>
+        <footer className="p-4 text-center text-xs text-muted-foreground border-t border-border">
+          Desenvolvido por Bruno Henrique Cordeiro
+        </footer>
       </SidebarInset>
       <FloatingChatButton />
       <SimulatedNotificationManager />
