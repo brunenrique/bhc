@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
-import { Loader2, Save, UserCircle, Palette } from "lucide-react";
+import { Loader2, Save, UserCircle, Palette, Sun, Moon } from "lucide-react"; // Added Sun and Moon
 import { Switch } from "@/components/ui/switch"; 
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
