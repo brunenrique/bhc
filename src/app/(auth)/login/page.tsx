@@ -24,7 +24,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-secondary p-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-background to-secondary p-4">
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="items-center text-center">
           <ShieldCheck className="h-16 w-16 text-primary mb-2" />
@@ -86,6 +86,9 @@ export default function LoginPage() {
           </p>
         </CardFooter>
       </Card>
+      <footer className="mt-8 text-center text-xs text-muted-foreground">
+        Desenvolvido por Bruno Henrique Cordeiro
+      </footer>
     </div>
   );
 }
