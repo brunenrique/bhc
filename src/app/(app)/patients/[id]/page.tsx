@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { RichTextEditor } from '@/components/shared/RichTextEditor'; 
-import { ArrowLeft, Edit, Mail, Phone, CalendarDays, FileText as FileTextIconLucide, PlusCircle, Repeat, Eye, EyeOff, Lock, History, Info, BookMarked, Fingerprint, ShieldCheck, ShieldX, ShieldAlert, UploadCloud, ListChecks, BarChart3, FileSignature, CalendarCheck2, CalendarX2, UserCheck, UserX, AlertTriangle, CaseSensitive, Bot, FileText as FileTextIcon, DownloadCloud, Edit3 } from 'lucide-react';
+import { ArrowLeft, Edit, Mail, Phone, CalendarDays, FileText as FileTextIconLucide, PlusCircle, Repeat, Eye, EyeOff, Lock, History, Info, BookMarked, Fingerprint, ShieldCheck, ShieldX, ShieldAlert, UploadCloud, ListChecks, BarChart3, FileSignature, CalendarCheck2, CalendarX2, UserCheck, UserX, AlertTriangle, CaseSensitive, Bot, FileText as FileTextIcon, DownloadCloud, Edit3, ShieldQuestion } from 'lucide-react';
 import { PatientFormDialog } from '@/features/patients/components/PatientFormDialog';
 import { SessionFormDialog } from '@/features/scheduling/components/SessionFormDialog';
 import { Separator } from '@/components/ui/separator';
@@ -16,7 +16,7 @@ import Image from 'next/image';
 import { format, parseISO, addDays, addWeeks, addMonths, isFuture, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter as UIDialogFooter } from "@/components/ui/dialog"; 
 import { cacheService } from '@/services/cacheService';
@@ -28,7 +28,7 @@ import { PatientEvolutionChart } from '@/features/patients/components/PatientEvo
 import { mockAssessmentsData as allMockAssessments } from '@/app/(app)/assessments/page'; 
 import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/ui/input';
-
+import { hasPermission } from '@/lib/permissions'; // Import hasPermission
 
 const mockProntuarioAna: ProntuarioData = {
   identificacao: {
@@ -95,10 +95,12 @@ const mockProntuarioBruno: ProntuarioData = {
   signatureDetails: { hash: 'mockhash_prontuario_bruno' }
 };
 
-
 const fetchPatientDetailsMock = async (id: string): Promise<Patient | null> => {
   await new Promise(resolve => setTimeout(resolve, 300)); 
   const baseDate = new Date();
+  // Use a consistent mock psychologist ID for assignedTo testing
+  const mockPsychologistId = 'mock-user-psychologist-1234'; 
+
   const mockPatientBase = {
     id,
     email: id === '1' ? 'ana.silva@example.com' : id === '2' ? 'bruno.costa@example.com' : 'paciente.detalhe@example.com',
@@ -107,10 +109,11 @@ const fetchPatientDetailsMock = async (id: string): Promise<Patient | null> => {
     address: id === '1' ? 'Rua das Palmeiras, 45, Apto 101, Centro, Cidade Alegre - CA' : id === '2' ? 'Av. Principal, 789, Bairro Novo, Capital Estadual - ES' : 'Rua Fictícia, 123, Bairro Imaginário, Cidade Exemplo - UF',
     createdAt: subDays(baseDate, 30).toISOString(), 
     updatedAt: new Date().toISOString(),
+    assignedTo: id === '1' ? mockPsychologistId : 'other-psy-uid', // Assign Ana to mock psychologist
   };
   
   let specificData: Partial<Patient> = {};
-  if (id === '1') { // Ana Silva
+  if (id === '1') { 
     specificData = {
       name: 'Ana Beatriz Silva',
       sessionNotes: `<p>Sessão de <strong>${format(subDays(baseDate,1), "dd/MM/yy")}</strong>: Paciente demonstrou melhora significativa na gestão de pensamentos automáticos.</p><p>Praticou as técnicas de respiração e relatou diminuição da insônia.</p><p><em>Próxima sessão focará em estratégias de manutenção e prevenção de recaídas.</em></p>`,
@@ -134,7 +137,7 @@ const fetchPatientDetailsMock = async (id: string): Promise<Patient | null> => {
       },
       caseStudyNotes: `<h1>Estudo de Caso - Ana Beatriz Silva</h1><p>Paciente apresenta histórico de <strong>ansiedade desde a adolescência</strong>, exacerbado por pressões no ambiente de trabalho atual. Responde bem à psicoeducação e técnicas cognitivas, mas demonstra dificuldade em manter a prática de relaxamento de forma consistente.</p><h2>Desafios:</h2><ul><li>Baixa tolerância à frustração.</li><li>Dificuldade em delegar tarefas no trabalho.</li></ul><h2>Hipóteses diagnósticas (a confirmar):</h2><ul><li>Transtorno de Ansiedade Generalizada.</li><li>Possíveis traços de personalidade anancástica.</li></ul><h2>Próximos passos:</h2><ol><li>Introduzir técnicas de mindfulness.</li><li>Explorar crenças centrais sobre autoexigência e perfeccionismo.</li><li>Trabalhar habilidades de comunicação assertiva e estabelecimento de limites.</li></ol>`
     };
-  } else if (id === '2') { // Bruno Costa
+  } else if (id === '2') { 
     specificData = {
       name: 'Bruno Almeida Costa',
       sessionNotes: `<p>Sessão de ${format(subDays(baseDate,3), "dd/MM/yy")}: Paciente relata dificuldades em manter a rotina de exercícios físicos, que é parte do plano de manejo do TEPT.</p><p>Exploramos barreiras e ajustamos o plano. Apresentou bom insight sobre procrastinação e evitação.</p>`,
@@ -167,6 +170,7 @@ const fetchPatientDetailsMock = async (id: string): Promise<Patient | null> => {
         signatureStatus: 'none',
         }, 
       caseStudyNotes: "<p>Nenhuma nota de estudo de caso para este paciente exemplo.</p>",
+      assignedTo: 'another-psy-uid',
     };
   }
 
@@ -179,7 +183,7 @@ const fetchPatientSessionsMock = async (patientId: string): Promise<Session[]> =
   let baseDate = new Date();
   const sessionsList: Session[] = [];
 
-  if (patientId === '1') { // Ana Silva
+  if (patientId === '1') { 
     sessionsList.push(
       { id: 's1_ana', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo Silva", startTime: subDays(baseDate, 1).toISOString(), endTime: new Date(subDays(baseDate, 1).getTime() + 60*60*1000).toISOString(), status: 'completed', recurring: 'weekly', notes: 'Discussão sobre pensamentos automáticos.'},
       { id: 's2_ana', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo Silva", startTime: addDays(baseDate, 6).toISOString(), endTime: new Date(addDays(baseDate, 6).getTime() + 60*60*1000).toISOString(), status: 'scheduled', recurring: 'weekly', notes: 'Manutenção e prevenção de recaídas.'},
@@ -189,7 +193,7 @@ const fetchPatientSessionsMock = async (patientId: string): Promise<Session[]> =
       { id: 's6_ana_past_noshow', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo Silva", startTime: subDays(baseDate, 29).toISOString(), endTime: new Date(subDays(baseDate, 29).getTime() + 60*60*1000).toISOString(), status: 'no-show'},
       { id: 's7_ana_past_cancelled', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo Silva", startTime: subDays(baseDate, 36).toISOString(), endTime: new Date(subDays(baseDate, 36).getTime() + 60*60*1000).toISOString(), status: 'cancelled'}
     );
-  } else if (patientId === '2') { // Bruno Costa
+  } else if (patientId === '2') { 
      sessionsList.push(
       { id: 's1_bruno', patientId, psychologistId: 'psy2', psychologistName: "Dra. Modelo Souza", startTime: subDays(baseDate, 3).toISOString(), endTime: new Date(subDays(baseDate, 3).getTime() + 60*60*1000).toISOString(), status: 'completed', notes: 'Discussão sobre barreiras para exercícios.'},
       { id: 's2_bruno', patientId, psychologistId: 'psy2', psychologistName: "Dra. Modelo Souza", startTime: addDays(baseDate, 4).toISOString(), endTime: new Date(addDays(baseDate, 4).getTime() + 60*60*1000).toISOString(), status: 'scheduled', notes: 'Próxima etapa da exposição narrativa.'},
@@ -258,7 +262,6 @@ function ProntuarioSignatureDetailsDialog({ isOpen, onOpenChange, details, docum
     </Dialog>
   );
 }
-
 
 const ProntuarioDisplay: React.FC<{ 
   patient: Patient;
@@ -404,18 +407,17 @@ const ProntuarioDisplay: React.FC<{
   );
 };
 
-
 export default function PatientDetailPage() {
   const router = useRouter();
   const params = useParams();
   const patientId = params.id as string;
   const { toast } = useToast();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, isLoading: authLoading } = useAuth();
 
   const [patient, setPatient] = useState<Patient | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [patientAssessments, setPatientAssessments] = useState<Assessment[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingPage, setIsLoadingPage] = useState(true);
   const [isPatientFormOpen, setIsPatientFormOpen] = useState(false);
   const [isSessionFormOpen, setIsSessionFormOpen] = useState(false);
   const [editingSession, setEditingSession] = useState<Session | null>(null);
@@ -425,12 +427,11 @@ export default function PatientDetailPage() {
   
   const [isProntuarioSignatureDetailsOpen, setIsProntuarioSignatureDetailsOpen] = useState(false);
 
-
   useEffect(() => {
     let isMounted = true;
     if (patientId) {
       const loadPatientData = async () => {
-        setIsLoading(true);
+        setIsLoadingPage(true);
         
         let fetchedPatientData: Patient | null = null;
         let fetchedSessionsData: Session[] = [];
@@ -449,15 +450,16 @@ export default function PatientDetailPage() {
           } else if (isMounted) { 
              setPatientAssessments(allMockAssessments.filter(asm => asm.patientId === patientId && asm.status === 'completed'));
           }
-
         } catch (error) {
           // console.warn(`Error loading patient data for ${patientId} from cache:`, error);
         }
 
         fetchedPatientData = await fetchPatientDetailsMock(patientId);
         fetchedSessionsData = await fetchPatientSessionsMock(patientId);
-        fetchedAssessmentsData = allMockAssessments.filter(asm => asm.patientId === patientId && asm.status === 'completed');
+        // Ensure mock data includes assignedTo
+        fetchedPatientData = fetchedPatientData ? { ...fetchedPatientData, assignedTo: fetchedPatientData.assignedTo || (fetchedPatientData.id === '1' ? 'mock-user-psychologist-1234' : `other-psy-${fetchedPatientData.id}`) } : null;
 
+        fetchedAssessmentsData = allMockAssessments.filter(asm => asm.patientId === patientId && asm.status === 'completed');
 
         if (isMounted) {
           if (fetchedPatientData) {
@@ -482,13 +484,25 @@ export default function PatientDetailPage() {
           await cacheService.patients.setSessions(patientId, fetchedSessionsData);
           
           setPatientAssessments(fetchedAssessmentsData);
-          setIsLoading(false);
+          setIsLoadingPage(false);
         }
       };
       loadPatientData();
     }
     return () => { isMounted = false; };
   }, [patientId]);
+
+  const canAccessClinicalData = useMemo(() => {
+    if (!currentUser || !patient) return false;
+    return hasPermission(currentUser.role, 'ACCESS_PATIENT_CLINICAL_DATA', patient.assignedTo === currentUser.id);
+  }, [currentUser, patient]);
+
+  const canEditClinicalNotes = useMemo(() => {
+    if (!currentUser || !patient) return false;
+     // Admins can edit any, psychologists can edit if assigned.
+    if (currentUser.role === 'admin') return true;
+    return hasPermission(currentUser.role, 'CREATE_EDIT_CLINICAL_NOTES') && patient.assignedTo === currentUser.id;
+  }, [currentUser, patient]);
 
 
   const handleEditSession = useCallback((session: Session) => {
@@ -684,8 +698,7 @@ export default function PatientDetailPage() {
     });
   }, [patient, toast]);
 
-
-  if (isLoading && !patient) {
+  if (authLoading || isLoadingPage) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-8 w-32 mb-4" /> 
@@ -708,15 +721,6 @@ export default function PatientDetailPage() {
             <Skeleton className="h-64 w-full" /> 
           </CardContent>
         </Card>
-        <Card className="shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <Skeleton className="h-7 w-48" />
-            <Skeleton className="h-9 w-32" />
-          </CardHeader>
-          <CardContent>
-            <Skeleton className="h-40 w-full" />
-          </CardContent>
-        </Card>
       </div>
     );
   }
@@ -724,11 +728,25 @@ export default function PatientDetailPage() {
   if (!patient) {
     return (
       <div className="text-center py-10">
+        <ShieldAlert className="mx-auto h-12 w-12 text-destructive mb-3" />
         <h2 className="text-2xl font-semibold mb-4">Paciente não encontrado</h2>
+        <p className="text-muted-foreground mb-4">Não foi possível carregar os dados do paciente.</p>
         <Button onClick={() => router.push('/patients')}>Voltar para lista de pacientes</Button>
       </div>
     );
   }
+  
+  if (!canAccessClinicalData) {
+    return (
+      <div className="text-center py-10">
+        <ShieldQuestion className="mx-auto h-12 w-12 text-destructive mb-3" />
+        <h2 className="text-2xl font-semibold mb-4">Acesso Negado</h2>
+        <p className="text-muted-foreground mb-4">Você não tem permissão para visualizar os dados clínicos deste paciente.</p>
+        <Button onClick={() => router.push('/patients')}>Voltar para lista de pacientes</Button>
+      </div>
+    );
+  }
+
 
   const completedPatientAssessments = patientAssessments.filter(asm => asm.status === 'completed' && typeof asm.results?.score === 'number');
 
@@ -757,9 +775,11 @@ export default function PatientDetailPage() {
               {patient.dateOfBirth && <span className="flex items-center justify-center md:justify-start mt-1"><CalendarDays className="w-4 h-4 mr-2" /> {format(parseISO(patient.dateOfBirth), "dd/MM/yyyy", { locale: ptBR })}</span>}
             </CardDescription>
           </div>
-          <Button variant="outline" size="icon" className="absolute top-4 right-4 md:static md:ml-auto" onClick={() => setIsPatientFormOpen(true)}>
-            <Edit className="h-5 w-5" /> <span className="sr-only">Editar Paciente e Prontuário</span>
-          </Button>
+          {canEditClinicalNotes && (
+            <Button variant="outline" size="icon" className="absolute top-4 right-4 md:static md:ml-auto" onClick={() => setIsPatientFormOpen(true)}>
+              <Edit className="h-5 w-5" /> <span className="sr-only">Editar Paciente e Prontuário</span>
+            </Button>
+          )}
         </div>
 
         <CardContent className="p-6 space-y-6">
@@ -875,9 +895,11 @@ export default function PatientDetailPage() {
       <Card className="shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between pb-3">
             <CardTitle className="text-xl font-headline">Histórico e Resumo de Sessões</CardTitle>
-            <Button onClick={handleNewSession} size="sm">
-                <PlusCircle className="mr-2 h-4 w-4" /> Nova Sessão
-            </Button>
+            { (currentUser?.role === 'admin' || currentUser?.role === 'psychologist') && (
+                <Button onClick={handleNewSession} size="sm">
+                    <PlusCircle className="mr-2 h-4 w-4" /> Nova Sessão
+                </Button>
+            )}
         </CardHeader>
         <CardContent>
           <div className="mb-4 p-3 border rounded-lg bg-muted/30">
@@ -945,37 +967,40 @@ export default function PatientDetailPage() {
                                       </Badge>
                                       {s.notes && <p className="text-xs text-muted-foreground mt-1 italic">Nota: {s.notes.substring(0,50)}...</p>}
                                   </div>
-                                  <Button variant="ghost" size="sm" onClick={() => handleEditSession(s)}>
-                                      <Edit className="w-4 h-4 mr-1" /> Editar
-                                  </Button>
+                                  {(currentUser?.role === 'admin' || (currentUser?.role === 'psychologist' && (s.psychologistId === currentUser.id || patient.assignedTo === currentUser.id))) && (
+                                      <Button variant="ghost" size="sm" onClick={() => handleEditSession(s)}>
+                                          <Edit className="w-4 h-4 mr-1" /> Editar
+                                      </Button>
+                                  )}
                               </div>
                           </li>
                       ))}
                   </ul>
               </ScrollArea>
           ) : (
-                isLoading ? <Skeleton className="h-20 w-full" /> : <p className="text-muted-foreground">Nenhuma sessão registrada para este paciente.</p>
+                isLoadingPage ? <Skeleton className="h-20 w-full" /> : <p className="text-muted-foreground">Nenhuma sessão registrada para este paciente.</p>
           )}
         </CardContent>
       </Card>
 
-      <PatientFormDialog 
-        isOpen={isPatientFormOpen} 
-        onOpenChange={setIsPatientFormOpen}
-        patient={patient}
-        onSave={handleSavePatient}
-      />
+      {canEditClinicalNotes && (
+        <PatientFormDialog 
+            isOpen={isPatientFormOpen} 
+            onOpenChange={setIsPatientFormOpen}
+            patient={patient}
+            onSave={handleSavePatient}
+        />
+      )}
       
       <SessionFormDialog
         isOpen={isSessionFormOpen}
         onOpenChange={setIsSessionFormOpen}
         session={editingSession}
         onSave={handleSaveSession}
-        // @ts-ignore - patient might be null, handle in component if needed
         patientData={patient ? { id: patient.id, name: patient.name } : undefined}
       />
 
-       <Dialog open={isHistoryDialogOpen && areNotesVisible && activeTab === 'evolution'} onOpenChange={setIsHistoryDialogOpen}>
+       <Dialog open={isHistoryDialogOpen && areNotesVisible && canAccessClinicalData && activeTab === 'evolution'} onOpenChange={setIsHistoryDialogOpen}>
         <DialogContent className="sm:max-w-2xl max-h-[80vh]">
           <DialogHeader>
             <DialogTitle className="font-headline">Histórico de Evolução das Sessões</DialogTitle>
@@ -1008,7 +1033,7 @@ export default function PatientDetailPage() {
         </DialogContent>
       </Dialog>
       
-      {patient && patient.prontuario && (
+      {patient && patient.prontuario && canAccessClinicalData && (
          <ProntuarioSignatureDetailsDialog 
             isOpen={isProntuarioSignatureDetailsOpen && areNotesVisible && activeTab === 'prontuario'}
             onOpenChange={setIsProntuarioSignatureDetailsOpen}

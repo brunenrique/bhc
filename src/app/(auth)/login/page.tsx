@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -66,6 +67,7 @@ export default function LoginPage() {
                   <SelectItem value="psychologist">Psicólogo(a)</SelectItem>
                   <SelectItem value="secretary">Secretário(a)</SelectItem>
                   <SelectItem value="admin">Administrador(a)</SelectItem>
+                  <SelectItem value="scheduling">Agendador(a)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -79,7 +81,6 @@ export default function LoginPage() {
           <p className="text-muted-foreground">
             Não tem uma conta? <Link href="#" className="text-primary hover:underline">Contate o administrador</Link>
           </p>
-          {/* For prototype, can add a mock registration or different roles */}
            <p className="text-xs text-muted-foreground mt-2">
             (Protótipo: qualquer email/senha funcionará)
           </p>

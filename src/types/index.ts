@@ -1,13 +1,13 @@
 
-export type UserRole = "admin" | "psychologist" | "secretary";
+export type UserRole = "admin" | "psychologist" | "secretary" | "scheduling";
 
 export interface User {
-  id: string;
+  id: string; // UID from Firebase Auth
   email: string;
   name: string;
   role: UserRole;
   avatarUrl?: string;
-  crp?: string;
+  crp?: string; // Specific to psychologists
 }
 
 export interface PatientNoteVersion {
@@ -93,6 +93,7 @@ export interface Patient {
   phone?: string;
   dateOfBirth?: string;
   address?: string;
+  assignedTo?: string; // Psychologist's UID assigned to this patient
   sessionNotes?: string;
   previousSessionNotes?: PatientNoteVersion[];
   prontuario?: ProntuarioData;
@@ -174,20 +175,19 @@ export interface EvolutionDataPoint {
 export interface WaitingListEntry {
   id: string;
   patientName: string;
-  patientId?: string; // Optional: if linking to an existing patient record
+  patientId?: string; 
   contactPhone?: string;
-  reason?: string; // e.g., "Preferência de horário", "Primeira consulta"
+  reason?: string; 
   preferredPsychologistId?: string;
   preferredPsychologistName?: string;
-  preferredDays?: string; // e.g., "Seg, Qua (Manhã)"
-  preferredTimes?: string; // e.g., "09:00 - 12:00"
+  preferredDays?: string; 
+  preferredTimes?: string; 
   addedAt: string; // ISO Date string
   status: 'waiting' | 'contacted' | 'scheduled' | 'archived';
   notes?: string;
 }
 
 
-// Data structure for Prontuário (local generation)
 export interface ProntuarioGenerationDataDynamic {
   'Descrição da Demanda/Queixa': string;
   'Descrição do Procedimento/Análise': string;
@@ -232,3 +232,4 @@ export interface ProntuarioAppsScriptPayload {
   psicologo: ProntuarioGenerationDataPsicologo;
   data: ProntuarioGenerationDataData;
 }
+

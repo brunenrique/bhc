@@ -21,28 +21,29 @@ import {
   BookOpenText,
   AreaChart, 
   LucideIcon,
-  BarChart3, // Restored from previous version or ensure it's the correct one.
 } from "lucide-react";
+import { WithRole } from '@/components/auth/WithRole';
+import type { UserRole } from "@/types";
 
 interface NavItem {
   href: string;
   label: string;
   icon: LucideIcon;
-  roles?: string[]; 
+  roles?: UserRole[]; 
   anchor?: boolean; 
 }
 
 const navItems: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/scheduling", label: "Agendamentos", icon: CalendarDays },
-  { href: "/scheduling#waiting-list", label: "Lista de Espera", icon: ListTodo, anchor: true },
-  { href: "/patients", label: "Pacientes", icon: Users },
-  { href: "/assessments", label: "Avaliações", icon: ClipboardList },
-  { href: "/documents", label: "Documentos", icon: FileText },
-  { href: "/whatsapp-reminders", label: "Lembretes WhatsApp", icon: MessageSquare },
-  { href: "/admin/metrics", label: "Métricas Admin", icon: AreaChart },
-  { href: "/guide", label: "Guia de Uso", icon: BookOpenText },
-  { href: "/settings", label: "Configurações", icon: Settings },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ['admin', 'psychologist', 'secretary', 'scheduling'] },
+  { href: "/scheduling", label: "Agendamentos", icon: CalendarDays, roles: ['admin', 'psychologist', 'secretary', 'scheduling'] },
+  { href: "/scheduling#waiting-list", label: "Lista de Espera", icon: ListTodo, anchor: true, roles: ['admin', 'psychologist', 'secretary', 'scheduling'] },
+  { href: "/patients", label: "Pacientes", icon: Users, roles: ['admin', 'psychologist', 'secretary'] }, // Schedulers don't manage patient records directly
+  { href: "/assessments", label: "Avaliações", icon: ClipboardList, roles: ['admin', 'psychologist'] },
+  { href: "/documents", label: "Documentos", icon: FileText, roles: ['admin', 'psychologist', 'secretary'] }, // secretary might need to upload/manage some docs
+  { href: "/whatsapp-reminders", label: "Lembretes WhatsApp", icon: MessageSquare, roles: ['admin', 'psychologist', 'secretary'] },
+  // Admin-specific link will be wrapped with WithRole below
+  { href: "/guide", label: "Guia de Uso", icon: BookOpenText, roles: ['admin', 'psychologist', 'secretary', 'scheduling'] },
+  { href: "/settings", label: "Configurações", icon: Settings, roles: ['admin', 'psychologist', 'secretary', 'scheduling'] },
 ];
 
 export function SidebarNav() {
@@ -52,10 +53,8 @@ export function SidebarNav() {
     if (isAnchor) {
       const [basePath, anchor] = itemHref.split('#');
       if (currentPath !== basePath && !currentPath.startsWith(basePath + '/')) return false;
-      // For client-side, accurately check hash
       if (typeof window !== 'undefined' && window.location.hash === `#${anchor}` && currentPath === basePath) return true;
-      // Fallback for server or initial render if hash isn't immediately available
-      return currentPath === basePath && currentPath.endsWith(itemHref); // Basic check
+      return currentPath === basePath && currentPath.endsWith(itemHref); 
     }
     return currentPath === itemHref || (itemHref !== "/" && itemHref !== "/dashboard" && currentPath.startsWith(itemHref + '/')) || (itemHref === "/dashboard" && currentPath === "/dashboard");
   };
@@ -72,33 +71,55 @@ export function SidebarNav() {
             const element = document.getElementById(anchorId);
             if (element) {
               element.scrollIntoView({ behavior: "smooth" });
-              // Updating URL hash manually after smooth scroll for better UX if needed,
-              // but Link component might handle this or browser default behavior is often sufficient.
-              // window.history.pushState(null, '', `#${anchorId}`);
             }
           }
-          // If it's not a same-page anchor scroll, Link's default behavior will handle navigation.
         };
         
-        return (
-          <SidebarMenuItem key={item.href}> 
-            <SidebarMenuButton
-              asChild // SidebarMenuButton will render Slot, passing styles to Link
-              isActive={isActive}
-              tooltip={item.label}
-              className={cn("w-full justify-start")}
+        const menuItemContent = (
+          <SidebarMenuButton
+            asChild 
+            isActive={isActive}
+            tooltip={item.label}
+            className={cn("w-full justify-start")}
+          >
+            <Link 
+              href={item.href}
+              onClick={item.anchor ? scrollHandler : undefined}
             >
-              <Link 
-                href={item.href}
-                onClick={item.anchor ? scrollHandler : undefined}
-              >
-                <item.icon className="mr-2 h-5 w-5 flex-shrink-0" />
-                <span className="truncate font-body">{item.label}</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+              <item.icon className="mr-2 h-5 w-5 flex-shrink-0" />
+              <span className="truncate font-body">{item.label}</span>
+            </Link>
+          </SidebarMenuButton>
         );
+
+        if (item.roles) {
+          return (
+            <SidebarMenuItem key={item.href}>
+              <WithRole role={item.roles}>
+                {menuItemContent}
+              </WithRole>
+            </SidebarMenuItem>
+          );
+        }
+        // This case is unlikely if all items have roles, but as a fallback
+        return <SidebarMenuItem key={item.href}>{menuItemContent}</SidebarMenuItem>;
       })}
+      {/* Admin Metrics specific link */}
+      <SidebarMenuItem key="/admin/metrics">
+        <WithRole role="admin">
+          <SidebarMenuButton
+            asChild
+            isActive={checkIsActive("/admin/metrics", pathname)}
+            tooltip="Métricas Admin"
+            className={cn("w-full justify-start")}
+          >
+            <Link href="/admin/metrics">
+              <AreaChart className="mr-2 h-5 w-5 flex-shrink-0" />
+              <span className="truncate font-body">Métricas Admin</span>
+            </Link>
+          </SidebarMenuButton>
+        </WithRole>
+      </SidebarMenuItem>
     </SidebarMenu>
   );
 }

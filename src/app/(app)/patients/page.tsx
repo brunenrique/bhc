@@ -8,14 +8,17 @@ import { PlusCircle, Search, Loader2 } from "lucide-react";
 import { useState, useCallback, useMemo, useEffect } from "react";
 import type { Patient } from "@/types";
 import { cacheService } from '@/services/cacheService';
+import { useAuth } from "@/hooks/useAuth"; // Import useAuth
 
+// Add assignedTo to mock data for testing psychologist scope
 export const mockPatientsData: Patient[] = [
-  { id: '1', name: 'Ana Beatriz Silva', email: 'ana.silva@example.com', phone: '(11) 98765-4321', dateOfBirth: '1990-05-15', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(), updatedAt: new Date().toISOString() },
-  { id: '2', name: 'Bruno Almeida Costa', email: 'bruno.costa@example.com', phone: '(21) 91234-5678', dateOfBirth: '1985-11-20', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(), updatedAt: new Date().toISOString() },
-  { id: '3', name: 'Carla Dias Oliveira', email: 'carla.oliveira@example.com', phone: '(31) 95555-5555', dateOfBirth: '2000-02-10', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+  { id: '1', name: 'Ana Beatriz Silva', email: 'ana.silva@example.com', phone: '(11) 98765-4321', dateOfBirth: '1990-05-15', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(), updatedAt: new Date().toISOString(), assignedTo: 'mock-user-psychologist-1234' }, // Assuming a mock psychologist UID
+  { id: '2', name: 'Bruno Almeida Costa', email: 'bruno.costa@example.com', phone: '(21) 91234-5678', dateOfBirth: '1985-11-20', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(), updatedAt: new Date().toISOString(), assignedTo: 'other-psy-uid' },
+  { id: '3', name: 'Carla Dias Oliveira', email: 'carla.oliveira@example.com', phone: '(31) 95555-5555', dateOfBirth: '2000-02-10', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), assignedTo: 'mock-user-psychologist-1234' },
 ];
 
 export default function PatientsPage() {
+  const { user } = useAuth(); // Get current user
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -31,9 +34,15 @@ export default function PatientsPage() {
         if (isMounted && cachedPatients && cachedPatients.length > 0) {
           setPatients(cachedPatients);
         } else if (isMounted) {
-          setPatients(mockPatientsData); 
+          // Ensure mock data has assignedTo for testing
+           const mockWithAssignedTo = mockPatientsData.map((p, index) => ({
+            ...p,
+            // Example: assign first and third to a mock psychologist ID used in useAuth
+            assignedTo: (index === 0 || index === 2) ? (user?.role === 'psychologist' ? user.id : 'mock-psy-id-for-admin-view') : `other-psy-${index}`
+          }));
+          setPatients(mockWithAssignedTo); 
           try {
-            await cacheService.patients.setList(mockPatientsData);
+            await cacheService.patients.setList(mockWithAssignedTo);
           } catch (error) {
             // console.warn("Error saving initial patients to cache:", error);
           }
@@ -41,7 +50,7 @@ export default function PatientsPage() {
       } catch (error) {
         // console.warn("Error loading patients from cache:", error);
         if (isMounted) {
-           setPatients(mockPatientsData); // Fallback if cache read fails
+           setPatients(mockPatientsData); 
         }
       }
       
@@ -52,7 +61,7 @@ export default function PatientsPage() {
 
     loadPatients();
     return () => { isMounted = false; };
-  }, []);
+  }, [user]);
 
   const handleNewPatient = useCallback(() => {
     setSelectedPatient(null);
@@ -75,21 +84,36 @@ export default function PatientsPage() {
     if (selectedPatient && patientData.id) { 
       updatedPatients = patients.map(p => p.id === patientData.id ? {...p, ...patientData, updatedAt: new Date().toISOString()} as Patient : p);
     } else { 
-      const newPatient = { ...patientData, id: `mock-${Date.now()}`, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } as Patient;
+      const newPatient = { 
+        ...patientData, 
+        id: `mock-${Date.now()}`, 
+        createdAt: new Date().toISOString(), 
+        updatedAt: new Date().toISOString(),
+        // If current user is psychologist creating, assign to them by default
+        assignedTo: user?.role === 'psychologist' ? user.id : patientData.assignedTo, 
+      } as Patient;
       updatedPatients = [newPatient, ...patients];
     }
     setPatients(updatedPatients);
     await cacheService.patients.setList(updatedPatients); 
     setIsFormOpen(false);
-  }, [selectedPatient, patients]);
+  }, [selectedPatient, patients, user]);
 
-  const filteredPatients = useMemo(() => 
-    patients.filter(p => 
+  const filteredPatients = useMemo(() => {
+    let displayPatients = patients;
+    if (user?.role === 'psychologist') {
+      displayPatients = patients.filter(p => p.assignedTo === user.id);
+    }
+    // Admins see all, secretaries see all for listing (details restricted elsewhere)
+    
+    return displayPatients.filter(p => 
       p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (p.email && p.email.toLowerCase().includes(searchTerm.toLowerCase()))
-    ).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()), 
-    [patients, searchTerm]
-  );
+    ).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [patients, searchTerm, user]);
+
+  // Secretaries and Schedulers should not create patients directly from this page
+  const canCreatePatient = user?.role === 'admin' || user?.role === 'psychologist';
 
   return (
     <div className="space-y-6">
@@ -106,14 +130,17 @@ export default function PatientsPage() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <Button onClick={handleNewPatient} className="shadow-md hover:shadow-lg transition-shadow">
-            <PlusCircle className="mr-2 h-5 w-5" />
-            Novo Paciente
-          </Button>
+          {canCreatePatient && (
+            <Button onClick={handleNewPatient} className="shadow-md hover:shadow-lg transition-shadow">
+              <PlusCircle className="mr-2 h-5 w-5" />
+              Novo Paciente
+            </Button>
+          )}
         </div>
       </div>
       <p className="text-muted-foreground font-body">
         Gerencie os registros dos seus pacientes. Adicione, edite ou visualize informações.
+        {user?.role === 'psychologist' && " Você está visualizando apenas pacientes atribuídos a você."}
       </p>
       
       {isLoading && patients.length === 0 ? (

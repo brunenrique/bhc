@@ -12,6 +12,8 @@ import type { Session, WaitingListEntry } from "@/types";
 import { addDays, addWeeks, addMonths, parseISO, subDays } from 'date-fns';
 import { cacheService } from '@/services/cacheService';
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { hasPermission } from "@/lib/permissions";
 
 const initialMockSessions: Session[] = [
   { id: 'sched1_ana_fut', patientId: '1', patientName: 'Ana Beatriz Silva', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: new Date(new Date().setDate(new Date().getDate() + 2)).toISOString(), endTime: new Date(new Date(new Date().setDate(new Date().getDate() + 2)).setHours(new Date().getHours() + 1)).toISOString(), status: 'scheduled', recurring: 'weekly' },
@@ -29,8 +31,8 @@ const initialMockWaitingList: WaitingListEntry[] = [
   { id: 'wl3', patientName: 'Sofia Oliveira', contactPhone: '(31) 97777-0003', reason: 'Retorno', addedAt: subDays(new Date(), 1).toISOString(), status: 'waiting'},
 ];
 
-
 export default function SchedulingPage() {
+  const { user } = useAuth();
   const [isSessionFormOpen, setIsSessionFormOpen] = useState(false);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
@@ -56,7 +58,6 @@ export default function SchedulingPage() {
 
     const loadData = async () => {
       setIsLoading(true);
-      // Load Sessions
       try {
         const cachedSessions = await cacheService.sessions.getList();
         const pendingSessions = await cacheService.pendingSessions.getList();
@@ -81,7 +82,6 @@ export default function SchedulingPage() {
         }
       }
 
-      // Load Waiting List
       try {
         const cachedWaitingList = await cacheService.waitingList.getList();
         if (isMounted && cachedWaitingList && cachedWaitingList.length > 0) {
@@ -143,20 +143,28 @@ export default function SchedulingPage() {
         }
       }
     };
-    if (isOnline) { // Check isOnline before running the effect
+    if (isOnline) { 
         syncPendingSessions();
     }
   }, [isOnline, toast]);
 
   const handleNewSession = useCallback(() => {
+    if (!hasPermission(user?.role, 'SCHEDULE_FROM_WAITING_LIST') && !hasPermission(user?.role, 'CREATE_EDIT_CLINICAL_NOTES')) { // broader check for general scheduling
+        toast({ title: "Acesso Negado", description: "Você não tem permissão para criar novas sessões.", variant: "destructive"});
+        return;
+    }
     setSelectedSession(null);
     setIsSessionFormOpen(true);
-  }, []);
+  }, [user, toast]);
 
   const handleEditSession = useCallback((session: Session) => {
+    if (!hasPermission(user?.role, 'SCHEDULE_FROM_WAITING_LIST') && !hasPermission(user?.role, 'CREATE_EDIT_CLINICAL_NOTES')) { // broader check for general scheduling
+        toast({ title: "Acesso Negado", description: "Você não tem permissão para editar sessões.", variant: "destructive"});
+        return;
+    }
     setSelectedSession(session);
     setIsSessionFormOpen(true);
-  }, []);
+  }, [user, toast]);
 
   const handleDateChange = useCallback((date?: Date) => {
     setCurrentCalendarDate(date);
@@ -169,14 +177,12 @@ export default function SchedulingPage() {
     let sessionToSave: Session;
     let updatedSessionsList: Session[];
     
-    // Mock data for patient and psychologist names based on IDs
-    // In a real app, this might come from a global store or fetched data
     const patientNameMap: Record<string, string> = {
-      '1': 'Ana Beatriz Silva', // Assuming '1' is an ID for Ana
-      '2': 'Bruno Almeida Costa', // Assuming '2' is an ID for Bruno
+      '1': 'Ana Beatriz Silva', 
+      '2': 'Bruno Almeida Costa', 
       '3': 'Carla Dias Oliveira',
-      'p1': 'Ana Silva', // from SessionFormDialog mock
-      'p2': 'Bruno Costa', // from SessionFormDialog mock
+      'p1': 'Ana Silva', 
+      'p2': 'Bruno Costa', 
     };
     const psychologistNameMap: Record<string, string> = {
       'psy1': 'Dr. Exemplo Silva',
@@ -195,8 +201,8 @@ export default function SchedulingPage() {
       const mainNewSession = { 
         ...sessionData, 
         id: `sess-${Date.now()}`, 
-        patientName: sessionData.patientId ? patientNameMap[sessionData.patientId] : 'Novo Paciente', // Fallback name
-        psychologistName: sessionData.psychologistId ? psychologistNameMap[sessionData.psychologistId] : 'Psicólogo Desconhecido', // Fallback name
+        patientName: sessionData.patientId ? patientNameMap[sessionData.patientId] : 'Novo Paciente', 
+        psychologistName: sessionData.psychologistId ? psychologistNameMap[sessionData.psychologistId] : 'Psicólogo Desconhecido', 
       } as Session;
       
       const sessionsToAdd = [mainNewSession];
@@ -257,11 +263,16 @@ export default function SchedulingPage() {
   }, [selectedSession, sessions, toast]);
 
   const handleOpenNewWaitingListEntryDialog = useCallback(() => {
+    if (!hasPermission(user?.role, 'ADD_PATIENT_TO_WAITING_LIST')) {
+        toast({ title: "Acesso Negado", description: "Você não tem permissão para adicionar pacientes à lista de espera.", variant: "destructive"});
+        return;
+    }
     setEditingWaitingListEntry(null);
     setIsWaitingListEntryDialogOpen(true);
-  }, []);
+  }, [user, toast]);
 
   const handleEditWaitingListEntry = useCallback((entry: WaitingListEntry) => {
+    // Assume edit is allowed if user can see the table, specific edit permission not granularly defined in matrix for now
     setEditingWaitingListEntry(entry);
     setIsWaitingListEntryDialogOpen(true);
   }, []);
@@ -306,6 +317,10 @@ export default function SchedulingPage() {
   }, [waitingList, toast]);
   
   const handleScheduleFromWaitingList = useCallback((entry: WaitingListEntry) => {
+     if (!hasPermission(user?.role, 'SCHEDULE_FROM_WAITING_LIST')) {
+        toast({ title: "Acesso Negado", description: "Você não tem permissão para agendar sessões a partir da lista de espera.", variant: "destructive"});
+        return;
+    }
     setSelectedSession({
         id: '', 
         patientName: entry.patientName,
@@ -319,7 +334,10 @@ export default function SchedulingPage() {
     });
     setIsSessionFormOpen(true);
     handleChangeWaitingListStatus(entry.id, 'scheduled');
-  }, [handleChangeWaitingListStatus]);
+  }, [user, toast, handleChangeWaitingListStatus]);
+
+  const canCreateNewSession = hasPermission(user?.role, 'SCHEDULE_FROM_WAITING_LIST') || hasPermission(user?.role, 'CREATE_EDIT_CLINICAL_NOTES'); // Broader perm for creating general sessions
+  const canAddWaitingList = hasPermission(user?.role, 'ADD_PATIENT_TO_WAITING_LIST');
   
   return (
     <div className="space-y-8">
@@ -330,10 +348,12 @@ export default function SchedulingPage() {
             <span className={`text-sm font-medium ${isOnline ? 'text-green-600' : 'text-destructive'}`}>
               {isOnline ? 'Online' : 'Offline'}
             </span>
-          <Button onClick={handleNewSession} className="shadow-md hover:shadow-lg transition-shadow">
-            <PlusCircle className="mr-2 h-5 w-5" />
-            Nova Sessão
-          </Button>
+          {canCreateNewSession && (
+            <Button onClick={handleNewSession} className="shadow-md hover:shadow-lg transition-shadow">
+                <PlusCircle className="mr-2 h-5 w-5" />
+                Nova Sessão
+            </Button>
+          )}
         </div>
       </div>
       <p className="text-muted-foreground font-body">
@@ -359,9 +379,11 @@ export default function SchedulingPage() {
                         <ListPlus className="h-6 w-6 text-primary" />
                         <CardTitle className="text-xl font-headline">Lista de Espera</CardTitle>
                     </div>
-                    <Button onClick={handleOpenNewWaitingListEntryDialog} size="sm">
-                        <PlusCircle className="mr-2 h-4 w-4" /> Adicionar à Lista
-                    </Button>
+                    {canAddWaitingList && (
+                        <Button onClick={handleOpenNewWaitingListEntryDialog} size="sm">
+                            <PlusCircle className="mr-2 h-4 w-4" /> Adicionar à Lista
+                        </Button>
+                    )}
                 </CardHeader>
                 <CardContent>
                     <WaitingListTable 
@@ -370,6 +392,7 @@ export default function SchedulingPage() {
                         onEdit={handleEditWaitingListEntry}
                         onDelete={handleDeleteWaitingListEntry}
                         onChangeStatus={handleChangeWaitingListStatus}
+                        currentUserRole={user?.role}
                     />
                 </CardContent>
             </Card>
@@ -377,19 +400,22 @@ export default function SchedulingPage() {
         </>
       )}
 
-      <SessionFormDialog
-        isOpen={isSessionFormOpen}
-        onOpenChange={setIsSessionFormOpen}
-        session={selectedSession}
-        onSave={handleSaveSession}
-      />
-      <WaitingListEntryDialog
-        isOpen={isWaitingListEntryDialogOpen}
-        onOpenChange={setIsWaitingListEntryDialogOpen}
-        entry={editingWaitingListEntry}
-        onSave={handleSaveWaitingListEntry}
-      />
+      {isSessionFormOpen && (
+        <SessionFormDialog
+            isOpen={isSessionFormOpen}
+            onOpenChange={setIsSessionFormOpen}
+            session={selectedSession}
+            onSave={handleSaveSession}
+        />
+      )}
+      {isWaitingListEntryDialogOpen && (
+        <WaitingListEntryDialog
+            isOpen={isWaitingListEntryDialogOpen}
+            onOpenChange={setIsWaitingListEntryDialogOpen}
+            entry={editingWaitingListEntry}
+            onSave={handleSaveWaitingListEntry}
+        />
+      )}
     </div>
   );
 }
-

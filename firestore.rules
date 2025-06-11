@@ -1,65 +1,104 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to check user roles from token claims
-    function isSignedIn() {
+    // Helper Functions
+    function isAuthenticated() {
       return request.auth != null;
     }
 
-    function getUserRole() {
-      return request.auth.token.role; // Assumes 'role' is a custom claim in the auth token
+    function isUser(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
     }
 
-    function isPsychologist() {
-      return isSignedIn() && getUserRole() == 'psychologist';
+    function getUserData(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data;
+    }
+
+    function getUserRole(userId) {
+      return getUserData(userId).role;
     }
 
     function isAdmin() {
-      return isSignedIn() && getUserRole() == 'admin';
+      return isAuthenticated() && getUserRole(request.auth.uid) == 'admin';
     }
-    
+
+    function isPsychologist() {
+      return isAuthenticated() && getUserRole(request.auth.uid) == 'psychologist';
+    }
+
     function isSecretary() {
-      return isSignedIn() && getUserRole() == 'secretary';
+      return isAuthenticated() && getUserRole(request.auth.uid) == 'secretary';
     }
 
-    // Rules for 'patients' collection
-    match /patients/{patientId} {
-      // Allow create:
-      // - Psychologists can create patients (and should ideally set themselves as psychologistId).
-      // - Admins can create patients.
-      allow create: if isPsychologist() || isAdmin();
-
-      // Allow read:
-      // - Psychologists can read any patient (in a real app, might restrict to their own).
-      // - Admins can read any patient.
-      // - Secretaries can read any patient.
-      allow read: if isPsychologist() || isAdmin() || isSecretary();
-      
-      // Allow update:
-      // - Psychologists can update any patient (in a real app, might restrict to their own).
-      // - Admins can update any patient.
-      allow update: if isPsychologist() || isAdmin();
-
-      // Allow delete:
-      // - Admins can delete patients.
-      // - Psychologists can delete patients (in a real app, might restrict to their own or add soft delete).
-      allow delete: if isAdmin() || isPsychologist();
+    function isScheduler() {
+      return isAuthenticated() && getUserRole(request.auth.uid) == 'scheduling';
     }
 
-    // Example for user profiles - only the user themselves or an admin can modify
+    // Users Collection: Stores user profiles with roles
+    // Ensure user creating their own doc has correct uid in docId or admin creates it.
     match /users/{userId} {
-      allow read: if isSignedIn();
-      allow write: if request.auth.uid == userId || isAdmin();
+      allow read: if isAuthenticated(); // Allow authenticated users to read user profiles (e.g., for names, roles).
+                   // Consider if more restrictive access is needed (e.g., only own profile or admin).
+      allow create: if isAdmin() || (isUser(userId) && request.resource.data.uid == request.auth.uid); // Admin can create any, user can create their own if uid matches.
+      allow update: if isUser(userId) || isAdmin(); // User can update own profile, admin can update any.
+      allow delete: if isAdmin(); // Only admins can delete user documents.
     }
 
-    // Add rules for other collections as needed (e.g., sessions, assessments)
-    // match /sessions/{sessionId} {
-    //   // Define rules for sessions
-    // }
-    // match /assessments/{assessmentId} {
-    //   // Define rules for assessments
-    // }
+    // Patients Collection
+    match /patients/{patientId} {
+      // Admin: Full access.
+      // Psychologist: Read/Write access ONLY if they are assigned to the patient.
+      // Other roles (secretary, scheduling): No direct read/write to the patient's main clinical document.
+      // Listing might be handled by a separate, less sensitive collection or specific UI logic if needed.
+      allow read, write: if isAdmin() || (isPsychologist() && resource.data.assignedTo == request.auth.uid);
+      // For listing purposes where only non-sensitive data is shown, a broader read might be needed
+      // on a specific subset of fields or a summary collection if this rule is too restrictive for listing.
+      // However, based on "Acessar dados clínicos: apenas se for o psicólogo vinculado", this seems correct for the main document.
+    }
+
+    // Sessions Collection
+    match /sessions/{sessionId} {
+      // Admin: Full access.
+      // Psychologist: Read all, Create/Update/Delete own sessions or sessions for their assigned patients.
+      // Secretary: Read all for viewing agenda.
+      // Scheduling: Read all, Create/Update for scheduling.
+      allow read: if isAdmin() || isPsychologist() || isSecretary() || isScheduler();
+      allow create: if isAdmin() || isPsychologist() || isScheduler();
+      allow update: if isAdmin() || isScheduler() || (isPsychologist() && (request.resource.data.psychologistId == request.auth.uid || get(/databases/$(database)/documents/patients/$(request.resource.data.patientId)).data.assignedTo == request.auth.uid));
+      allow delete: if isAdmin() || (isPsychologist() && (resource.data.psychologistId == request.auth.uid || get(/databases/$(database)/documents/patients/$(resource.data.patientId)).data.assignedTo == request.auth.uid));
+    }
+
+    // WaitingList Collection
+    match /waitingList/{entryId} {
+      // Admin: Full access.
+      // Psychologist: Full access.
+      // Secretary: Full access (can add patients).
+      // Scheduling: Read access, can update status (e.g., to 'scheduled').
+      allow read: if isAdmin() || isPsychologist() || isSecretary() || isScheduler();
+      allow create: if isAdmin() || isPsychologist() || isSecretary(); // Scheduling role cannot add.
+      allow update: if isAdmin() || isPsychologist() || isSecretary() || isScheduler(); // All can update (e.g., notes, or scheduler changes status).
+      allow delete: if isAdmin() || isPsychologist() || isSecretary();
+    }
+
+    // Documents Collection
+    match /documents/{documentId} {
+      // Admin: Full access.
+      // Psychologist: Full access (can manage general resources or patient-linked docs if rules allow).
+      // Other roles: Potentially read if it's a general resource, or no access if confidential.
+      // This needs more specific rules if documents are linked to patients.
+      allow read: if isAdmin() || isPsychologist() || isSecretary(); // Secretaries might need to view some documents
+      allow create, update, delete: if isAdmin() || isPsychologist();
+    }
+
+    // Assessments Collection
+    match /assessments/{assessmentId} {
+      // Admin: Full access.
+      // Psychologist: Access if it's for their assigned patient.
+      allow read: if isAdmin() || (isPsychologist() && get(/databases/$(database)/documents/patients/$(resource.data.patientId)).data.assignedTo == request.auth.uid);
+      allow create, update, delete: if isAdmin() || isPsychologist(); // Assuming psychologists create these.
+    }
   }
 }

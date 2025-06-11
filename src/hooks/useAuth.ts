@@ -1,5 +1,4 @@
 
-// src/hooks/useAuth.ts
 "use client";
 
 import type { User, UserRole } from '@/types';
@@ -7,14 +6,10 @@ import { useRouter } from 'next/navigation';
 import { atom, useAtom } from 'jotai';
 import { useEffect } from 'react';
 
-// Replace with actual Firebase auth state if integrating
-const mockUser: User = {
-  id: 'mock-user-id',
-  email: 'psicologo@psiguard.com',
-  name: 'Dr. Exemplo Silva',
-  role: 'psychologist',
+// Mock user for initial state and some defaults
+const baseMockUser: Omit<User, 'role' | 'email' | 'name' | 'id'> = {
   avatarUrl: 'https://placehold.co/100x100.png',
-  crp: '06/123456', // Added mock CRP
+  crp: '06/123456',
 };
 
 const authAtom = atom<User | null>(null);
@@ -26,10 +21,13 @@ export function useAuth() {
   const router = useRouter();
 
   useEffect(() => {
-    // Simulate checking auth state
     const storedUser = localStorage.getItem('psiguard_user');
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (e) {
+        localStorage.removeItem('psiguard_user');
+      }
     }
     setIsLoading(false);
   }, [setUser, setIsLoading]);
@@ -37,14 +35,34 @@ export function useAuth() {
 
   const login = async (email: string, pass: string, role: UserRole = 'psychologist') => {
     setIsLoading(true);
-    // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 500));
+    
+    let userName = 'Usuário';
+    let userSpecificData: Partial<User> = {};
+
+    switch(role) {
+      case 'admin':
+        userName = 'Admin Geral';
+        break;
+      case 'psychologist':
+        userName = 'Dr. Exemplo Silva';
+        userSpecificData.crp = baseMockUser.crp;
+        break;
+      case 'secretary':
+        userName = 'Secretária Exemplo';
+        break;
+      case 'scheduling':
+        userName = 'Agendador(a) Psi';
+        break;
+    }
+
     const loggedInUser: User = { 
-      ...mockUser, 
+      ...baseMockUser,
+      id: `mock-user-${role}-${Date.now().toString().slice(-4)}`, // More unique mock ID
       email, 
       role, 
-      name: role === 'admin' ? 'Admin User' : role === 'secretary' ? 'Secretária Exemplo' : 'Dr. Exemplo Silva',
-      crp: role === 'psychologist' ? mockUser.crp : undefined, // Assign CRP only if psychologist
+      name: userName,
+      ...userSpecificData,
     };
     setUser(loggedInUser);
     localStorage.setItem('psiguard_user', JSON.stringify(loggedInUser));
@@ -61,21 +79,8 @@ export function useAuth() {
     router.push('/login');
   };
 
-  const register = async (name: string, email: string, pass: string, role: UserRole) => {
-    setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-    const newUser: User = { 
-      id: `mock-new-${Date.now()}`, 
-      email, 
-      name, 
-      role, 
-      crp: role === 'psychologist' ? '06/000000' : undefined 
-    };
-    setUser(newUser);
-    localStorage.setItem('psiguard_user', JSON.stringify(newUser));
-    setIsLoading(false);
-    router.push('/dashboard');
-  }
+  // Register function might be needed if users can sign up themselves,
+  // for now, login assigns roles for mock purposes.
 
-  return { user, isLoading, login, logout, register, isAuthenticated: !!user };
+  return { user, isLoading, login, logout, isAuthenticated: !!user };
 }

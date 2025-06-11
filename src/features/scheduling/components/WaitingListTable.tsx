@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import type { WaitingListEntry } from "@/types";
+import type { WaitingListEntry, UserRole } from "@/types";
 import { MoreHorizontal, Edit, Trash2, CalendarPlus, UserCheck, PhoneCall, Clock4 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { hasPermission } from "@/lib/permissions";
 
 interface WaitingListTableProps {
   entries: WaitingListEntry[];
@@ -31,6 +32,7 @@ interface WaitingListTableProps {
   onEdit: (entry: WaitingListEntry) => void;
   onDelete: (entryId: string) => void;
   onChangeStatus: (entryId: string, status: WaitingListEntry['status']) => void;
+  currentUserRole?: UserRole;
 }
 
 const statusMap: Record<WaitingListEntry["status"], { label: string; icon?: React.ElementType; color: string; badgeVariant: "default" | "secondary" | "outline" | "destructive" }> = {
@@ -41,10 +43,18 @@ const statusMap: Record<WaitingListEntry["status"], { label: string; icon?: Reac
 };
 
 
-export const WaitingListTable: React.FC<WaitingListTableProps> = ({ entries, onSchedule, onEdit, onDelete, onChangeStatus }) => {
+export const WaitingListTable: React.FC<WaitingListTableProps> = ({ entries, onSchedule, onEdit, onDelete, onChangeStatus, currentUserRole }) => {
   if (!entries || entries.length === 0) {
     return <p className="text-muted-foreground text-center py-8">Nenhum paciente na lista de espera no momento.</p>;
   }
+
+  const canSchedule = hasPermission(currentUserRole, 'SCHEDULE_FROM_WAITING_LIST');
+  // Assuming admins and psychologists can also edit/delete if they can add/schedule
+  const canEdit = hasPermission(currentUserRole, 'ADD_PATIENT_TO_WAITING_LIST');
+  const canDelete = hasPermission(currentUserRole, 'ADD_PATIENT_TO_WAITING_LIST');
+  // All roles with access to the table can change status (scheduler, secretary, psychologist, admin)
+  const canChangeStatus = hasPermission(currentUserRole, 'VIEW_WAITING_LIST_PATIENTS');
+
 
   return (
     <div className="rounded-lg border shadow-sm overflow-hidden">
@@ -94,29 +104,42 @@ export const WaitingListTable: React.FC<WaitingListTableProps> = ({ entries, onS
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Ações na Lista</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => onSchedule(entry)} disabled={entry.status === 'scheduled' || entry.status === 'archived'}>
-                        <CalendarPlus className="mr-2 h-4 w-4" /> Agendar Sessão
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onEdit(entry)}>
-                        <Edit className="mr-2 h-4 w-4" /> Editar Entrada
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuLabel>Alterar Status</DropdownMenuLabel>
-                      {Object.entries(statusMap).map(([statusKey, statusValue]) => (
-                        <DropdownMenuItem 
-                          key={statusKey} 
-                          onClick={() => onChangeStatus(entry.id, statusKey as WaitingListEntry['status'])}
-                          disabled={entry.status === statusKey}
-                          className={entry.status === statusKey ? "bg-muted" : ""}
-                        >
-                          {statusValue.icon && <statusValue.icon className={`mr-2 h-4 w-4 ${statusValue.color.split(' ')[0]}`} />}
-                           Marcar como {statusValue.label}
+                      {canSchedule && (
+                        <DropdownMenuItem onClick={() => onSchedule(entry)} disabled={entry.status === 'scheduled' || entry.status === 'archived'}>
+                            <CalendarPlus className="mr-2 h-4 w-4" /> Agendar Sessão
                         </DropdownMenuItem>
-                      ))}
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => onDelete(entry.id)} className="text-destructive focus:text-destructive focus:bg-destructive/10">
-                        <Trash2 className="mr-2 h-4 w-4" /> Remover da Lista
-                      </DropdownMenuItem>
+                      )}
+                      {canEdit && (
+                        <DropdownMenuItem onClick={() => onEdit(entry)}>
+                            <Edit className="mr-2 h-4 w-4" /> Editar Entrada
+                        </DropdownMenuItem>
+                      )}
+                      { (canSchedule || canEdit) && <DropdownMenuSeparator /> }
+                      
+                      {canChangeStatus && (
+                        <>
+                            <DropdownMenuLabel>Alterar Status</DropdownMenuLabel>
+                            {Object.entries(statusMap).map(([statusKey, statusValue]) => (
+                                <DropdownMenuItem 
+                                key={statusKey} 
+                                onClick={() => onChangeStatus(entry.id, statusKey as WaitingListEntry['status'])}
+                                disabled={entry.status === statusKey}
+                                className={entry.status === statusKey ? "bg-muted" : ""}
+                                >
+                                {statusValue.icon && <statusValue.icon className={`mr-2 h-4 w-4 ${statusValue.color.split(' ')[0]}`} />}
+                                Marcar como {statusValue.label}
+                                </DropdownMenuItem>
+                            ))}
+                        </>
+                      )}
+                      {canDelete && (
+                        <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => onDelete(entry.id)} className="text-destructive focus:text-destructive focus:bg-destructive/10">
+                                <Trash2 className="mr-2 h-4 w-4" /> Remover da Lista
+                            </DropdownMenuItem>
+                        </>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
