@@ -25,27 +25,27 @@ const mockPatientsData: Patient[] = [
 
 export const mockSessionsData: Session[] = [
   // Ana Silva
-  { id: 's_ana_near', patientId: '1', patientName: 'Ana Beatriz Silva', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: addDays(new Date(), 1).setHours(10,0,0,0).toString(), endTime: new Date(addDays(new Date(), 1).setHours(11,0,0,0)).toISOString(), status: 'scheduled', createdAt: subDays(new Date(), 1).toISOString() },
-  { id: 's_ana_week', patientId: '1', patientName: 'Ana Beatriz Silva', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: addDays(new Date(), 7).setHours(14,0,0,0).toString(), endTime: new Date(addDays(new Date(), 7).setHours(15,0,0,0)).toISOString(), status: 'scheduled', createdAt: subDays(new Date(), 1).toISOString() },
-  { id: 's_ana_future_cancelled', patientId: '1', patientName: 'Ana Beatriz Silva', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: addDays(new Date(), 3).setHours(11,0,0,0).toString(), endTime: new Date(addDays(new Date(), 3).setHours(12,0,0,0)).toISOString(), status: 'cancelled', createdAt: subDays(new Date(), 1).toISOString() }, // Sessão futura cancelada
+  { id: 's_ana_near', patientId: '1', patientName: 'Ana Beatriz Silva', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: addDays(new Date(new Date().setHours(10,0,0,0)), 1).toISOString(), endTime: addDays(new Date(new Date().setHours(11,0,0,0)), 1).toISOString(), status: 'scheduled', createdAt: subDays(new Date(), 1).toISOString() },
+  { id: 's_ana_week', patientId: '1', patientName: 'Ana Beatriz Silva', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: addDays(new Date(new Date().setHours(14,0,0,0)), 7).toISOString(), endTime: addDays(new Date(new Date().setHours(15,0,0,0)), 7).toISOString(), status: 'scheduled', createdAt: subDays(new Date(), 1).toISOString() },
+  { id: 's_ana_future_cancelled', patientId: '1', patientName: 'Ana Beatriz Silva', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: addDays(new Date(new Date().setHours(11,0,0,0)), 3).toISOString(), endTime: addDays(new Date(new Date().setHours(12,0,0,0)), 3).toISOString(), status: 'cancelled', createdAt: subDays(new Date(), 1).toISOString() }, // Sessão futura cancelada
   
   // Bruno Costa
-  { id: 's_bruno_later_today', patientId: '2', patientName: 'Bruno Almeida Costa', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: new Date().setHours(new Date().getHours() + 3, 0,0,0).toString(), endTime: new Date(new Date().setHours(new Date().getHours() + 4,0,0,0)).toISOString(), status: 'scheduled', createdAt: subDays(new Date(), 0).toISOString() },
-  { id: 's_bruno_two_days', patientId: '2', patientName: 'Bruno Almeida Costa', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: addDays(new Date(), 2).setHours(16,30,0,0).toString(), endTime: new Date(addDays(new Date(), 2).setHours(17,30,0,0)).toISOString(), status: 'scheduled', createdAt: subDays(new Date(), 0).toISOString() },
-  { id: 's_bruno_future_completed', patientId: '2', patientName: 'Bruno Almeida Costa', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: addDays(new Date(), 4).setHours(10,0,0,0).toString(), endTime: new Date(addDays(new Date(), 4).setHours(11,0,0,0)).toISOString(), status: 'completed', createdAt: subDays(new Date(), 0).toISOString() }, // Sessão futura concluída (teste de filtro)
+  { id: 's_bruno_later_today', patientId: '2', patientName: 'Bruno Almeida Costa', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: new Date(new Date().setHours(new Date().getHours() + 3, 0,0,0)).toISOString(), endTime: new Date(new Date().setHours(new Date().getHours() + 4,0,0,0)).toISOString(), status: 'scheduled', createdAt: subDays(new Date(), 0).toISOString() },
+  { id: 's_bruno_two_days', patientId: '2', patientName: 'Bruno Almeida Costa', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: addDays(new Date(new Date().setHours(16,30,0,0)), 2).toISOString(), endTime: addDays(new Date(new Date().setHours(17,30,0,0)), 2).toISOString(), status: 'scheduled', createdAt: subDays(new Date(), 0).toISOString() },
+  { id: 's_bruno_future_completed', patientId: '2', patientName: 'Bruno Almeida Costa', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: addDays(new Date(new Date().setHours(10,0,0,0)), 4).toISOString(), endTime: addDays(new Date(new Date().setHours(11,0,0,0)), 4).toISOString(), status: 'completed', createdAt: subDays(new Date(), 0).toISOString() }, // Sessão futura concluída (teste de filtro)
 
 
   // Carla Dias Oliveira
-  { id: 's_carla_tomorrow', patientId: '3', patientName: 'Carla Dias Oliveira', psychologistId: 'psy2', psychologistName: 'Dra. Modelo Souza', startTime: addDays(new Date(), 1).setHours(9,0,0,0).toString(), endTime: new Date(addDays(new Date(), 1).setHours(10,0,0,0)).toISOString(), status: 'scheduled', createdAt: subDays(new Date(), 1).toISOString() },
+  { id: 's_carla_tomorrow', patientId: '3', patientName: 'Carla Dias Oliveira', psychologistId: 'psy2', psychologistName: 'Dra. Modelo Souza', startTime: addDays(new Date(new Date().setHours(9,0,0,0)), 1).toISOString(), endTime: addDays(new Date(new Date().setHours(10,0,0,0)), 1).toISOString(), status: 'scheduled', createdAt: subDays(new Date(), 1).toISOString() },
 
   // Daniel Farias Lima
-  { id: 's_daniel_far', patientId: '4', patientName: 'Daniel Farias Lima', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: addDays(new Date(), 10).setHours(11,0,0,0).toString(), endTime: new Date(addDays(new Date(), 10).setHours(12,0,0,0)).toISOString(), status: 'scheduled', createdAt: subDays(new Date(), 1).toISOString() },
+  { id: 's_daniel_far', patientId: '4', patientName: 'Daniel Farias Lima', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: addDays(new Date(new Date().setHours(11,0,0,0)), 10).toISOString(), endTime: addDays(new Date(new Date().setHours(12,0,0,0)), 10).toISOString(), status: 'scheduled', createdAt: subDays(new Date(), 1).toISOString() },
 
   // Eduarda Gomes Ferreira (sessão passada, não deve aparecer)
   { id: 's_edu_past', patientId: '5', patientName: 'Eduarda Gomes Ferreira', psychologistId: 'psy2', psychologistName: 'Dra. Modelo Souza', startTime: subDays(new Date(), 3).toISOString(), endTime: new Date(subDays(new Date(), 3).getTime() + 60*60*1000).toISOString(), status: 'completed', createdAt: subDays(new Date(), 4).toISOString() }, 
 
   // Felipe Moreira (paciente sem telefone)
-  { id: 's_felipe_no_phone', patientId: '6', patientName: 'Felipe Moreira', psychologistId: 'psy2', psychologistName: 'Dra. Modelo Souza', startTime: addDays(new Date(), 2).setHours(14,0,0,0).toString(), endTime: new Date(addDays(new Date(), 2).setHours(15,0,0,0)).toISOString(), status: 'scheduled', createdAt: subDays(new Date(), 1).toISOString() },
+  { id: 's_felipe_no_phone', patientId: '6', patientName: 'Felipe Moreira', psychologistId: 'psy2', psychologistName: 'Dra. Modelo Souza', startTime: addDays(new Date(new Date().setHours(14,0,0,0)), 2).toISOString(), endTime: addDays(new Date(new Date().setHours(15,0,0,0)), 2).toISOString(), status: 'scheduled', createdAt: subDays(new Date(), 1).toISOString() },
 ];
 
 
