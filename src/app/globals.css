@@ -4,6 +4,7 @@
 
 @layer base {
   :root {
+    /* Tema Padrão (Light) */
     --background: 207 100% 97%; /* Very Light Blue - #E3F2FD */
     --foreground: 210 40% 15%; /* Dark Blue/Grey */
 
@@ -52,6 +53,7 @@
   }
 
   .dark {
+    /* Tema Padrão (Dark) */
     --background: 210 30% 12%; /* Dark Blue */
     --foreground: 210 40% 95%; /* Light Gray/Blue */
 
@@ -95,6 +97,82 @@
     --sidebar-accent-foreground: 210 40% 92%;
     --sidebar-border: 210 30% 25%;
     --sidebar-ring: var(--ring);
+  }
+
+  /*
+    Tema Moderno Alternativo
+    Para ativar, adicione a classe "theme-modern" ao elemento <html> em src/app/layout.tsx.
+    Exemplo: <html lang="pt-BR" suppressHydrationWarning className="theme-modern">
+    O ThemeProvider existente (next-themes) continuará a gerenciar os modos light/dark.
+  */
+  .theme-modern {
+    /* Tema Moderno (Light) - sobrescreve :root quando .theme-modern está presente */
+    --background: 220 20% 98%;      /* Cinza muito claro e frio */
+    --foreground: 220 15% 20%;      /* Cinza escuro e frio */
+    --muted: 220 20% 92%;
+    --muted-foreground: 220 15% 45%;
+    --popover: 220 20% 99%;
+    --popover-foreground: 220 15% 20%;
+    --card: 220 20% 99%;
+    --card-foreground: 220 15% 20%;
+    --border: 220 20% 88%;
+    --input: 220 20% 95%;
+    --primary: 180 65% 50%;         /* Teal */
+    --primary-foreground: 180 100% 10%; /* Preto teal muito escuro */
+    --secondary: 220 15% 85%;       /* Cinza claro */
+    --secondary-foreground: 220 15% 30%;
+    --accent: 30 90% 60%;           /* Laranja suave */
+    --accent-foreground: 30 100% 10%;
+    --ring: 180 65% 45%;            /* Teal um pouco mais escuro para anel */
+
+    --chart-1: 180 60% 50%;         /* Teal principal */
+    --chart-2: 30 80% 65%;          /* Laranja suave */
+    --chart-3: 220 50% 60%;         /* Azul acinzentado */
+    --chart-4: 100 50% 55%;         /* Verde suave */
+    --chart-5: 280 50% 65%;         /* Roxo suave */
+
+    --sidebar-background: 220 25% 96%;
+    --sidebar-foreground: 220 15% 25%;
+    --sidebar-primary: var(--primary);
+    --sidebar-primary-foreground: var(--primary-foreground);
+    --sidebar-accent: 220 25% 90%;
+    --sidebar-accent-foreground: 220 15% 20%;
+    --sidebar-border: 220 20% 85%;
+    --sidebar-ring: var(--ring);
+  }
+
+  .dark.theme-modern {
+    /* Tema Moderno (Dark) - sobrescreve .dark e .theme-modern quando ambos estão presentes */
+    --background: 220 20% 10%;      /* Cinza-azulado escuro e frio */
+    --foreground: 220 20% 90%;      /* Cinza claro e frio */
+    --muted: 220 20% 18%;
+    --muted-foreground: 220 20% 65%;
+    --popover: 220 20% 12%;
+    --popover-foreground: 220 20% 90%;
+    --card: 220 20% 12%;
+    --card-foreground: 220 20% 90%;
+    --border: 220 20% 25%;
+    --input: 220 20% 20%;
+    --primary: 180 60% 60%;         /* Teal mais brilhante */
+    --primary-foreground: 180 100% 10%;
+    --secondary: 220 15% 22%;
+    --secondary-foreground: 220 15% 80%;
+    --accent: 30 80% 70%;           /* Laranja mais brilhante */
+    --accent-foreground: 30 100% 10%;
+    --ring: 180 60% 55%;
+
+    --chart-1: 180 55% 60%;
+    --chart-2: 30 70% 75%;
+    --chart-3: 220 45% 65%;
+    --chart-4: 100 45% 60%;
+    --chart-5: 280 45% 70%;
+
+    --sidebar-background: 220 20% 8%;
+    --sidebar-foreground: 220 20% 85%;
+    /* sidebar-primary, etc., herdarão de .theme-modern se não forem sobrescritos aqui, usando as vars modernas */
+    --sidebar-accent: 220 20% 15%;
+    --sidebar-accent-foreground: 220 20% 88%;
+    --sidebar-border: 220 20% 20%;
   }
 }
 
