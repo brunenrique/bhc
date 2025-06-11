@@ -1,0 +1,66 @@
+
+[
+  {
+    "id": "tcc-depressao-leve",
+    "titulo": "TCC para Depressão Leve",
+    "descricao": "Protocolo baseado em Terapia Cognitivo-Comportamental para tratamento de depressão leve.",
+    "criadaPor": "system",
+    "publico": true,
+    "abordagem": "TCC",
+    "tags": ["depressão", "tcc"],
+    "etapas": [
+      {"id": "tcc-dep-1", "titulo": "Psicoeducação sobre Depressão", "objetivo": "Entender a natureza da depressão e o modelo cognitivo-comportamental.", "tipo": "psicoeducacao"},
+      {"id": "tcc-dep-2", "titulo": "Monitoramento de Atividades", "objetivo": "Identificar padrões de atividade e humor.", "tipo": "tarefa"},
+      {"id": "tcc-dep-3", "titulo": "Reestruturação Cognitiva", "objetivo": "Identificar e modificar pensamentos negativos automáticos.", "tipo": "discussao"},
+      {"id": "tcc-dep-4", "titulo": "Aumento de Reforçadores Positivos", "objetivo": "Programar atividades prazerosas e que gerem senso de maestria.", "tipo": "tarefa"},
+      {"id": "tcc-dep-5", "titulo": "Planejamento de Atividades Agradáveis", "objetivo": "Criar um cronograma para incorporar atividades reforçadoras.", "tipo": "tarefa"}
+    ]
+  },
+  {
+    "id": "act-ansiedade-geral",
+    "titulo": "ACT para Ansiedade Generalizada",
+    "descricao": "Protocolo baseado em Terapia de Aceitação e Compromisso para ansiedade generalizada.",
+    "criadaPor": "system",
+    "publico": true,
+    "abordagem": "ACT",
+    "tags": ["ansiedade", "act"],
+    "etapas": [
+      {"id": "act-ans-1", "titulo": "Desfusão Cognitiva", "objetivo": "Observar pensamentos sem se apegar a eles.", "tipo": "psicoeducacao"},
+      {"id": "act-ans-2", "titulo": "Mindfulness Introdutório", "objetivo": "Praticar a atenção plena no momento presente.", "tipo": "tarefa"},
+      {"id": "act-ans-3", "titulo": "Identificação de Valores", "objetivo": "Clarificar o que realmente importa na vida.", "tipo": "discussao"},
+      {"id": "act-ans-4", "titulo": "Ação Comprometida", "objetivo": "Definir e dar passos em direção aos valores.", "tipo": "tarefa"},
+      {"id": "act-ans-5", "titulo": "Aceitação da Experiência Interna", "objetivo": "Abrir espaço para sentimentos desconfortáveis sem lutar contra eles.", "tipo": "discussao"}
+    ]
+  },
+  {
+    "id": "dbt-regulacao-emocional",
+    "titulo": "Psicoeducação em Regulação Emocional (DBT)",
+    "descricao": "Módulo educativo baseado em habilidades de regulação emocional da Terapia Comportamental Dialética (DBT).",
+    "criadaPor": "system",
+    "publico": true,
+    "abordagem": "DBT",
+    "tags": ["regulação emocional", "dbt", "psicoeducação"],
+    "etapas": [
+      {"id": "dbt-reg-1", "titulo": "Nomeação das Emoções", "objetivo": "Aprender a identificar e nomear diferentes emoções.", "tipo": "psicoeducacao"},
+      {"id": "dbt-reg-2", "titulo": "Modelo de Emoções", "objetivo": "Compreender o ciclo da emoção e seus componentes.", "tipo": "psicoeducacao"},
+      {"id": "dbt-reg-3", "titulo": "Redução da Vulnerabilidade Emocional", "objetivo": "Estratégias para diminuir a intensidade de emoções negativas (Habilidades PLEASE).", "tipo": "psicoeducacao"},
+      {"id": "dbt-reg-4", "titulo": "Estratégias de Enfrentamento", "objetivo": "Desenvolver formas saudáveis de lidar com emoções difíceis (Habilidades OPPOSITE ACTION e PROBLEM SOLVING).", "tipo": "discussao"},
+      {"id": "dbt-reg-5", "titulo": "Técnicas de Tolerância à Angústia", "objetivo": "Desenvolver a capacidade de suportar emoções intensas sem piorar a situação (Habilidades DISTRACTION, SELF-SOOTHE, IMPROVE, TIPP).", "tipo": "tarefa"}
+    ]
+  },
+  {
+    "id": "intervencao-luto",
+    "titulo": "Trilha de Intervenção para Luto",
+    "descricao": "Trilha estruturada para auxiliar no processo de elaboração do luto.",
+    "criadaPor": "system",
+    "publico": true,
+    "abordagem": "Psicoeducação",
+    "tags": ["luto", "perda", "intervenção"],
+    "etapas": [
+      {"id": "luto-int-1", "titulo": "Aceitação e Reconhecimento da Perda", "objetivo": "Validar a dor e a realidade da perda.", "tipo": "psicoeducacao"},
+      {"id": "luto-int-2", "titulo": "Memórias e Significado da Relação", "objetivo": "Explorar e honrar a memória da pessoa ou do que foi perdido.", "tipo": "discussao"},
+      {"id": "luto-int-3", "titulo": "Reconstrução de Rotina", "objetivo": "Adaptar-se à vida sem a presença do que foi perdido.", "tipo": "tarefa"},
+      {"id": "luto-int-4", "titulo": "Estímulo à Retomada de Metas Pessoais", "objetivo": "Encontrar um novo sentido e direção para o futuro.", "tipo": "discussao"}
+    ]
+  }
+]
