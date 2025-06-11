@@ -8,23 +8,48 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
-import { Loader2, Save, UserCircle } from "lucide-react";
-import { Switch } from "@/components/ui/switch"; // Assuming you have a Switch component
+import { Loader2, Save, UserCircle, Palette } from "lucide-react";
+import { Switch } from "@/components/ui/switch"; 
 import { useToast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useTheme as useNextTheme } from 'next-themes'; // For light/dark mode toggle
+
+// Theme definitions
+const THEMES = [
+  { name: 'Padrão (Azul/Lavanda)', class: '' }, // Default, no extra class
+  { name: 'Moderno (Teal/Laranja)', class: 'theme-modern' },
+  { name: 'Cinza Claro', class: 'theme-light-gray' },
+  { name: 'Lilás', class: 'theme-lilac' },
+];
+const CUSTOM_THEME_LS_KEY = 'psiguard-custom-theme';
+const ALL_CUSTOM_THEME_CLASSES = THEMES.map(t => t.class).filter(Boolean);
 
 export default function SettingsPage() {
   const { user, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
+  const { theme: nextThemeMode, setTheme: setNextThemeMode } = useNextTheme(); // For light/dark
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  // Add more settings states as needed, e.g., notifications
   const [enableNotifications, setEnableNotifications] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [selectedCustomTheme, setSelectedCustomTheme] = useState<string>('');
 
   useEffect(() => {
     if (user) {
       setName(user.name || '');
       setEmail(user.email || '');
+    }
+    // Load custom theme preference
+    const savedCustomTheme = localStorage.getItem(CUSTOM_THEME_LS_KEY);
+    if (savedCustomTheme && ALL_CUSTOM_THEME_CLASSES.includes(savedCustomTheme)) {
+      setSelectedCustomTheme(savedCustomTheme);
+    } else {
+      // Fallback to the default theme class from RootLayout or CSS if nothing is saved.
+      // For the select, if it's "Padrão", the class is empty.
+      const currentHtmlClass = document.documentElement.className;
+      const activeTheme = THEMES.find(t => t.class && currentHtmlClass.includes(t.class));
+      setSelectedCustomTheme(activeTheme?.class || '');
     }
   }, [user]);
 
@@ -34,16 +59,35 @@ export default function SettingsPage() {
     return (names[0][0] + (names[names.length - 1][0] || '')).toUpperCase();
   }
 
+  const handleCustomThemeChange = (newThemeClass: string) => {
+    setSelectedCustomTheme(newThemeClass);
+    const htmlElement = document.documentElement;
+
+    // Remove all known custom theme classes
+    ALL_CUSTOM_THEME_CLASSES.forEach(cls => htmlElement.classList.remove(cls));
+
+    // Add the new one if it's not the default (empty class)
+    if (newThemeClass) {
+      htmlElement.classList.add(newThemeClass);
+    }
+    localStorage.setItem(CUSTOM_THEME_LS_KEY, newThemeClass);
+    toast({
+        title: "Tema Alterado",
+        description: `O tema da aplicação foi alterado.`,
+    });
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
     // Simulate API call to save settings
-    // console.log("Saving settings:", { name, email, enableNotifications });
+    // console.log("Saving settings:", { name, email, enableNotifications, selectedCustomTheme });
     await new Promise(resolve => setTimeout(resolve, 1500));
+    // Note: Custom theme is already saved to localStorage by handleCustomThemeChange
     setIsSaving(false);
     toast({
         title: "Configurações Salvas",
-        description: "Suas preferências foram atualizadas com sucesso.",
+        description: "Suas preferências de perfil e notificações foram atualizadas.",
     });
   };
 
@@ -59,7 +103,7 @@ export default function SettingsPage() {
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="font-headline">Perfil do Usuário</CardTitle>
-            <CardDescription>Atualize suas informações pessoais e preferências.</CardDescription>
+            <CardDescription>Atualize suas informações pessoais.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex items-center space-x-4">
@@ -87,21 +131,35 @@ export default function SettingsPage() {
                 <Label htmlFor="role">Função</Label>
                 <Input id="role" type="text" value={user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : ''} disabled className="capitalize bg-muted/50" />
             </div>
-
-            {/* Example for password change - more complex, usually separate flow */}
-            {/* <div>
-              <Label htmlFor="password">Nova Senha</Label>
-              <Input id="password" type="password" placeholder="Deixe em branco para não alterar" />
-            </div> */}
           </CardContent>
         </Card>
 
         <Card className="mt-6 shadow-lg">
           <CardHeader>
-            <CardTitle className="font-headline">Preferências</CardTitle>
-            <CardDescription>Ajuste as configurações de notificação e outras preferências do sistema.</CardDescription>
+            <CardTitle className="font-headline">Preferências de Aparência e Notificações</CardTitle>
+            <CardDescription>Ajuste o tema visual e como você recebe notificações.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
+            <div className="space-y-1.5">
+              <Label htmlFor="themeSelector">Tema da Aplicação</Label>
+              <Select value={selectedCustomTheme} onValueChange={handleCustomThemeChange}>
+                <SelectTrigger id="themeSelector" className="w-full">
+                  <Palette className="mr-2 h-4 w-4 opacity-50" />
+                  <SelectValue placeholder="Selecione um tema" />
+                </SelectTrigger>
+                <SelectContent>
+                  {THEMES.map(themeOption => (
+                    <SelectItem key={themeOption.class || 'default'} value={themeOption.class}>
+                      {themeOption.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+               <p className="text-xs text-muted-foreground">
+                O modo Claro/Escuro é controlado pelo botão <Sun className="inline h-3 w-3"/>/<Moon className="inline h-3 w-3"/> na barra lateral.
+              </p>
+            </div>
+            
             <div className="flex items-center justify-between rounded-lg border p-4">
               <div>
                 <Label htmlFor="notifications" className="font-medium">Notificações por Email</Label>
@@ -116,18 +174,16 @@ export default function SettingsPage() {
                 disabled={isSaving}
               />
             </div>
-            {/* Add more preference settings here */}
           </CardContent>
         </Card>
         
         <div className="mt-8 flex justify-end">
           <Button type="submit" disabled={isSaving || authLoading}>
             {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-            Salvar Alterações
+            Salvar Alterações de Perfil
           </Button>
         </div>
       </form>
     </div>
   );
 }
-

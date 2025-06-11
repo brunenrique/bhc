@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
-import { ThemeProvider } from "next-themes"; // Importar ThemeProvider
+import { ThemeProvider } from "next-themes"; 
 
 export const metadata: Metadata = {
   title: 'PsiGuard - Gestão de Clínica Psicológica',
@@ -14,7 +14,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning className="theme-modern">
+    // Aplicando 'theme-lilac' como classe padrão inicial.
+    // A lógica no AppLayout (via settings ou useEffect) poderá sobrescrever isso com a preferência do usuário.
+    <html lang="pt-BR" suppressHydrationWarning className="theme-lilac">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -24,9 +26,11 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="system" // next-themes gerencia light/dark
           enableSystem
           disableTransitionOnChange
+          // O ThemeProvider do next-themes não gerenciará nossas classes de tema customizadas diretamente.
+          // Faremos isso manualmente no AppLayout e Settings.
         >
           {children}
           <Toaster />
