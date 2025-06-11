@@ -15,9 +15,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    // Aplicando 'theme-lilac' como classe padrão inicial.
+    // Aplicando 'theme-modern' como classe padrão inicial.
     // CustomThemeInitializer cuidará de aplicar a preferência do usuário do localStorage.
-    <html lang="pt-BR" suppressHydrationWarning className="theme-lilac">
+    <html lang="pt-BR" suppressHydrationWarning className="theme-modern">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
