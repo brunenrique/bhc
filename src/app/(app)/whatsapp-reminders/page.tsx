@@ -8,32 +8,33 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Loader2, MessageSquare, Search } from "lucide-react";
 import type { Patient, Session } from "@/types";
 import { cacheService } from "@/services/cacheService";
-import { format, parseISO, isFuture, differenceInHours } from "date-fns"; // Removed addDays, subDays as we'll simplify date creation
+import { format, parseISO, isFuture, differenceInHours } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { WhatsAppReminderDialog } from "@/features/whatsapp-reminders/components/WhatsAppReminderDialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-const createFutureDateISOString = (daysInFuture: number, hour: number = 10): string => {
+const createFutureDateISOString = (daysInFuture: number, hour: number = 10, minute: number = 0): string => {
   const date = new Date();
   date.setDate(date.getDate() + daysInFuture);
-  date.setHours(hour, 0, 0, 0);
+  date.setHours(hour, minute, 0, 0);
   return date.toISOString();
 };
 
-const createPastDateISOString = (daysInPast: number): string => {
+const createPastDateISOString = (daysInPast: number, hour: number = 10, minute: number = 0): string => {
   const date = new Date();
   date.setDate(date.getDate() - daysInPast);
+  date.setHours(hour, minute, 0, 0);
   return date.toISOString();
 };
 
 const mockPatientsData: Patient[] = [
-  { id: '1', name: 'Ana Beatriz Silva', email: 'ana.silva@example.com', phone: '(11) 98765-4321', dateOfBirth: '1990-05-15', createdAt: createPastDateISOString(10), updatedAt: new Date().toISOString() },
-  { id: '2', name: 'Bruno Almeida Costa', email: 'bruno.costa@example.com', phone: '(21) 91234-5678', dateOfBirth: '1985-11-20', createdAt: createPastDateISOString(5), updatedAt: new Date().toISOString() },
-  { id: '3', name: 'Carla Dias Oliveira', email: 'carla.oliveira@example.com', phone: '(31) 95555-5555', dateOfBirth: '2000-02-10', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  { id: '4', name: 'Daniel Farias Lima', email: 'daniel.lima@example.com', phone: '(41) 94444-0000', dateOfBirth: '1992-07-22', createdAt: createPastDateISOString(2), updatedAt: new Date().toISOString() },
-  { id: '5', name: 'Eduarda Gomes Ferreira', email: 'eduarda.ferreira@example.com', phone: '(51) 93333-1111', dateOfBirth: '1998-03-30', createdAt: createPastDateISOString(45), updatedAt: new Date().toISOString() },
-  { id: '6', name: 'Felipe Moreira', email: 'felipe.moreira@example.com', phone: null, dateOfBirth: '1995-09-12', createdAt: createPastDateISOString(15), updatedAt: new Date().toISOString() },
+  { id: '1', name: 'Ana Beatriz Silva', email: 'ana.silva@example.com', phone: '(11) 98765-4321', dateOfBirth: '1990-05-15', createdAt: createPastDateISOString(10), updatedAt: new Date().toISOString(), assignedTo: 'psy1' },
+  { id: '2', name: 'Bruno Almeida Costa', email: 'bruno.costa@example.com', phone: '(21) 91234-5678', dateOfBirth: '1985-11-20', createdAt: createPastDateISOString(5), updatedAt: new Date().toISOString(), assignedTo: 'psy1' },
+  { id: '3', name: 'Carla Dias Oliveira', email: 'carla.oliveira@example.com', phone: '(31) 95555-5555', dateOfBirth: '2000-02-10', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), assignedTo: 'psy2' },
+  { id: '4', name: 'Daniel Farias Lima', email: 'daniel.lima@example.com', phone: '(41) 94444-0000', dateOfBirth: '1992-07-22', createdAt: createPastDateISOString(2), updatedAt: new Date().toISOString(), assignedTo: 'psy1' },
+  { id: '5', name: 'Eduarda Gomes Ferreira', email: 'eduarda.ferreira@example.com', phone: '(51) 93333-1111', dateOfBirth: '1998-03-30', createdAt: createPastDateISOString(45), updatedAt: new Date().toISOString(), assignedTo: 'psy2' },
+  { id: '6', name: 'Felipe Moreira', email: 'felipe.moreira@example.com', phone: null, dateOfBirth: '1995-09-12', createdAt: createPastDateISOString(15), updatedAt: new Date().toISOString(), assignedTo: 'psy2' },
 ];
 
 export const mockSessionsData: Session[] = [
@@ -43,7 +44,7 @@ export const mockSessionsData: Session[] = [
   { id: 's_ana_future_cancelled', patientId: '1', patientName: 'Ana Beatriz Silva', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: createFutureDateISOString(3, 11), endTime: createFutureDateISOString(3, 12), status: 'cancelled', createdAt: createPastDateISOString(1) },
   
   // Bruno Costa
-  { id: 's_bruno_later_today_or_tomorrow', patientId: '2', patientName: 'Bruno Almeida Costa', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: createFutureDateISOString(0, new Date().getHours() + 3), endTime: createFutureDateISOString(0, new Date().getHours() + 4), status: 'scheduled', createdAt: createPastDateISOString(0) }, // May become tomorrow if current time + 3h crosses midnight
+  { id: 's_bruno_later_today_or_tomorrow', patientId: '2', patientName: 'Bruno Almeida Costa', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: createFutureDateISOString(0, new Date().getHours() + 3), endTime: createFutureDateISOString(0, new Date().getHours() + 4), status: 'scheduled', createdAt: createPastDateISOString(0) },
   { id: 's_bruno_two_days', patientId: '2', patientName: 'Bruno Almeida Costa', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: createFutureDateISOString(2, 16), endTime: createFutureDateISOString(2, 17), status: 'scheduled', createdAt: createPastDateISOString(0) },
   { id: 's_bruno_future_completed', patientId: '2', patientName: 'Bruno Almeida Costa', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: createFutureDateISOString(4, 10), endTime: createFutureDateISOString(4, 11), status: 'completed', createdAt: createPastDateISOString(0) },
 
@@ -68,7 +69,7 @@ interface ReminderItem {
 
 export default function WhatsAppRemindersPage() {
   const [allPatients, setAllPatients] = useState<Patient[]>([]);
-  const [allSessions, setAllSessions] = useState<Session[]>([]);
+  const [allSessions, setAllSessions] = useState<Session[]>([]); // This will store only future, scheduled sessions
   const [isLoading, setIsLoading] = useState(true);
   const [selectedReminderItem, setSelectedReminderItem] = useState<ReminderItem | null>(null);
   const [isWhatsAppReminderDialogOpen, setIsWhatsAppReminderDialogOpen] = useState(false);
@@ -81,46 +82,58 @@ export default function WhatsAppRemindersPage() {
     const loadData = async () => {
       setIsLoading(true);
       
-      let patientsToUse: Patient[] = mockPatientsData;
-      try {
-        const cachedPatients = await cacheService.patients.getList();
-        if (isMounted && cachedPatients && cachedPatients.length > 0) {
-          patientsToUse = cachedPatients;
-        } else if (isMounted) {
-          await cacheService.patients.setList(mockPatientsData);
-        }
-      } catch (e) { /* ignore, use mockPatientsData */ }
-      if(isMounted) setAllPatients(patientsToUse);
+      let loadedPatients: Patient[] | undefined;
+      let loadedSessions: Session[] | undefined;
 
-      let sessionsToUse: Session[] = mockSessionsData;
       try {
-        const cachedSessions = await cacheService.sessions.getList() || [];
-        const pendingSessions = await cacheService.pendingSessions.getList() || [];
-        let combinedSessions = [...cachedSessions];
+        loadedPatients = await cacheService.patients.getList();
+      } catch (e) { console.warn("Cache read error for patients", e); }
 
-        if (pendingSessions.length > 0) {
-          const pendingSessionIds = new Set(pendingSessions.map(s => s.id));
-          combinedSessions = combinedSessions.filter(s => !pendingSessionIds.has(s.id));
-          combinedSessions = [...combinedSessions, ...pendingSessions];
+      try {
+        const cachedSessionsRaw = await cacheService.sessions.getList();
+        const pendingSessionsRaw = await cacheService.pendingSessions.getList();
+        let combinedSessionsRaw: Session[] = cachedSessionsRaw || [];
+
+        if (pendingSessionsRaw && pendingSessionsRaw.length > 0) {
+            const pendingIds = new Set(pendingSessionsRaw.map(s => s.id));
+            combinedSessionsRaw = combinedSessionsRaw.filter(s => !pendingIds.has(s.id));
+            combinedSessionsRaw = [...combinedSessionsRaw, ...pendingSessionsRaw];
         }
-        
-        if (isMounted && combinedSessions.length > 0) {
-          sessionsToUse = combinedSessions;
-        } else if (isMounted) {
-            await cacheService.sessions.setList(mockSessionsData);
-        }
-      } catch (e) { /* ignore, use mockSessionsData */ }
+        loadedSessions = combinedSessionsRaw;
+      } catch (e) { console.warn("Cache read error for sessions", e); }
       
-      if(isMounted) {
-        const futureScheduledSessions = sessionsToUse.filter(s => {
+      if (isMounted) {
+        const finalPatients = (loadedPatients && loadedPatients.length > 0) ? loadedPatients : mockPatientsData;
+        const finalSessionsSource = (loadedSessions && loadedSessions.length > 0) ? loadedSessions : mockSessionsData;
+
+        setAllPatients(finalPatients);
+        
+        const futureScheduled = finalSessionsSource.filter(s => {
           try {
-            return s.status === 'scheduled' && isFuture(parseISO(s.startTime));
+            // Ensure startTime is a valid string before parsing
+            return s.status === 'scheduled' && typeof s.startTime === 'string' && isFuture(parseISO(s.startTime));
           } catch (parseError) {
-            // console.error(`Failed to parse date for session ${s.id}: ${s.startTime}`, parseError);
+            // console.error(`Reminder Page: Failed to parse date for session ${s.id}: ${s.startTime}`, parseError);
             return false;
           }
         });
-        setAllSessions(futureScheduledSessions);
+        setAllSessions(futureScheduled);
+
+        // If we ended up using mock data because cache was empty/problematic, populate cache
+        if (!loadedPatients || loadedPatients.length === 0) {
+          try {
+            await cacheService.patients.setList(mockPatientsData);
+          } catch (cacheError) { console.warn("Failed to save mock patients to cache", cacheError); }
+        }
+        // Save the original mockSessionsData to cache if loadedSessions was empty,
+        // as it contains all statuses, not just future/scheduled.
+        // Other pages might need the full list.
+        if (!loadedSessions || loadedSessions.length === 0) {
+          try {
+            await cacheService.sessions.setList(mockSessionsData);
+          } catch (cacheError) { console.warn("Failed to save mock sessions to cache", cacheError); }
+        }
+        
         setIsLoading(false);
       }
     };
@@ -130,15 +143,25 @@ export default function WhatsAppRemindersPage() {
 
   const reminderItems = useMemo(() => {
     const items: ReminderItem[] = [];
-    allSessions.forEach(session => { // allSessions should already be filtered for future and scheduled
+    // allSessions should already be filtered for future and scheduled by the useEffect
+    allSessions.forEach(session => { 
       const patient = allPatients.find(p => p.id === session.patientId);
       if (patient) {
-        const sessionTime = parseISO(session.startTime); // No need for try-catch here if allSessions is already validated
+        let sessionTime;
+        try {
+            sessionTime = parseISO(session.startTime);
+        } catch (e) {
+            // console.error("Invalid date for session in reminderItems:", session.startTime);
+            return; // Skip this session if date is invalid
+        }
+        
         const now = new Date();
-        if (timeFilter === "24h" && differenceInHours(sessionTime, now) > 24) {
+        const hoursDifference = differenceInHours(sessionTime, now);
+
+        if (timeFilter === "24h" && hoursDifference > 24) {
           return;
         }
-        if (timeFilter === "48h" && differenceInHours(sessionTime, now) > 48) {
+        if (timeFilter === "48h" && hoursDifference > 48) {
           return;
         }
 
@@ -150,7 +173,13 @@ export default function WhatsAppRemindersPage() {
         items.push({ patient, session });
       }
     });
-    return items.sort((a,b) => parseISO(a.session.startTime).getTime() - parseISO(b.session.startTime).getTime());
+    return items.sort((a,b) => {
+        try {
+            return parseISO(a.session.startTime).getTime() - parseISO(b.session.startTime).getTime();
+        } catch (e) {
+            return 0;
+        }
+    });
   }, [allSessions, allPatients, searchTerm, timeFilter]);
 
   const handleOpenDialog = useCallback((item: ReminderItem) => {
@@ -194,7 +223,7 @@ export default function WhatsAppRemindersPage() {
 
       <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle className="font-headline">Consultas Agendadas</CardTitle>
+          <CardTitle className="font-headline">Consultas Agendadas Futuras</CardTitle>
           <CardDescription>Pacientes com consultas futuras que podem precisar de um lembrete.</CardDescription>
         </CardHeader>
         <CardContent>
@@ -204,7 +233,7 @@ export default function WhatsAppRemindersPage() {
             </div>
           ) : reminderItems.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">
-              Nenhuma consulta agendada encontrada para os filtros atuais.
+              Nenhuma consulta agendada futura encontrada para os filtros atuais.
             </p>
           ) : (
             <div className="overflow-x-auto">
