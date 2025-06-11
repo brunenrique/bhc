@@ -109,12 +109,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </header>
       {visibleTabs.length > 0 && (
         <Tabs value={activeTabValue} className="w-full px-4 sm:px-6">
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-2 md:max-w-2xl lg:grid-cols-4">
+            <TabsList className="grid w-full grid-cols-1 gap-1.5 sm:grid-cols-2 md:grid-cols-4 md:max-w-2xl">
             {visibleTabs.map((tab) => (
                 <TabsTrigger key={tab.value} value={tab.value} asChild className="font-body">
                 <Link href={tab.href} className="flex items-center gap-2">
                     <tab.icon className="h-4 w-4" />
-                    {tab.label}
+                    <span className="truncate">{tab.label}</span>
                 </Link>
                 </TabsTrigger>
             ))}
