@@ -4,7 +4,7 @@ import { PatientListTable } from "@/features/patients/components/PatientListTabl
 import { PatientFormDialog } from "@/features/patients/components/PatientFormDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PlusCircle, Search, Loader2 } from "lucide-react";
+import { PlusCircle, Search, Loader2, Users } from "lucide-react"; // Added Users here
 import { useState, useCallback, useMemo, useEffect } from "react";
 import type { Patient } from "@/types";
 import { cacheService } from '@/services/cacheService';
@@ -40,8 +40,8 @@ export default function PatientsPage() {
   useEffect(() => {
     let isMounted = true;
     const loadPatients = async () => {
-      if (!user) { // Don't load if user is not yet available
-        setIsLoading(true); // Keep loading state until user is resolved
+      if (!user) { 
+        setIsLoading(true); 
         return;
       }
       setIsLoading(true);
@@ -50,7 +50,7 @@ export default function PatientsPage() {
         if (isMounted && cachedPatients && cachedPatients.length > 0) {
           setPatients(cachedPatients);
         } else if (isMounted) {
-           let initialData = [...mockPatientsData]; // Create a mutable copy
+           let initialData = [...mockPatientsData]; 
           if (user.role === 'psychologist') {
             initialData = initialData.map((p) => {
               if (p.assignedTo === 'psy1' && user.name === 'Dr. Exemplo Silva') {
@@ -59,13 +59,6 @@ export default function PatientsPage() {
               if (p.assignedTo === 'psy2' && user.name === 'Dra. Modelo Souza') {
                 return {...p, assignedTo: user.id};
               }
-              // If the mock user from useAuth is neither of these names,
-              // we can assign some patients to the logged-in psychologist generically.
-              // For simplicity, let's assume 'psy1' maps to the first default psychologist and 'psy2' to another.
-              // This logic ensures that the default "Dr. Exemplo Silva" (usually the first psy to log in) gets 'psy1' patients.
-              // And if another psychologist logs in, they might not see patients unless their mock name matches,
-              // or we assign some 'other-psy-uid' patients to them here.
-              // For this fix, we specifically target the known mock names.
               return p;
             });
           }
@@ -90,7 +83,7 @@ export default function PatientsPage() {
 
     loadPatients();
     return () => { isMounted = false; };
-  }, [user]); // Depend on user to reload/re-filter when user changes
+  }, [user]); 
 
   const handleNewPatient = useCallback(() => {
     setSelectedPatient(null);
@@ -125,8 +118,6 @@ export default function PatientsPage() {
       if (user?.role === 'psychologist') {
         patientToSave = { ...newPatientBase, assignedTo: user.id } as Patient;
       } else {
-        // For admin/secretary, assignedTo might be selected in the form or left undefined
-        // For this mock, we'll leave it as is or potentially assign to a default if logic was added in form
         patientToSave = newPatientBase as Patient; 
       }
       updatedPatients = [patientToSave, ...patients];
@@ -137,15 +128,12 @@ export default function PatientsPage() {
   }, [selectedPatient, patients, user]);
 
   const filteredPatients = useMemo(() => {
-    if (!user) return []; // Return empty if user is not loaded
+    if (!user) return []; 
 
     let displayPatients = patients;
     if (user.role === 'psychologist') {
-      // Psychologists only see patients directly assigned to their user.id
       displayPatients = patients.filter(p => p.assignedTo === user.id);
     }
-    // Admins, Secretaries, etc., see all patients based on the current `patients` state
-    // (which for admins/secretaries is the full list from cache/mock).
     
     return displayPatients.filter(p => 
       p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -157,7 +145,7 @@ export default function PatientsPage() {
                            hasPermission(user?.role, 'ACCESS_ADMIN_PANEL_SETTINGS');
 
 
-  if (isLoading || !user) { // Also check if user is loaded
+  if (isLoading || !user) { 
     return (
       <div className="flex justify-center items-center h-64">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -193,7 +181,7 @@ export default function PatientsPage() {
         {user?.role === 'psychologist' && " Você está visualizando apenas pacientes atribuídos a você."}
       </p>
       
-      {filteredPatients.length === 0 && !isLoading ? ( // Show message only if not loading
+      {filteredPatients.length === 0 && !isLoading ? ( 
         <div className="text-center py-10 text-muted-foreground">
           <Users className="mx-auto h-12 w-12 mb-2 opacity-50" />
           Nenhum paciente encontrado para os filtros atuais
@@ -218,4 +206,3 @@ export default function PatientsPage() {
     </div>
   );
 }
-    
