@@ -17,7 +17,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 const createFutureDateISOString = (daysInFuture: number, hour: number = 10, minute: number = 0): string => {
   const date = new Date();
   date.setDate(date.getDate() + daysInFuture);
-  date.setHours(hour, minute, 0, 0);
+  // Ensure hour and minute are within valid ranges after potential day change
+  let H = hour;
+  let M = minute;
+  if (hour >= 24) H = 23; // Cap hour if it's too high from previous logic
+  if (minute >= 60) M = 59; // Cap minute
+  date.setHours(H, M, 0, 0);
   return date.toISOString();
 };
 
@@ -31,7 +36,7 @@ const createPastDateISOString = (daysInPast: number, hour: number = 10, minute: 
 const mockPatientsData: Patient[] = [
   { id: '1', name: 'Ana Beatriz Silva', email: 'ana.silva@example.com', phone: '(11) 98765-4321', dateOfBirth: '1990-05-15', createdAt: createPastDateISOString(10), updatedAt: new Date().toISOString(), assignedTo: 'psy1' },
   { id: '2', name: 'Bruno Almeida Costa', email: 'bruno.costa@example.com', phone: '(21) 91234-5678', dateOfBirth: '1985-11-20', createdAt: createPastDateISOString(5), updatedAt: new Date().toISOString(), assignedTo: 'psy1' },
-  { id: '3', name: 'Carla Dias Oliveira', email: 'carla.oliveira@example.com', phone: '(31) 95555-5555', dateOfBirth: '2000-02-10', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), assignedTo: 'psy2' },
+  { id: '3', name: 'Carla Dias Oliveira', email: 'carla.oliveira@example.com', phone: '(31) 95555-5555', dateOfBirth: '2000-02-10', createdAt: createPastDateISOString(0), updatedAt: new Date().toISOString(), assignedTo: 'psy2' },
   { id: '4', name: 'Daniel Farias Lima', email: 'daniel.lima@example.com', phone: '(41) 94444-0000', dateOfBirth: '1992-07-22', createdAt: createPastDateISOString(2), updatedAt: new Date().toISOString(), assignedTo: 'psy1' },
   { id: '5', name: 'Eduarda Gomes Ferreira', email: 'eduarda.ferreira@example.com', phone: '(51) 93333-1111', dateOfBirth: '1998-03-30', createdAt: createPastDateISOString(45), updatedAt: new Date().toISOString(), assignedTo: 'psy2' },
   { id: '6', name: 'Felipe Moreira', email: 'felipe.moreira@example.com', phone: null, dateOfBirth: '1995-09-12', createdAt: createPastDateISOString(15), updatedAt: new Date().toISOString(), assignedTo: 'psy2' },
@@ -44,7 +49,7 @@ export const mockSessionsData: Session[] = [
   { id: 's_ana_future_cancelled', patientId: '1', patientName: 'Ana Beatriz Silva', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: createFutureDateISOString(3, 11), endTime: createFutureDateISOString(3, 12), status: 'cancelled', createdAt: createPastDateISOString(1) },
   
   // Bruno Costa
-  { id: 's_bruno_later_today_or_tomorrow', patientId: '2', patientName: 'Bruno Almeida Costa', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: createFutureDateISOString(0, new Date().getHours() + 3), endTime: createFutureDateISOString(0, new Date().getHours() + 4), status: 'scheduled', createdAt: createPastDateISOString(0) },
+  { id: 's_bruno_later_today', patientId: '2', patientName: 'Bruno Almeida Costa', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: createFutureDateISOString(0, Math.min(22, new Date().getHours() + 3) ), endTime: createFutureDateISOString(0, Math.min(23, new Date().getHours() + 4)), status: 'scheduled', createdAt: createPastDateISOString(0) },
   { id: 's_bruno_two_days', patientId: '2', patientName: 'Bruno Almeida Costa', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: createFutureDateISOString(2, 16), endTime: createFutureDateISOString(2, 17), status: 'scheduled', createdAt: createPastDateISOString(0) },
   { id: 's_bruno_future_completed', patientId: '2', patientName: 'Bruno Almeida Costa', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: createFutureDateISOString(4, 10), endTime: createFutureDateISOString(4, 11), status: 'completed', createdAt: createPastDateISOString(0) },
 
@@ -69,7 +74,7 @@ interface ReminderItem {
 
 export default function WhatsAppRemindersPage() {
   const [allPatients, setAllPatients] = useState<Patient[]>([]);
-  const [allSessions, setAllSessions] = useState<Session[]>([]); // This will store only future, scheduled sessions
+  const [allSessions, setAllSessions] = useState<Session[]>([]); 
   const [isLoading, setIsLoading] = useState(true);
   const [selectedReminderItem, setSelectedReminderItem] = useState<ReminderItem | null>(null);
   const [isWhatsAppReminderDialogOpen, setIsWhatsAppReminderDialogOpen] = useState(false);
@@ -82,58 +87,27 @@ export default function WhatsAppRemindersPage() {
     const loadData = async () => {
       setIsLoading(true);
       
-      let loadedPatients: Patient[] | undefined;
-      let loadedSessions: Session[] | undefined;
-
-      try {
-        loadedPatients = await cacheService.patients.getList();
-      } catch (e) { console.warn("Cache read error for patients", e); }
-
-      try {
-        const cachedSessionsRaw = await cacheService.sessions.getList();
-        const pendingSessionsRaw = await cacheService.pendingSessions.getList();
-        let combinedSessionsRaw: Session[] = cachedSessionsRaw || [];
-
-        if (pendingSessionsRaw && pendingSessionsRaw.length > 0) {
-            const pendingIds = new Set(pendingSessionsRaw.map(s => s.id));
-            combinedSessionsRaw = combinedSessionsRaw.filter(s => !pendingIds.has(s.id));
-            combinedSessionsRaw = [...combinedSessionsRaw, ...pendingSessionsRaw];
-        }
-        loadedSessions = combinedSessionsRaw;
-      } catch (e) { console.warn("Cache read error for sessions", e); }
-      
+      // Forcing local mocks for focused debugging
       if (isMounted) {
-        const finalPatients = (loadedPatients && loadedPatients.length > 0) ? loadedPatients : mockPatientsData;
-        const finalSessionsSource = (loadedSessions && loadedSessions.length > 0) ? loadedSessions : mockSessionsData;
+        setAllPatients(mockPatientsData);
+        // console.log("WhatsApp Page: Loaded local mock patients:", mockPatientsData.length);
 
-        setAllPatients(finalPatients);
-        
-        const futureScheduled = finalSessionsSource.filter(s => {
+        const futureScheduledFromMock = mockSessionsData.filter(s => {
           try {
-            // Ensure startTime is a valid string before parsing
-            return s.status === 'scheduled' && typeof s.startTime === 'string' && isFuture(parseISO(s.startTime));
+            if (typeof s.startTime !== 'string') {
+              // console.warn(`Session ${s.id} has invalid startTime type:`, s.startTime);
+              return false;
+            }
+            const sessionDate = parseISO(s.startTime);
+            return s.status === 'scheduled' && isFuture(sessionDate);
           } catch (parseError) {
-            // console.error(`Reminder Page: Failed to parse date for session ${s.id}: ${s.startTime}`, parseError);
+            // console.error(`WhatsApp Page (Mock Load): Failed to parse date for session ${s.id}: ${s.startTime}`, parseError);
             return false;
           }
         });
-        setAllSessions(futureScheduled);
-
-        // If we ended up using mock data because cache was empty/problematic, populate cache
-        if (!loadedPatients || loadedPatients.length === 0) {
-          try {
-            await cacheService.patients.setList(mockPatientsData);
-          } catch (cacheError) { console.warn("Failed to save mock patients to cache", cacheError); }
-        }
-        // Save the original mockSessionsData to cache if loadedSessions was empty,
-        // as it contains all statuses, not just future/scheduled.
-        // Other pages might need the full list.
-        if (!loadedSessions || loadedSessions.length === 0) {
-          try {
-            await cacheService.sessions.setList(mockSessionsData);
-          } catch (cacheError) { console.warn("Failed to save mock sessions to cache", cacheError); }
-        }
-        
+        setAllSessions(futureScheduledFromMock);
+        // console.log("WhatsApp Page: Loaded and filtered local mock sessions (future/scheduled):", futureScheduledFromMock.length);
+        // console.log("All future sessions being set:", futureScheduledFromMock.map(s => ({name: s.patientName, time: s.startTime, status: s.status})));
         setIsLoading(false);
       }
     };
@@ -143,21 +117,25 @@ export default function WhatsAppRemindersPage() {
 
   const reminderItems = useMemo(() => {
     const items: ReminderItem[] = [];
-    // allSessions should already be filtered for future and scheduled by the useEffect
+    // console.log("WhatsApp Page: Calculating reminderItems. allSessions:", allSessions.length, "allPatients:", allPatients.length);
+    // console.log("WhatsApp Page: Current timeFilter:", timeFilter, "Current searchTerm:", searchTerm);
+
     allSessions.forEach(session => { 
       const patient = allPatients.find(p => p.id === session.patientId);
       if (patient) {
         let sessionTime;
         try {
+            if (typeof session.startTime !== 'string') return; // Guard against non-string startTime
             sessionTime = parseISO(session.startTime);
         } catch (e) {
-            // console.error("Invalid date for session in reminderItems:", session.startTime);
-            return; // Skip this session if date is invalid
+            // console.error("Invalid date for session in reminderItems memo:", session.startTime, "Session ID:", session.id);
+            return; 
         }
         
         const now = new Date();
         const hoursDifference = differenceInHours(sessionTime, now);
 
+        // Apply time filter
         if (timeFilter === "24h" && hoursDifference > 24) {
           return;
         }
@@ -165,6 +143,7 @@ export default function WhatsAppRemindersPage() {
           return;
         }
 
+        // Apply search term filter
         if (searchTerm && 
             !patient.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
             !(patient.phone && patient.phone.replace(/\D/g, '').includes(searchTerm.replace(/\D/g, '')))) {
@@ -173,8 +152,10 @@ export default function WhatsAppRemindersPage() {
         items.push({ patient, session });
       }
     });
+    // console.log("WhatsApp Page: Final reminderItems:", items.length, items.map(i => ({name: i.patient.name, sessionTime: i.session.startTime})));
     return items.sort((a,b) => {
         try {
+            if (typeof a.session.startTime !== 'string' || typeof b.session.startTime !== 'string') return 0;
             return parseISO(a.session.startTime).getTime() - parseISO(b.session.startTime).getTime();
         } catch (e) {
             return 0;
@@ -248,34 +229,49 @@ export default function WhatsAppRemindersPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {reminderItems.map((item) => (
-                    <TableRow key={item.session.id}>
-                      <TableCell>
-                        <div className="font-medium">{item.patient.name}</div>
-                        <div className="text-xs text-muted-foreground md:hidden">{item.patient.phone || "N/A"}</div>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">{item.patient.phone || "N/A"}</TableCell>
-                      <TableCell>
-                        {format(parseISO(item.session.startTime), "dd/MM/yy HH:mm", { locale: ptBR })}
-                        <div className="text-xs text-muted-foreground">
-                          ({format(parseISO(item.session.startTime), "EEEE", { locale: ptBR })})
-                        </div>
-                      </TableCell>
-                      <TableCell>{item.session.psychologistName || "N/A"}</TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleOpenDialog(item)}
-                          disabled={!item.patient.phone}
-                          title={!item.patient.phone ? "Telefone não cadastrado" : "Criar lembrete"}
-                        >
-                          <MessageSquare className="mr-2 h-4 w-4" />
-                          Lembrete
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {reminderItems.map((item) => {
+                    let sessionDateDisplay = "Data inválida";
+                    try {
+                      if (typeof item.session.startTime === 'string') {
+                        sessionDateDisplay = format(parseISO(item.session.startTime), "dd/MM/yy HH:mm", { locale: ptBR });
+                      }
+                    } catch (e) { /* console.error("Error formatting date for display:", item.session.startTime, e); */ }
+                    
+                    let dayOfWeekDisplay = "";
+                     try {
+                      if (typeof item.session.startTime === 'string') {
+                        dayOfWeekDisplay = format(parseISO(item.session.startTime), "EEEE", { locale: ptBR });
+                      }
+                    } catch (e) { /* console.error("Error formatting day of week for display:", item.session.startTime, e); */ }
+
+
+                    return (
+                      <TableRow key={item.session.id}>
+                        <TableCell>
+                          <div className="font-medium">{item.patient.name}</div>
+                          <div className="text-xs text-muted-foreground md:hidden">{item.patient.phone || "N/A"}</div>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">{item.patient.phone || "N/A"}</TableCell>
+                        <TableCell>
+                          {sessionDateDisplay}
+                          {dayOfWeekDisplay && <div className="text-xs text-muted-foreground">({dayOfWeekDisplay})</div>}
+                        </TableCell>
+                        <TableCell>{item.session.psychologistName || "N/A"}</TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleOpenDialog(item)}
+                            disabled={!item.patient.phone}
+                            title={!item.patient.phone ? "Telefone não cadastrado" : "Criar lembrete"}
+                          >
+                            <MessageSquare className="mr-2 h-4 w-4" />
+                            Lembrete
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
@@ -293,5 +289,3 @@ export default function WhatsAppRemindersPage() {
     </div>
   );
 }
-
-    
