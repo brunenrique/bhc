@@ -13,10 +13,12 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, CalendarDays } from 'lucide-react';
 
-// Import FullCalendar core and plugin CSS
-import '@fullcalendar/core/main.css';
-import '@fullcalendar/daygrid/main.css';
-import '@fullcalendar/timegrid/main.css';
+// FullCalendar React components should handle their own CSS,
+// or global CSS should be imported in layout.tsx if necessary.
+// Removing these direct imports as they cause "Module not found".
+// import '@fullcalendar/core/main.css';
+// import '@fullcalendar/daygrid/main.css';
+// import '@fullcalendar/timegrid/main.css';
 
 // Helper to convert MockTimestamp to Date
 const timestampToDate = (timestamp: MockTimestamp): Date => {
@@ -202,3 +204,5 @@ export function InteractiveCalendar() {
     </Card>
   );
 }
+
+    
