@@ -7,13 +7,15 @@
     "criadaPor": "system",
     "publico": true,
     "abordagem": "TCC",
-    "tags": ["depressão", "tcc"],
+    "tags": ["depressão", "tcc", "humor"],
     "etapas": [
       {"id": "tcc-dep-1", "titulo": "Psicoeducação sobre Depressão", "objetivo": "Entender a natureza da depressão e o modelo cognitivo-comportamental.", "tipo": "psicoeducacao"},
-      {"id": "tcc-dep-2", "titulo": "Monitoramento de Atividades", "objetivo": "Identificar padrões de atividade e humor.", "tipo": "tarefa"},
-      {"id": "tcc-dep-3", "titulo": "Reestruturação Cognitiva", "objetivo": "Identificar e modificar pensamentos negativos automáticos.", "tipo": "discussao"},
-      {"id": "tcc-dep-4", "titulo": "Aumento de Reforçadores Positivos", "objetivo": "Programar atividades prazerosas e que gerem senso de maestria.", "tipo": "tarefa"},
-      {"id": "tcc-dep-5", "titulo": "Planejamento de Atividades Agradáveis", "objetivo": "Criar um cronograma para incorporar atividades reforçadoras.", "tipo": "tarefa"}
+      {"id": "tcc-dep-2", "titulo": "Monitoramento de Atividades e Humor", "objetivo": "Identificar padrões de atividade e humor (RDP).", "tipo": "tarefa"},
+      {"id": "tcc-dep-3", "titulo": "Identificação de Pensamentos Automáticos", "objetivo": "Aprender a reconhecer pensamentos disfuncionais.", "tipo": "discussao"},
+      {"id": "tcc-dep-4", "titulo": "Reestruturação Cognitiva Inicial", "objetivo": "Questionar e modificar pensamentos negativos.", "tipo": "psicoeducacao"},
+      {"id": "tcc-dep-5", "titulo": "Ativação Comportamental", "objetivo": "Programar atividades prazerosas e que gerem senso de maestria.", "tipo": "tarefa"},
+      {"id": "tcc-dep-6", "titulo": "Planejamento de Atividades Agradáveis", "objetivo": "Criar um cronograma para incorporar atividades reforçadoras.", "tipo": "tarefa"},
+      {"id": "tcc-dep-7", "titulo": "Prevenção de Recaída", "objetivo": "Identificar gatilhos e desenvolver plano de manutenção.", "tipo": "discussao"}
     ]
   },
   {
@@ -23,13 +25,14 @@
     "criadaPor": "system",
     "publico": true,
     "abordagem": "ACT",
-    "tags": ["ansiedade", "act"],
+    "tags": ["ansiedade", "act", "mindfulness"],
     "etapas": [
-      {"id": "act-ans-1", "titulo": "Desfusão Cognitiva", "objetivo": "Observar pensamentos sem se apegar a eles.", "tipo": "psicoeducacao"},
-      {"id": "act-ans-2", "titulo": "Mindfulness Introdutório", "objetivo": "Praticar a atenção plena no momento presente.", "tipo": "tarefa"},
-      {"id": "act-ans-3", "titulo": "Identificação de Valores", "objetivo": "Clarificar o que realmente importa na vida.", "tipo": "discussao"},
-      {"id": "act-ans-4", "titulo": "Ação Comprometida", "objetivo": "Definir e dar passos em direção aos valores.", "tipo": "tarefa"},
-      {"id": "act-ans-5", "titulo": "Aceitação da Experiência Interna", "objetivo": "Abrir espaço para sentimentos desconfortáveis sem lutar contra eles.", "tipo": "discussao"}
+      {"id": "act-ans-1", "titulo": "Psicoeducação sobre ACT e Ansiedade", "objetivo": "Introdução aos princípios da ACT e como se aplicam à ansiedade.", "tipo": "psicoeducacao"},
+      {"id": "act-ans-2", "titulo": "Desfusão Cognitiva", "objetivo": "Aprender a observar pensamentos sem se fundir a eles.", "tipo": "psicoeducacao"},
+      {"id": "act-ans-3", "titulo": "Aceitação da Experiência Interna", "objetivo": "Abrir espaço para sentimentos e sensações desconfortáveis.", "tipo": "discussao"},
+      {"id": "act-ans-4", "titulo": "Contato com o Momento Presente", "objetivo": "Praticar a atenção plena (mindfulness) no aqui e agora.", "tipo": "tarefa"},
+      {"id": "act-ans-5", "titulo": "Identificação de Valores", "objetivo": "Clarificar o que é genuinamente importante na vida.", "tipo": "discussao"},
+      {"id": "act-ans-6", "titulo": "Ação Comprometida", "objetivo": "Definir e dar passos em direção aos valores, mesmo na presença de desconforto.", "tipo": "tarefa"}
     ]
   },
   {
@@ -39,28 +42,64 @@
     "criadaPor": "system",
     "publico": true,
     "abordagem": "DBT",
-    "tags": ["regulação emocional", "dbt", "psicoeducação"],
+    "tags": ["regulação emocional", "dbt", "psicoeducação", "habilidades"],
     "etapas": [
-      {"id": "dbt-reg-1", "titulo": "Nomeação das Emoções", "objetivo": "Aprender a identificar e nomear diferentes emoções.", "tipo": "psicoeducacao"},
-      {"id": "dbt-reg-2", "titulo": "Modelo de Emoções", "objetivo": "Compreender o ciclo da emoção e seus componentes.", "tipo": "psicoeducacao"},
-      {"id": "dbt-reg-3", "titulo": "Redução da Vulnerabilidade Emocional", "objetivo": "Estratégias para diminuir a intensidade de emoções negativas (Habilidades PLEASE).", "tipo": "psicoeducacao"},
-      {"id": "dbt-reg-4", "titulo": "Estratégias de Enfrentamento", "objetivo": "Desenvolver formas saudáveis de lidar com emoções difíceis (Habilidades OPPOSITE ACTION e PROBLEM SOLVING).", "tipo": "discussao"},
-      {"id": "dbt-reg-5", "titulo": "Técnicas de Tolerância à Angústia", "objetivo": "Desenvolver a capacidade de suportar emoções intensas sem piorar a situação (Habilidades DISTRACTION, SELF-SOOTHE, IMPROVE, TIPP).", "tipo": "tarefa"}
+      {"id": "dbt-reg-1", "titulo": "Entendendo e Nomeando Emoções", "objetivo": "Aprender a identificar e nomear diferentes emoções.", "tipo": "psicoeducacao"},
+      {"id": "dbt-reg-2", "titulo": "Modelo de Emoções da DBT", "objetivo": "Compreender o ciclo da emoção (gatilho, interpretação, experiência, expressão, pós-efeito).", "tipo": "psicoeducacao"},
+      {"id": "dbt-reg-3", "titulo": "Reduzindo a Vulnerabilidade Emocional (PLEASE)", "objetivo": "Estratégias para diminuir a intensidade de emoções negativas cuidando do corpo (Tratar doenças físicas, Alimentação equilibrada, Evitar drogas, Sono, Exercício).", "tipo": "psicoeducacao"},
+      {"id": "dbt-reg-4", "titulo": "Aumentando Eventos Emocionais Positivos", "objetivo": "Construir uma vida com mais experiências positivas no curto e longo prazo.", "tipo": "tarefa"},
+      {"id": "dbt-reg-5", "titulo": "Ação Oposta (Opposite Action)", "objetivo": "Agir de forma contrária ao que a emoção disfuncional impulsiona.", "tipo": "discussao"},
+      {"id": "dbt-reg-6", "titulo": "Resolução de Problemas (Problem Solving)", "objetivo": "Estratégias para resolver problemas que causam emoções difíceis.", "tipo": "discussao"},
+      {"id": "dbt-reg-7", "titulo": "Técnicas de Tolerância à Angústia (DISTRACT, SELF-SOOTHE, IMPROVE, TIPP)", "objetivo": "Desenvolver a capacidade de suportar emoções intensas sem piorar a situação.", "tipo": "tarefa"}
     ]
   },
   {
     "id": "intervencao-luto",
     "titulo": "Trilha de Intervenção para Luto",
-    "descricao": "Trilha estruturada para auxiliar no processo de elaboração do luto.",
+    "descricao": "Trilha estruturada para auxiliar no processo de elaboração do luto, baseada no modelo de tarefas de Worden.",
     "criadaPor": "system",
     "publico": true,
     "abordagem": "Psicoeducação",
-    "tags": ["luto", "perda", "intervenção"],
+    "tags": ["luto", "perda", "intervenção", "worden"],
     "etapas": [
-      {"id": "luto-int-1", "titulo": "Aceitação e Reconhecimento da Perda", "objetivo": "Validar a dor e a realidade da perda.", "tipo": "psicoeducacao"},
-      {"id": "luto-int-2", "titulo": "Memórias e Significado da Relação", "objetivo": "Explorar e honrar a memória da pessoa ou do que foi perdido.", "tipo": "discussao"},
-      {"id": "luto-int-3", "titulo": "Reconstrução de Rotina", "objetivo": "Adaptar-se à vida sem a presença do que foi perdido.", "tipo": "tarefa"},
-      {"id": "luto-int-4", "titulo": "Estímulo à Retomada de Metas Pessoais", "objetivo": "Encontrar um novo sentido e direção para o futuro.", "tipo": "discussao"}
+      {"id": "luto-int-1", "titulo": "Tarefa I: Aceitar a Realidade da Perda", "objetivo": "Reconhecer e validar a dor e a realidade da perda em níveis cognitivos e emocionais.", "tipo": "psicoeducacao"},
+      {"id": "luto-int-2", "titulo": "Tarefa II: Processar a Dor do Luto", "objetivo": "Identificar, sentir e expressar a gama de emoções associadas à perda.", "tipo": "discussao"},
+      {"id": "luto-int-3", "titulo": "Tarefa III: Ajustar-se a um Mundo sem o Ente Querido", "objetivo": "Adaptar-se a novos papéis, rotinas e identidade na ausência da pessoa falecida.", "tipo": "tarefa"},
+      {"id": "luto-int-4", "titulo": "Tarefa IV: Encontrar uma Conexão Duradoura com o Ente Querido em Meio ao Embarcar em uma Nova Vida", "objetivo": "Encontrar formas de manter a memória e o legado da pessoa, enquanto se reconecta com a vida e encontra novo significado.", "tipo": "discussao"}
+    ]
+  },
+  {
+    "id": "habilidades-sociais-intro",
+    "titulo": "Introdução ao Treinamento de Habilidades Sociais (THS)",
+    "descricao": "Trilha psicoeducativa inicial para o desenvolvimento de habilidades sociais.",
+    "criadaPor": "system",
+    "publico": true,
+    "abordagem": "Psicoeducação",
+    "tags": ["habilidades sociais", "ths", "comunicação", "assertividade"],
+    "etapas": [
+      {"id": "ths-intro-1", "titulo": "O que são Habilidades Sociais?", "objetivo": "Compreender o conceito de habilidades sociais e sua importância.", "tipo": "psicoeducacao"},
+      {"id": "ths-intro-2", "titulo": "Identificando Déficits e Excessos Comportamentais", "objetivo": "Autoavaliação de comportamentos sociais que precisam ser desenvolvidos ou modificados.", "tipo": "discussao"},
+      {"id": "ths-intro-3", "titulo": "Comunicação Verbal e Não Verbal", "objetivo": "Aprender sobre os componentes da comunicação eficaz (tom de voz, postura, contato visual).", "tipo": "psicoeducacao"},
+      {"id": "ths-intro-4", "titulo": "Assertividade: Direitos e Expressão", "objetivo": "Entender o conceito de assertividade e como expressar necessidades e opiniões de forma respeitosa.", "tipo": "discussao"},
+      {"id": "ths-intro-5", "titulo": "Prática Inicial: Iniciar e Manter Conversas", "objetivo": "Desenvolver técnicas para iniciar e manter conversas de forma natural.", "tipo": "tarefa"}
+    ]
+  },
+  {
+    "id": "manejo-estresse-ocupacional",
+    "titulo": "Estratégias para Manejo do Estresse Ocupacional",
+    "descricao": "Trilha focada em técnicas para identificar e gerenciar o estresse relacionado ao trabalho.",
+    "criadaPor": "system",
+    "publico": true,
+    "abordagem": "TCC",
+    "tags": ["estresse", "trabalho", "ocupacional", "tcc", "autocuidado"],
+    "etapas": [
+      {"id": "estresse-ocup-1", "titulo": "Identificação de Estressores no Trabalho", "objetivo": "Reconhecer as principais fontes de estresse no ambiente profissional.", "tipo": "discussao"},
+      {"id": "estresse-ocup-2", "titulo": "Psicoeducação sobre Estresse e Burnout", "objetivo": "Diferenciar estresse agudo, crônico e burnout, e seus impactos.", "tipo": "psicoeducacao"},
+      {"id": "estresse-ocup-3", "titulo": "Técnicas de Relaxamento Rápido", "objetivo": "Aprender e praticar técnicas de respiração e relaxamento para alívio imediato.", "tipo": "tarefa"},
+      {"id": "estresse-ocup-4", "titulo": "Gerenciamento do Tempo e Prioridades", "objetivo": "Desenvolver habilidades para organizar tarefas e definir prioridades de forma eficaz.", "tipo": "psicoeducacao"},
+      {"id": "estresse-ocup-5", "titulo": "Estabelecimento de Limites Saudáveis", "objetivo": "Aprender a dizer não e proteger o tempo pessoal.", "tipo": "discussao"},
+      {"id": "estresse-ocup-6", "titulo": "Promoção do Autocuidado no Contexto Laboral", "objetivo": "Identificar e implementar práticas de autocuidado que podem ser integradas à rotina de trabalho.", "tipo": "tarefa"}
     ]
   }
 ]
+    

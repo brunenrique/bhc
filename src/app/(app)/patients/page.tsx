@@ -10,12 +10,24 @@ import type { Patient } from "@/types";
 import { cacheService } from '@/services/cacheService';
 import { useAuth } from "@/hooks/useAuth"; 
 import { hasPermission } from "@/lib/permissions";
+import { subDays } from 'date-fns';
+
+// Função auxiliar para criar datas no passado
+const createPastDate = (days: number): string => subDays(new Date(), days).toISOString();
 
 export const mockPatientsData: Patient[] = [
-  { id: '1', name: 'Ana Beatriz Silva', email: 'ana.silva@example.com', phone: '(11) 98765-4321', dateOfBirth: '1990-05-15', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(), updatedAt: new Date().toISOString(), assignedTo: 'mock-user-psychologist-1234' }, 
-  { id: '2', name: 'Bruno Almeida Costa', email: 'bruno.costa@example.com', phone: '(21) 91234-5678', dateOfBirth: '1985-11-20', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(), updatedAt: new Date().toISOString(), assignedTo: 'other-psy-uid' },
-  { id: '3', name: 'Carla Dias Oliveira', email: 'carla.oliveira@example.com', phone: '(31) 95555-5555', dateOfBirth: '2000-02-10', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), assignedTo: 'mock-user-psychologist-1234' },
+  { id: '1', name: 'Ana Beatriz Silva', email: 'ana.silva@example.com', phone: '(11) 98765-4321', dateOfBirth: '1990-05-15', createdAt: createPastDate(10), updatedAt: new Date().toISOString(), assignedTo: 'psy1' }, 
+  { id: '2', name: 'Bruno Almeida Costa', email: 'bruno.costa@example.com', phone: '(21) 91234-5678', dateOfBirth: '1985-11-20', createdAt: createPastDate(5), updatedAt: new Date().toISOString(), assignedTo: 'psy1' },
+  { id: '3', name: 'Carla Dias Oliveira', email: 'carla.oliveira@example.com', phone: '(31) 95555-5555', dateOfBirth: '2000-02-10', createdAt: createPastDate(0), updatedAt: new Date().toISOString(), assignedTo: 'psy2' },
+  { id: '4', name: 'Daniel Farias Lima', email: 'daniel.lima@example.com', phone: '(41) 94444-0000', dateOfBirth: '1992-07-22', createdAt: createPastDate(20), updatedAt: new Date().toISOString(), assignedTo: 'psy1' },
+  { id: '5', name: 'Eduarda Gomes Ferreira', email: 'eduarda.ferreira@example.com', phone: '(51) 93333-1111', dateOfBirth: '1998-03-30', createdAt: createPastDate(45), updatedAt: new Date().toISOString(), assignedTo: 'psy2' },
+  { id: '6', name: 'Felipe Nogueira Moreira', email: 'felipe.moreira@example.com', phone: '(61) 92222-1111', dateOfBirth: '1995-09-12', createdAt: createPastDate(15), updatedAt: new Date().toISOString(), assignedTo: 'psy2' },
+  { id: '7', name: 'Gabriela Martins Azevedo', email: 'gabriela.azevedo@example.com', phone: '(71) 91111-2222', dateOfBirth: '1993-01-25', createdAt: createPastDate(60), updatedAt: new Date().toISOString(), assignedTo: 'psy1' },
+  { id: '8', name: 'Hugo Pereira da Silva', email: 'hugo.pereira@example.com', phone: '(81) 90000-3333', dateOfBirth: '1988-08-05', createdAt: createPastDate(3), updatedAt: new Date().toISOString(), assignedTo: 'other-psy-uid' }, // Outro psicólogo
+  { id: '9', name: 'Isabela Santos Rocha', email: 'isabela.santos@example.com', phone: '(91) 98888-4444', dateOfBirth: '2002-12-12', createdAt: createPastDate(90), updatedAt: new Date().toISOString(), assignedTo: 'psy2' },
+  { id: '10', name: 'Lucas Mendes Oliveira', email: 'lucas.mendes@example.com', phone: '(12) 97777-5555', dateOfBirth: '1975-06-18', createdAt: createPastDate(120), updatedAt: new Date().toISOString(), assignedTo: 'psy1' },
 ];
+
 
 export default function PatientsPage() {
   const { user } = useAuth(); 
@@ -34,10 +46,11 @@ export default function PatientsPage() {
         if (isMounted && cachedPatients && cachedPatients.length > 0) {
           setPatients(cachedPatients);
         } else if (isMounted) {
-           const mockWithAssignedTo = mockPatientsData.map((p, index) => ({
-            ...p,
-            assignedTo: p.assignedTo || ((index === 0 || index === 2) ? (user?.role === 'psychologist' ? user.id : 'mock-psy-id-for-admin-view') : `other-psy-${index}`)
-          }));
+           const mockWithAssignedTo = mockPatientsData.map((p) => {
+            if (p.assignedTo === 'psy1' && user?.role === 'psychologist' && user.name === 'Dr. Exemplo Silva') return {...p, assignedTo: user.id};
+            if (p.assignedTo === 'psy2' && user?.role === 'psychologist' && user.name === 'Dra. Modelo Souza') return {...p, assignedTo: user.id};
+            return p;
+          });
           setPatients(mockWithAssignedTo); 
           try {
             await cacheService.patients.setList(mockWithAssignedTo);
@@ -72,11 +85,9 @@ export default function PatientsPage() {
   }, []);
 
   const handleDeletePatient = useCallback(async (patientId: string) => {
-    // In a real app, this would also call a backend service to delete from Firestore
     const updatedPatients = patients.filter(p => p.id !== patientId);
     setPatients(updatedPatients);
     await cacheService.patients.setList(updatedPatients); 
-    // console.log(`Simulated delete patient ${patientId}`);
   }, [patients]);
 
   const handleSavePatient = useCallback(async (patientDataFromForm: Partial<Patient>) => {
@@ -93,31 +104,27 @@ export default function PatientsPage() {
         createdAt: new Date().toISOString(), 
         updatedAt: new Date().toISOString(),
       };
-      // Set assignedTo if current user is a psychologist
       if (user?.role === 'psychologist') {
         patientToSave = { ...newPatientBase, assignedTo: user.id } as Patient;
       } else {
-        // For admin or other roles, assignedTo would come from form or be undefined
-        // For this mock, if admin creates, assignedTo could be set if form is enhanced
         patientToSave = newPatientBase as Patient; 
       }
       updatedPatients = [patientToSave, ...patients];
     }
     setPatients(updatedPatients);
     await cacheService.patients.setList(updatedPatients); 
-    // In a real app, this would be:
-    // await setDoc(doc(db, "patients", patientToSave.id), patientToSave, { merge: !!selectedPatient });
-    // console.log("Simulated save patient:", patientToSave);
     setIsFormOpen(false);
   }, [selectedPatient, patients, user]);
 
   const filteredPatients = useMemo(() => {
     let displayPatients = patients;
     if (user?.role === 'psychologist') {
-      displayPatients = patients.filter(p => p.assignedTo === user.id);
+      // For mock purposes, "Dr. Exemplo Silva" corresponds to 'psy1' or user.id, "Dra. Modelo Souza" to 'psy2' or user.id
+      // This simplified logic assumes the mock user IDs for psychologists are 'psy1' or 'psy2' if not the current user.
+      // A more robust solution would map names to static IDs or use the actual user.id if it's known.
+      const psychologistMockId = user.name === 'Dr. Exemplo Silva' ? 'psy1' : user.name === 'Dra. Modelo Souza' ? 'psy2' : user.id;
+      displayPatients = patients.filter(p => p.assignedTo === psychologistMockId || p.assignedTo === user.id);
     }
-    // Admins, Secretaries, Schedulers see all patients based on initial load.
-    // Firestore rules and Patient Detail Page logic restrict sensitive data access.
     
     return displayPatients.filter(p => 
       p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -125,9 +132,8 @@ export default function PatientsPage() {
     ).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [patients, searchTerm, user]);
 
-  // Permissions check for creating patients
-  const canCreatePatient = hasPermission(user?.role, 'CREATE_EDIT_CLINICAL_NOTES') || // Psychologists can
-                           hasPermission(user?.role, 'ACCESS_ADMIN_PANEL_SETTINGS'); // Admins can
+  const canCreatePatient = hasPermission(user?.role, 'CREATE_EDIT_CLINICAL_NOTES') || 
+                           hasPermission(user?.role, 'ACCESS_ADMIN_PANEL_SETTINGS');
 
 
   return (
@@ -170,7 +176,7 @@ export default function PatientsPage() {
         />
       )}
 
-      {isFormOpen && ( // Conditionally render dialog to ensure reset on patient change
+      {isFormOpen && (
         <PatientFormDialog
             isOpen={isFormOpen}
             onOpenChange={setIsFormOpen}
@@ -181,3 +187,4 @@ export default function PatientsPage() {
     </div>
   );
 }
+    

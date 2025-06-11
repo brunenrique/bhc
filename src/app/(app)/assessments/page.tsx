@@ -10,6 +10,14 @@ import {ClipboardEdit, ListChecks, Loader2} from "lucide-react";
 import { useState, useCallback, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { cacheService } from "@/services/cacheService";
+import { subDays, addDays } from 'date-fns'; // Import addDays
+
+// Helper to create dates
+const createDateISOString = (offsetDays: number, isPast: boolean = true): string => {
+  const date = isPast ? subDays(new Date(), offsetDays) : addDays(new Date(), offsetDays);
+  return date.toISOString();
+};
+
 
 export const mockAssessmentsData: Assessment[] = [
   { 
@@ -19,8 +27,8 @@ export const mockAssessmentsData: Assessment[] = [
     patientName: 'Ana Beatriz Silva', 
     status: 'completed', 
     formLink: 'mock-link-123', 
-    results: { score: 25, level: 'Moderado', summary: 'Paciente reportou sintomas consistentes com ansiedade moderada, incluindo preocupação excessiva e tensão física. Respondido via simulação.', answeredAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 21).toISOString(), detailedAnswers: [{question: "Como se sente sobre o futuro?", answer:"Preocupada"}] }, 
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 22).toISOString() 
+    results: { score: 25, level: 'Moderado', summary: 'Sintomas de ansiedade moderada, preocupação excessiva. Respondido via simulação.', answeredAt: createDateISOString(21), detailedAnswers: [{question: "Como se sente sobre o futuro?", answer:"Preocupada"}] }, 
+    createdAt: createDateISOString(22)
   },
   { 
     id: 'assess_beck_ana_2', 
@@ -29,8 +37,8 @@ export const mockAssessmentsData: Assessment[] = [
     patientName: 'Ana Beatriz Silva', 
     status: 'completed', 
     formLink: 'mock-link-123b', 
-    results: { score: 18, level: 'Leve', summary: 'Sintomas de ansiedade diminuíram, reportando melhora na qualidade do sono. Respondido via simulação.', answeredAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(), detailedAnswers: [{question: "Como se sente sobre o futuro?", answer:"Um pouco melhor"}] }, 
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 8).toISOString() 
+    results: { score: 18, level: 'Leve', summary: 'Melhora na ansiedade, sono ainda irregular. Respondido via simulação.', answeredAt: createDateISOString(7), detailedAnswers: [{question: "Como se sente sobre o futuro?", answer:"Um pouco melhor"}] }, 
+    createdAt: createDateISOString(8) 
   },
   { 
     id: 'assess_bdi_bruno_1', 
@@ -39,7 +47,7 @@ export const mockAssessmentsData: Assessment[] = [
     patientName: 'Bruno Almeida Costa', 
     status: 'sent', 
     formLink: 'mock-link-456', 
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString() 
+    createdAt: createDateISOString(5) 
   },
    { 
     id: 'assess_bdi_ana_1', 
@@ -48,8 +56,8 @@ export const mockAssessmentsData: Assessment[] = [
     patientName: 'Ana Beatriz Silva', 
     status: 'completed', 
     formLink: 'mock-link-bdi-p1', 
-    results: { score: 12, level: 'Mínimo', summary: 'Sintomas depressivos mínimos. Respondido via simulação.', answeredAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString() , detailedAnswers: [{question: "Como está seu apetite?", answer:"Normal"}]}, 
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 15).toISOString() 
+    results: { score: 12, level: 'Mínimo', summary: 'Sintomas depressivos mínimos. Respondido via simulação.', answeredAt: createDateISOString(14) , detailedAnswers: [{question: "Como está seu apetite?", answer:"Normal"}]}, 
+    createdAt: createDateISOString(15) 
   },
   { 
     id: 'assess_whoqol_ana_1', 
@@ -58,7 +66,7 @@ export const mockAssessmentsData: Assessment[] = [
     patientName: 'Ana Beatriz Silva', 
     status: 'pending', 
     formLink: 'mock-link-whoqol-p1',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString() 
+    createdAt: createDateISOString(2) 
   },
   {
     id: 'assess_stai_carla_1',
@@ -67,7 +75,7 @@ export const mockAssessmentsData: Assessment[] = [
     patientName: 'Carla Dias Oliveira',
     status: 'sent',
     formLink: 'mock-link-stai-p3',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString()
+    createdAt: createDateISOString(3)
   },
   {
     id: 'assess_pcl5_bruno_1',
@@ -76,8 +84,8 @@ export const mockAssessmentsData: Assessment[] = [
     patientName: 'Bruno Almeida Costa',
     status: 'completed',
     formLink: 'mock-link-pcl5-p2',
-    results: { score: 45, level: 'Elevado', summary: 'Indicadores significativos de TEPT. Respondido via simulação.', answeredAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(), detailedAnswers: [{question: "Reviveu o evento?", answer:"Frequentemente"}] },
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 11).toISOString()
+    results: { score: 45, level: 'Elevado', summary: 'Indicadores significativos de TEPT. Respondido via simulação.', answeredAt: createDateISOString(10), detailedAnswers: [{question: "Reviveu o evento?", answer:"Frequentemente"}] },
+    createdAt: createDateISOString(11)
   },
   {
     id: 'assess_custom_carla_1',
@@ -86,7 +94,64 @@ export const mockAssessmentsData: Assessment[] = [
     patientName: 'Carla Dias Oliveira',
     status: 'pending',
     formLink: 'mock-link-custom-p3',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString()
+    createdAt: createDateISOString(1)
+  },
+  // Novos dados de exemplo
+  { 
+    id: 'assess_burnout_daniel_1', 
+    title: 'Inventário de Burnout de Maslach (MBI)', 
+    patientId: '4', 
+    patientName: 'Daniel Farias Lima', 
+    status: 'sent', 
+    formLink: 'mock-link-mbi-p4', 
+    createdAt: createDateISOString(4) 
+  },
+  { 
+    id: 'assess_adhd_eduarda_1', 
+    title: 'Escala de Autoavaliação de TDAH (ASRS-18)', 
+    patientId: '5', 
+    patientName: 'Eduarda Gomes Ferreira', 
+    status: 'completed', 
+    formLink: 'mock-link-asrs-p5', 
+    results: { score: 35, level: 'Sugestivo de TDAH', summary: 'Sintomas consistentes com TDAH, principalmente desatenção. Respondido via simulação.', answeredAt: createDateISOString(6), detailedAnswers: [{question: "Dificuldade em organizar tarefas?", answer:"Frequentemente"}] }, 
+    createdAt: createDateISOString(7) 
+  },
+  { 
+    id: 'assess_social_felipe_1', 
+    title: 'Inventário de Fobia Social (SPIN)', 
+    patientId: '6', 
+    patientName: 'Felipe Nogueira Moreira', 
+    status: 'pending', 
+    formLink: 'mock-link-spin-p6',
+    createdAt: createDateISOString(0) 
+  },
+  { 
+    id: 'assess_resilience_gabriela_1', 
+    title: 'Escala de Resiliência Connor-Davidson (CD-RISC)', 
+    patientId: '7', 
+    patientName: 'Gabriela Martins Azevedo', 
+    status: 'completed', 
+    formLink: 'mock-link-cdrisc-p7', 
+    results: { score: 75, level: 'Resiliência Moderada', summary: 'Capacidade de enfrentamento em nível moderado. Respondido via simulação.', answeredAt: createDateISOString(9), detailedAnswers: [{question: "Lida bem com mudanças?", answer:"Às vezes"}] }, 
+    createdAt: createDateISOString(10) 
+  },
+  { 
+    id: 'assess_stress_hugo_1', 
+    title: 'Escala de Estresse Percebido (PSS)', 
+    patientId: '8', 
+    patientName: 'Hugo Pereira da Silva', 
+    status: 'sent', 
+    formLink: 'mock-link-pss-p8',
+    createdAt: createDateISOString(3) 
+  },
+  { 
+    id: 'assess_selfesteem_isabela_1', 
+    title: 'Escala de Autoestima de Rosenberg', 
+    patientId: '9', 
+    patientName: 'Isabela Santos Rocha', 
+    status: 'pending', 
+    formLink: 'mock-link-rosenberg-p9',
+    createdAt: createDateISOString(1) 
   }
 ];
 
@@ -97,6 +162,19 @@ export default function AssessmentsPage() {
   const [activeTab, setActiveTab] = useState("results");
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
+
+  const patientNameMap: Record<string, string> = {
+    '1': 'Ana Beatriz Silva',
+    '2': 'Bruno Almeida Costa',
+    '3': 'Carla Dias Oliveira',
+    '4': 'Daniel Farias Lima',
+    '5': 'Eduarda Gomes Ferreira',
+    '6': 'Felipe Nogueira Moreira',
+    '7': 'Gabriela Martins Azevedo',
+    '8': 'Hugo Pereira da Silva',
+    '9': 'Isabela Santos Rocha',
+    '10': 'Lucas Mendes Oliveira',
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -117,12 +195,9 @@ export default function AssessmentsPage() {
       } catch (error) {
         // console.warn("Error loading assessments from cache:", error);
         if (isMounted) {
-          setAssessments(mockAssessmentsData); // Fallback to mock if cache read fails
+          setAssessments(mockAssessmentsData); 
         }
       }
-
-      // Simulate fetching fresh data - not strictly needed if cache is king for demo
-      // await new Promise(resolve => setTimeout(resolve, 300));
       
       if (isMounted) {
         const keysToRemove: string[] = [];
@@ -168,11 +243,6 @@ export default function AssessmentsPage() {
   }, []); 
 
   const handleCreateOrUpdateAssessment = useCallback(async (data: Partial<Assessment>) => {
-    const patientNameMap: Record<string, string> = {
-      '1': 'Ana Beatriz Silva',
-      '2': 'Bruno Almeida Costa',
-      '3': 'Carla Dias Oliveira',
-    };
     let updatedAssessments;
 
     if(editingAssessment) {
@@ -201,7 +271,7 @@ export default function AssessmentsPage() {
     await cacheService.assessments.setList(updatedAssessments);
     setEditingAssessment(null);
     setActiveTab("results"); 
-  }, [editingAssessment, toast, assessments]);
+  }, [editingAssessment, toast, assessments, patientNameMap]);
 
   const handleEditAssessment = useCallback((assessment: Assessment) => {
     setEditingAssessment(assessment);
@@ -277,3 +347,4 @@ export default function AssessmentsPage() {
   );
 }
 
+    

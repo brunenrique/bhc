@@ -1,16 +1,14 @@
 
 "use client";
-// Removed SessionCalendar, selectedSession, currentCalendarDate, handleSaveSession related to old calendar
-// Kept WaitingList related state and handlers
 import { WaitingListTable } from "@/features/scheduling/components/WaitingListTable";
 import { WaitingListEntryDialog } from "@/features/scheduling/components/WaitingListEntryDialog";
-import { InteractiveCalendar } from "@/features/scheduling/components/InteractiveCalendar"; // New Calendar
+import { InteractiveCalendar } from "@/features/scheduling/components/InteractiveCalendar"; 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlusCircle, Loader2, WifiOff, Wifi, ListPlus, CalendarDays } from "lucide-react"; // Added CalendarDays
+import { PlusCircle, Loader2, WifiOff, Wifi, ListPlus, CalendarDays } from "lucide-react"; 
 import { useState, useCallback, useEffect } from "react";
-import type { WaitingListEntry } from "@/types"; // Session type no longer needed here directly for calendar
-import { parseISO, subDays } from 'date-fns'; // Session related date functions removed
+import type { WaitingListEntry } from "@/types"; 
+import { parseISO, subDays } from 'date-fns'; 
 import { cacheService } from '@/services/cacheService';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -22,25 +20,21 @@ const initialMockWaitingList: WaitingListEntry[] = [
   { id: 'wl1', nomeCompleto: 'Mariana F. Lima', cpf: '111.222.333-44', contato: formatPhoneNumberToE164('(11) 99999-0001'), motivo: 'Primeira consulta, ansiedade', prioridade: 'normal', criadoEm: subDays(new Date(), 2).toISOString(), criadoPor: 'mockAdminUID', status: 'pendente'},
   { id: 'wl2', nomeCompleto: 'João Pedro S. Santos', cpf: '222.333.444-55', contato: formatPhoneNumberToE164('(21) 98888-0002'), motivo: 'Acompanhamento', prioridade: 'normal', criadoEm: subDays(new Date(), 5).toISOString(), criadoPor: 'mockPsychologistUID', status: 'pendente'},
   { id: 'wl3', nomeCompleto: 'Sofia C. Oliveira', cpf: '333.444.555-66', contato: formatPhoneNumberToE164('(31) 97777-0003'), motivo: 'Retorno', prioridade: 'urgente', criadoEm: subDays(new Date(), 1).toISOString(), criadoPor: 'mockSecretaryUID', status: 'pendente'},
+  { id: 'wl4', nomeCompleto: 'Ricardo Almeida', cpf: '444.555.666-77', contato: formatPhoneNumberToE164('(41) 96666-0004'), motivo: 'Avaliação neuropsicológica', prioridade: 'normal', criadoEm: subDays(new Date(), 10).toISOString(), criadoPor: 'mockPsychologistUID', status: 'pendente'},
+  { id: 'wl5', nomeCompleto: 'Beatriz Costa', cpf: '555.666.777-88', contato: formatPhoneNumberToE164('(51) 95555-0005'), motivo: 'Terapia de casal', prioridade: 'urgente', criadoEm: subDays(new Date(), 3).toISOString(), criadoPor: 'mockAdminUID', status: 'agendado'},
+  { id: 'wl6', nomeCompleto: 'Thiago Ferreira', cpf: '666.777.888-99', contato: formatPhoneNumberToE164('(61) 94444-0006'), motivo: 'Orientação vocacional', prioridade: 'normal', criadoEm: subDays(new Date(), 7).toISOString(), criadoPor: 'mockSecretaryUID', status: 'pendente'},
 ];
 
 export default function SchedulingPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   
-  // State for Waiting List
   const [waitingList, setWaitingList] = useState<WaitingListEntry[]>([]);
   const [isWaitingListEntryDialogOpen, setIsWaitingListEntryDialogOpen] = useState(false);
   const [editingWaitingListEntry, setEditingWaitingListEntry] = useState<WaitingListEntry | null>(null);
 
-  // General loading and online state
   const [isLoading, setIsLoading] = useState(true);
   const [isOnline, setIsOnline] = useState(true); 
-
-  // SessionFormDialog and selectedSession state (might be used if FullCalendar event click opens it)
-  const [isSessionFormOpen, setIsSessionFormOpen] = useState(false);
-  // const [selectedSessionForForm, setSelectedSessionForForm] = useState<Partial<FirestoreSessionData> | null>(null);
-
 
   useEffect(() => {
     let isMounted = true;
@@ -54,18 +48,16 @@ export default function SchedulingPage() {
 
     const loadData = async () => {
       setIsLoading(true);
-      // Calendar data is now fetched within InteractiveCalendar.tsx
-      // Only load waiting list data here.
       try {
         const cachedWaitingList = await cacheService.waitingList.getList();
         if (isMounted && cachedWaitingList && cachedWaitingList.length > 0) {
-          setWaitingList(cachedWaitingList);
+          setWaitingList(cachedWaitingList.sort((a,b) => parseISO(b.criadoEm).getTime() - parseISO(a.criadoEm).getTime()));
         } else if (isMounted) {
-          setWaitingList(initialMockWaitingList);
+          setWaitingList(initialMockWaitingList.sort((a,b) => parseISO(b.criadoEm).getTime() - parseISO(a.criadoEm).getTime()));
           await cacheService.waitingList.setList(initialMockWaitingList);
         }
       } catch (error) {
-         if (isMounted) setWaitingList(initialMockWaitingList);
+         if (isMounted) setWaitingList(initialMockWaitingList.sort((a,b) => parseISO(b.criadoEm).getTime() - parseISO(a.criadoEm).getTime()));
       }
 
       if (isMounted) setIsLoading(false);
@@ -79,17 +71,12 @@ export default function SchedulingPage() {
       window.removeEventListener('offline', updateOnlineStatus);
     };
   }, []);
-
-  // Offline sync logic for pending sessions (if any were created outside FullCalendar context)
-  // This might need adjustment if all session creation/updates go through FullCalendar now.
+ 
   useEffect(() => {
     const syncPendingSessions = async () => {
       if (isOnline) {
         const pending = await cacheService.pendingSessions.getList();
         if (pending && pending.length > 0) {
-          // If using FullCalendar, this sync logic might need to update FullCalendar's event source
-          // or trigger a refetch within InteractiveCalendar.
-          // For now, just a toast.
           await cacheService.pendingSessions.clear();
           toast({
             title: "Sincronização Concluída (Simulado)",
@@ -169,10 +156,6 @@ export default function SchedulingPage() {
         toast({ title: "Acesso Negado", description: "Você não tem permissão para agendar sessões a partir da lista de espera.", variant: "destructive"});
         return;
     }
-    // This would ideally pre-fill a form for the new FullCalendar
-    // For now, just a toast as FullCalendar handles its own creation/editing.
-    // To integrate: one might open a modal (like SessionFormDialog, adapted) 
-    // with patient details from 'entry' pre-filled, and upon saving, add event to FullCalendar.
     toast({
       title: "Agendar Paciente (Simulado)",
       description: `Abra o calendário e crie uma nova sessão para ${entry.nomeCompleto}. Detalhes: CPF ${entry.cpf}, Contato ${entry.contato}.`,
@@ -181,7 +164,6 @@ export default function SchedulingPage() {
     handleChangeWaitingListStatus(entry.id, 'agendado');
   }, [user, toast, handleChangeWaitingListStatus]);
 
-  // const canCreateNewSession = hasPermission(user?.role, 'SCHEDULE_FROM_WAITING_LIST') || hasPermission(user?.role, 'CREATE_EDIT_CLINICAL_NOTES');
   const canAddWaitingList = hasPermission(user?.role, 'ADD_PATIENT_TO_WAITING_LIST');
   
   return (
@@ -196,13 +178,6 @@ export default function SchedulingPage() {
             <span className={`text-sm font-medium ${isOnline ? 'text-green-600' : 'text-destructive'}`}>
               {isOnline ? 'Online' : 'Offline'}
             </span>
-          {/* Button for new session might be part of FullCalendar's header or a separate button that interacts with it */}
-          {/* {canCreateNewSession && (
-            <Button onClick={() => {}} className="shadow-md hover:shadow-lg transition-shadow">
-                <PlusCircle className="mr-2 h-5 w-5" />
-                Nova Sessão (Calendário)
-            </Button>
-          )} */}
         </div>
       </div>
       <p className="text-muted-foreground font-body">
@@ -210,7 +185,7 @@ export default function SchedulingPage() {
         {isOnline ? "" : " Você está offline. As sessões criadas/alteradas no calendário podem não ser sincronizadas imediatamente."}
       </p>
       
-      {isLoading && waitingList.length === 0 ? ( // Adjusted loading condition
+      {isLoading && waitingList.length === 0 ? ( 
         <div className="flex justify-center items-center h-96">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
         </div>
@@ -218,7 +193,7 @@ export default function SchedulingPage() {
         <>
         <InteractiveCalendar /> 
         
-        <div id="waiting-list" className="pt-12"> {/* Added more top padding */}
+        <div id="waiting-list" className="pt-12"> 
             <Card className="shadow-lg">
                 <CardHeader className="flex flex-row items-center justify-between pb-3">
                     <div className="flex items-center gap-2">
@@ -246,15 +221,6 @@ export default function SchedulingPage() {
         </>
       )}
 
-      {/* SessionFormDialog is kept if needed for creating events on FullCalendar via a modal */}
-      {/* For now, FullCalendar's select callback is commented out, so this dialog isn't triggered by it */}
-      {/* <SessionFormDialog
-            isOpen={isSessionFormOpen}
-            onOpenChange={setIsSessionFormOpen}
-            session={selectedSessionForForm} // Needs to be adapted for FirestoreSessionData or EventInput
-            onSave={() => {}} // Needs new save handler for FullCalendar events
-        /> */}
-
       {isWaitingListEntryDialogOpen && (
         <WaitingListEntryDialog
             isOpen={isWaitingListEntryDialogOpen}
@@ -266,3 +232,4 @@ export default function SchedulingPage() {
     </div>
   );
 }
+    

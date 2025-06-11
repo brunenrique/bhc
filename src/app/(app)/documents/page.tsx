@@ -5,16 +5,30 @@ import type { DocumentResource, DocumentSignatureDetails } from "@/types";
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { cacheService } from "@/services/cacheService";
-import { useToast } from "@/hooks/use-toast"; // Import useToast
+import { useToast } from "@/hooks/use-toast"; 
+import { subDays } from 'date-fns';
+
+// Helper to create dates
+const createDateISOString = (offsetDays: number, isPast: boolean = true): string => {
+  const date = isPast ? subDays(new Date(), offsetDays) : new Date(new Date().setDate(new Date().getDate() + offsetDays));
+  return date.toISOString();
+};
 
 export const mockDocumentsData: DocumentResource[] = [
-  { id: 'doc1', name: 'Formulário de Consentimento Informado - Ana Silva.pdf', type: 'pdf', url: '#', uploadedAt: new Date(Date.now() - 1000*60*60*24*5).toISOString(), size: 120 * 1024, category: 'Formulários Clínicos', signatureStatus: 'signed', signatureDetails: { hash: 'mockhash_consent_ana', signerInfo: 'Ana Silva (Paciente Mock)', signedAt: new Date(Date.now() - 1000*60*60*24*4).toISOString(), verificationCode: 'VERIFY-CONSENT-ANA-123', signedDocumentLink: '#' } },
-  { id: 'doc2', name: 'Termos de Serviço Psicologia Clínica.docx', type: 'docx', url: '#', uploadedAt: new Date(Date.now() - 1000*60*60*24*10).toISOString(), size: 85 * 1024, category: 'Documentos Legais', signatureStatus: 'none' },
-  { id: 'doc3', name: 'Relatório Psicológico - Bruno Costa.pdf', type: 'pdf', url: '#', uploadedAt: new Date(Date.now() - 1000*60*60*24*2).toISOString(), size: 250 * 1024, category: 'Relatórios e Encaminhamentos', signatureStatus: 'pending_govbr_signature', signatureDetails: { hash: 'mockhash_report_bruno' } },
-  { id: 'doc4', name: 'Anotações Confidenciais Reunião Equipe.txt', type: 'txt', url: '#', uploadedAt: new Date(Date.now() - 1000*60*60*24*1).toISOString(), size: 5 * 1024, category: 'Notas Internas', signatureStatus: 'none' },
-  { id: 'doc5', name: 'Planilha de Acompanhamento Financeiro.pdf', type: 'pdf', url: '#', uploadedAt: new Date(Date.now() - 1000*60*60*24*3).toISOString(), size: 150 * 1024, category: 'Administrativo', signatureStatus: 'none' },
-  { id: 'doc6', name: 'Guia de Relaxamento para Pacientes.pdf', type: 'pdf', url: '#', uploadedAt: new Date(Date.now() - 1000*60*60*24*15).toISOString(), size: 300 * 1024, category: 'Recursos para Pacientes', signatureStatus: 'none' },
-  { id: 'doc7', name: 'Contrato Terapêutico - Carla Dias.pdf', type: 'pdf', url: '#', uploadedAt: new Date(Date.now() - 1000*60*60*24*8).toISOString(), size: 95 * 1024, category: 'Contratos', signatureStatus: 'verification_failed', signatureDetails: { hash: 'mockhash_contract_carla_fail', signerInfo: 'Tentativa por Carla Dias (Mock)', signedAt: new Date(Date.now() - 1000*60*60*24*7).toISOString()} },
+  { id: 'doc1', name: 'Formulário de Consentimento Informado - Ana Silva.pdf', type: 'pdf', url: '#', uploadedAt: createDateISOString(5), size: 120 * 1024, category: 'Formulários Clínicos', signatureStatus: 'signed', signatureDetails: { hash: 'mockhash_consent_ana', signerInfo: 'Ana Silva (Paciente Mock)', signedAt: createDateISOString(4), verificationCode: 'VERIFY-CONSENT-ANA-123', signedDocumentLink: '#' } },
+  { id: 'doc2', name: 'Termos de Serviço Psicologia Clínica.docx', type: 'docx', url: '#', uploadedAt: createDateISOString(10), size: 85 * 1024, category: 'Documentos Legais', signatureStatus: 'none' },
+  { id: 'doc3', name: 'Relatório Psicológico - Bruno Costa.pdf', type: 'pdf', url: '#', uploadedAt: createDateISOString(2), size: 250 * 1024, category: 'Relatórios e Encaminhamentos', signatureStatus: 'pending_govbr_signature', signatureDetails: { hash: 'mockhash_report_bruno' } },
+  { id: 'doc4', name: 'Anotações Confidenciais Reunião Equipe.txt', type: 'txt', url: '#', uploadedAt: createDateISOString(1), size: 5 * 1024, category: 'Notas Internas', signatureStatus: 'none' },
+  { id: 'doc5', name: 'Planilha de Acompanhamento Financeiro.pdf', type: 'pdf', url: '#', uploadedAt: createDateISOString(3), size: 150 * 1024, category: 'Administrativo', signatureStatus: 'none' },
+  { id: 'doc6', name: 'Guia de Relaxamento para Pacientes.pdf', type: 'pdf', url: '#', uploadedAt: createDateISOString(15), size: 300 * 1024, category: 'Recursos para Pacientes', signatureStatus: 'none' },
+  { id: 'doc7', name: 'Contrato Terapêutico - Carla Dias.pdf', type: 'pdf', url: '#', uploadedAt: createDateISOString(8), size: 95 * 1024, category: 'Contratos', signatureStatus: 'verification_failed', signatureDetails: { hash: 'mockhash_contract_carla_fail', signerInfo: 'Tentativa por Carla Dias (Mock)', signedAt: createDateISOString(7)} },
+  // Novos dados de exemplo
+  { id: 'doc8', name: 'Encaminhamento Médico - Daniel Lima.pdf', type: 'pdf', url: '#', uploadedAt: createDateISOString(6), size: 180 * 1024, category: 'Relatórios e Encaminhamentos', signatureStatus: 'none' },
+  { id: 'doc9', name: 'Atestado de Comparecimento - Eduarda Ferreira.docx', type: 'docx', url: '#', uploadedAt: createDateISOString(12), size: 70 * 1024, category: 'Formulários Clínicos', signatureStatus: 'pending_govbr_signature', signatureDetails: { hash: 'mockhash_att_eduarda' } },
+  { id: 'doc10', name: 'Plano de Tratamento - Felipe Moreira.pdf', type: 'pdf', url: '#', uploadedAt: createDateISOString(20), size: 220 * 1024, category: 'Planos de Tratamento', signatureStatus: 'signed', signatureDetails: { hash: 'mockhash_plan_felipe', signerInfo: 'Felipe Moreira (Paciente Mock)', signedAt: createDateISOString(19), verificationCode: 'VERIFY-PLAN-FELIPE-456', signedDocumentLink: '#' } },
+  { id: 'doc11', name: 'Material de Psicoeducação - Ansiedade.pdf', type: 'pdf', url: '#', uploadedAt: createDateISOString(30), size: 450 * 1024, category: 'Recursos para Pacientes', signatureStatus: 'none' },
+  { id: 'doc12', name: 'Pesquisa de Satisfação (Modelo).txt', type: 'txt', url: '#', uploadedAt: createDateISOString(1), size: 2 * 1024, category: 'Administrativo', signatureStatus: 'none' },
+
 ];
 
 
@@ -43,7 +57,7 @@ export default function DocumentsPage() {
       } catch (error) {
         // console.warn("Error loading documents from cache:", error);
          if (isMounted) {
-            setDocuments(mockDocumentsData); // Fallback if cache read fails
+            setDocuments(mockDocumentsData); 
          }
       }
       
@@ -86,7 +100,6 @@ export default function DocumentsPage() {
     const docToSign = documents.find(d => d.id === docId);
     if (!docToSign) return;
 
-    // Simulate hash generation
     const mockHash = `sha256-${Math.random().toString(36).substring(2, 15)}`;
     
     const updatedDocuments = documents.map(doc => 
@@ -107,7 +120,6 @@ export default function DocumentsPage() {
     const docToUpdate = documents.find(d => d.id === docId);
     if (!docToUpdate) return;
 
-    // Simulate validation
     const isValidExtension = signedFile.name.endsWith('.p7s') || signedFile.name.endsWith('.pdf');
     if (!isValidExtension) {
       const updatedDocsError = documents.map(doc => 
@@ -126,7 +138,7 @@ export default function DocumentsPage() {
       signerInfo: `CPF ${Math.floor(100 + Math.random() * 900)}.${Math.floor(100 + Math.random() * 900)}.${Math.floor(100 + Math.random() * 900)}-${Math.floor(10 + Math.random() * 90)} (Mock)`,
       signedAt: new Date().toISOString(),
       verificationCode: `GOVBR-MOCK-${Date.now().toString().slice(-6)}`,
-      signedDocumentLink: URL.createObjectURL(signedFile), // Mock link to the "uploaded" signed file
+      signedDocumentLink: URL.createObjectURL(signedFile), 
       p7sFile: signedFile.name.endsWith('.p7s') ? signedFile.name : undefined,
     };
     
@@ -175,3 +187,4 @@ export default function DocumentsPage() {
   );
 }
 
+    

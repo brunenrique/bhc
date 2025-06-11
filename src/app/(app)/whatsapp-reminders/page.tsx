@@ -8,27 +8,20 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Loader2, MessageSquare, Search } from "lucide-react";
 import type { Patient, Session } from "@/types";
 import { cacheService } from "@/services/cacheService";
-import { format, parseISO, isFuture, differenceInHours } from "date-fns";
+import { format, parseISO, isFuture, differenceInHours, addDays, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { WhatsAppReminderDialog } from "@/features/whatsapp-reminders/components/WhatsAppReminderDialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const createFutureDateISOString = (daysInFuture: number, hour: number = 10, minute: number = 0): string => {
-  const date = new Date();
-  date.setDate(date.getDate() + daysInFuture);
-  // Ensure hour and minute are within valid ranges after potential day change
-  let H = hour;
-  let M = minute;
-  if (hour >= 24) H = 23; // Cap hour if it's too high from previous logic
-  if (minute >= 60) M = 59; // Cap minute
-  date.setHours(H, M, 0, 0);
+  const date = addDays(new Date(), daysInFuture);
+  date.setHours(hour, minute, 0, 0);
   return date.toISOString();
 };
 
 const createPastDateISOString = (daysInPast: number, hour: number = 10, minute: number = 0): string => {
-  const date = new Date();
-  date.setDate(date.getDate() - daysInPast);
+  const date = subDays(new Date(), daysInPast);
   date.setHours(hour, minute, 0, 0);
   return date.toISOString();
 };
@@ -37,33 +30,57 @@ const mockPatientsData: Patient[] = [
   { id: '1', name: 'Ana Beatriz Silva', email: 'ana.silva@example.com', phone: '(11) 98765-4321', dateOfBirth: '1990-05-15', createdAt: createPastDateISOString(10), updatedAt: new Date().toISOString(), assignedTo: 'psy1' },
   { id: '2', name: 'Bruno Almeida Costa', email: 'bruno.costa@example.com', phone: '(21) 91234-5678', dateOfBirth: '1985-11-20', createdAt: createPastDateISOString(5), updatedAt: new Date().toISOString(), assignedTo: 'psy1' },
   { id: '3', name: 'Carla Dias Oliveira', email: 'carla.oliveira@example.com', phone: '(31) 95555-5555', dateOfBirth: '2000-02-10', createdAt: createPastDateISOString(0), updatedAt: new Date().toISOString(), assignedTo: 'psy2' },
-  { id: '4', name: 'Daniel Farias Lima', email: 'daniel.lima@example.com', phone: '(41) 94444-0000', dateOfBirth: '1992-07-22', createdAt: createPastDateISOString(2), updatedAt: new Date().toISOString(), assignedTo: 'psy1' },
+  { id: '4', name: 'Daniel Farias Lima', email: 'daniel.lima@example.com', phone: '(41) 94444-0000', dateOfBirth: '1992-07-22', createdAt: createPastDateISOString(20), updatedAt: new Date().toISOString(), assignedTo: 'psy1' },
   { id: '5', name: 'Eduarda Gomes Ferreira', email: 'eduarda.ferreira@example.com', phone: '(51) 93333-1111', dateOfBirth: '1998-03-30', createdAt: createPastDateISOString(45), updatedAt: new Date().toISOString(), assignedTo: 'psy2' },
-  { id: '6', name: 'Felipe Moreira', email: 'felipe.moreira@example.com', phone: null, dateOfBirth: '1995-09-12', createdAt: createPastDateISOString(15), updatedAt: new Date().toISOString(), assignedTo: 'psy2' },
+  { id: '6', name: 'Felipe Nogueira Moreira', email: 'felipe.moreira@example.com', phone: null, dateOfBirth: '1995-09-12', createdAt: createPastDateISOString(15), updatedAt: new Date().toISOString(), assignedTo: 'psy2' },
+  { id: '7', name: 'Gabriela Martins Azevedo', email: 'gabriela.azevedo@example.com', phone: '(71) 91111-2222', dateOfBirth: '1993-01-25', createdAt: createPastDateISOString(60), updatedAt: new Date().toISOString(), assignedTo: 'psy1' },
+  { id: '8', name: 'Hugo Pereira da Silva', email: 'hugo.pereira@example.com', phone: '(81) 90000-3333', dateOfBirth: '1988-08-05', createdAt: createPastDateISOString(3), updatedAt: new Date().toISOString(), assignedTo: 'other-psy-uid' },
+  { id: '9', name: 'Isabela Santos Rocha', email: 'isabela.santos@example.com', phone: '(91) 98888-4444', dateOfBirth: '2002-12-12', createdAt: createPastDateISOString(90), updatedAt: new Date().toISOString(), assignedTo: 'psy2' },
+  { id: '10', name: 'Lucas Mendes Oliveira', email: 'lucas.mendes@example.com', phone: '(12) 97777-5555', dateOfBirth: '1975-06-18', createdAt: createPastDateISOString(120), updatedAt: new Date().toISOString(), assignedTo: 'psy1' },
 ];
 
 export const mockSessionsData: Session[] = [
-  // Ana Silva
+  // Ana Silva (ID 1)
   { id: 's_ana_near', patientId: '1', patientName: 'Ana Beatriz Silva', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: createFutureDateISOString(1, 10), endTime: createFutureDateISOString(1, 11), status: 'scheduled', createdAt: createPastDateISOString(1) },
   { id: 's_ana_week', patientId: '1', patientName: 'Ana Beatriz Silva', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: createFutureDateISOString(7, 14), endTime: createFutureDateISOString(7, 15), status: 'scheduled', createdAt: createPastDateISOString(1) },
   { id: 's_ana_future_cancelled', patientId: '1', patientName: 'Ana Beatriz Silva', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: createFutureDateISOString(3, 11), endTime: createFutureDateISOString(3, 12), status: 'cancelled', createdAt: createPastDateISOString(1) },
   
-  // Bruno Costa
+  // Bruno Costa (ID 2)
   { id: 's_bruno_later_today', patientId: '2', patientName: 'Bruno Almeida Costa', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: createFutureDateISOString(0, Math.min(22, new Date().getHours() + 3) ), endTime: createFutureDateISOString(0, Math.min(23, new Date().getHours() + 4)), status: 'scheduled', createdAt: createPastDateISOString(0) },
   { id: 's_bruno_two_days', patientId: '2', patientName: 'Bruno Almeida Costa', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: createFutureDateISOString(2, 16), endTime: createFutureDateISOString(2, 17), status: 'scheduled', createdAt: createPastDateISOString(0) },
   { id: 's_bruno_future_completed', patientId: '2', patientName: 'Bruno Almeida Costa', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: createFutureDateISOString(4, 10), endTime: createFutureDateISOString(4, 11), status: 'completed', createdAt: createPastDateISOString(0) },
 
-  // Carla Dias Oliveira
+  // Carla Dias Oliveira (ID 3)
   { id: 's_carla_tomorrow', patientId: '3', patientName: 'Carla Dias Oliveira', psychologistId: 'psy2', psychologistName: 'Dra. Modelo Souza', startTime: createFutureDateISOString(1, 9), endTime: createFutureDateISOString(1, 10), status: 'scheduled', createdAt: createPastDateISOString(1) },
+  { id: 's_carla_next_week', patientId: '3', patientName: 'Carla Dias Oliveira', psychologistId: 'psy2', psychologistName: 'Dra. Modelo Souza', startTime: createFutureDateISOString(8, 11), endTime: createFutureDateISOString(8, 12), status: 'scheduled', createdAt: createPastDateISOString(1) },
 
-  // Daniel Farias Lima
+
+  // Daniel Farias Lima (ID 4)
   { id: 's_daniel_far', patientId: '4', patientName: 'Daniel Farias Lima', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: createFutureDateISOString(10, 11), endTime: createFutureDateISOString(10, 12), status: 'scheduled', createdAt: createPastDateISOString(1) },
+  { id: 's_daniel_48h', patientId: '4', patientName: 'Daniel Farias Lima', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: createFutureDateISOString(2, 10, 30), endTime: createFutureDateISOString(2, 11, 30), status: 'scheduled', createdAt: createPastDateISOString(1) },
 
-  // Eduarda Gomes Ferreira (sessão passada, não deve aparecer)
+
+  // Eduarda Gomes Ferreira (ID 5) (sessão passada, não deve aparecer nos lembretes)
   { id: 's_edu_past', patientId: '5', patientName: 'Eduarda Gomes Ferreira', psychologistId: 'psy2', psychologistName: 'Dra. Modelo Souza', startTime: createPastDateISOString(3), endTime: new Date(new Date().getTime() - (3 * 24 * 60 * 60 * 1000) + (60 * 60 * 1000)).toISOString(), status: 'completed', createdAt: createPastDateISOString(4) }, 
+  { id: 's_edu_future_noshow', patientId: '5', patientName: 'Eduarda Gomes Ferreira', psychologistId: 'psy2', psychologistName: 'Dra. Modelo Souza', startTime: createFutureDateISOString(5, 15), endTime: createFutureDateISOString(5, 16), status: 'no-show', createdAt: createPastDateISOString(1) },
 
-  // Felipe Moreira (paciente sem telefone)
-  { id: 's_felipe_no_phone', patientId: '6', patientName: 'Felipe Moreira', psychologistId: 'psy2', psychologistName: 'Dra. Modelo Souza', startTime: createFutureDateISOString(2, 14), endTime: createFutureDateISOString(2, 15), status: 'scheduled', createdAt: createPastDateISOString(1) },
+
+  // Felipe Nogueira Moreira (ID 6) (paciente sem telefone, mas sessão aparece)
+  { id: 's_felipe_no_phone', patientId: '6', patientName: 'Felipe Nogueira Moreira', psychologistId: 'psy2', psychologistName: 'Dra. Modelo Souza', startTime: createFutureDateISOString(2, 14), endTime: createFutureDateISOString(2, 15), status: 'scheduled', createdAt: createPastDateISOString(1) },
+
+  // Gabriela Martins Azevedo (ID 7)
+  { id: 's_gabriela_today_evening', patientId: '7', patientName: 'Gabriela Martins Azevedo', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: createFutureDateISOString(0, 18), endTime: createFutureDateISOString(0, 19), status: 'scheduled', createdAt: createPastDateISOString(2) },
+  { id: 's_gabriela_next_month', patientId: '7', patientName: 'Gabriela Martins Azevedo', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: createFutureDateISOString(35, 10), endTime: createFutureDateISOString(35, 11), status: 'scheduled', createdAt: createPastDateISOString(2) },
+
+  // Hugo Pereira da Silva (ID 8)
+  { id: 's_hugo_24h', patientId: '8', patientName: 'Hugo Pereira da Silva', psychologistId: 'other-psy-uid', psychologistName: 'Dr. Outro Exemplo', startTime: createFutureDateISOString(1, 15), endTime: createFutureDateISOString(1, 16), status: 'scheduled', createdAt: createPastDateISOString(1) },
+  
+  // Isabela Santos Rocha (ID 9)
+  { id: 's_isabela_upcoming', patientId: '9', patientName: 'Isabela Santos Rocha', psychologistId: 'psy2', psychologistName: 'Dra. Modelo Souza', startTime: createFutureDateISOString(6, 13), endTime: createFutureDateISOString(6, 14), status: 'scheduled', createdAt: createPastDateISOString(3) },
+
+  // Lucas Mendes Oliveira (ID 10)
+  { id: 's_lucas_tomorrow_afternoon', patientId: '10', patientName: 'Lucas Mendes Oliveira', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: createFutureDateISOString(1, 16, 30), endTime: createFutureDateISOString(1, 17, 30), status: 'scheduled', createdAt: createPastDateISOString(5) },
+  { id: 's_lucas_completed_recent', patientId: '10', patientName: 'Lucas Mendes Oliveira', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: createPastDateISOString(2, 10), endTime: createPastDateISOString(2, 11), status: 'completed', createdAt: createPastDateISOString(5) },
 ];
 
 
@@ -87,27 +104,19 @@ export default function WhatsAppRemindersPage() {
     const loadData = async () => {
       setIsLoading(true);
       
-      // Forcing local mocks for focused debugging
       if (isMounted) {
         setAllPatients(mockPatientsData);
-        // console.log("WhatsApp Page: Loaded local mock patients:", mockPatientsData.length);
-
         const futureScheduledFromMock = mockSessionsData.filter(s => {
           try {
-            if (typeof s.startTime !== 'string') {
-              // console.warn(`Session ${s.id} has invalid startTime type:`, s.startTime);
-              return false;
-            }
+            if (typeof s.startTime !== 'string') return false;
             const sessionDate = parseISO(s.startTime);
+            // Only show 'scheduled' sessions for reminders. Others are for context in performance page etc.
             return s.status === 'scheduled' && isFuture(sessionDate);
           } catch (parseError) {
-            // console.error(`WhatsApp Page (Mock Load): Failed to parse date for session ${s.id}: ${s.startTime}`, parseError);
             return false;
           }
         });
         setAllSessions(futureScheduledFromMock);
-        // console.log("WhatsApp Page: Loaded and filtered local mock sessions (future/scheduled):", futureScheduledFromMock.length);
-        // console.log("All future sessions being set:", futureScheduledFromMock.map(s => ({name: s.patientName, time: s.startTime, status: s.status})));
         setIsLoading(false);
       }
     };
@@ -117,33 +126,28 @@ export default function WhatsAppRemindersPage() {
 
   const reminderItems = useMemo(() => {
     const items: ReminderItem[] = [];
-    // console.log("WhatsApp Page: Calculating reminderItems. allSessions:", allSessions.length, "allPatients:", allPatients.length);
-    // console.log("WhatsApp Page: Current timeFilter:", timeFilter, "Current searchTerm:", searchTerm);
-
     allSessions.forEach(session => { 
       const patient = allPatients.find(p => p.id === session.patientId);
       if (patient) {
         let sessionTime;
         try {
-            if (typeof session.startTime !== 'string') return; // Guard against non-string startTime
+            if (typeof session.startTime !== 'string') return; 
             sessionTime = parseISO(session.startTime);
         } catch (e) {
-            // console.error("Invalid date for session in reminderItems memo:", session.startTime, "Session ID:", session.id);
             return; 
         }
         
         const now = new Date();
         const hoursDifference = differenceInHours(sessionTime, now);
 
-        // Apply time filter
-        if (timeFilter === "24h" && hoursDifference > 24) {
+        if (timeFilter === "24h" && (hoursDifference < 0 || hoursDifference > 24)) {
           return;
         }
-        if (timeFilter === "48h" && hoursDifference > 48) {
+        if (timeFilter === "48h" && (hoursDifference < 0 || hoursDifference > 48)) {
           return;
         }
+        // For "all", we still only want future sessions, which is already filtered in `allSessions` state.
 
-        // Apply search term filter
         if (searchTerm && 
             !patient.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
             !(patient.phone && patient.phone.replace(/\D/g, '').includes(searchTerm.replace(/\D/g, '')))) {
@@ -152,7 +156,6 @@ export default function WhatsAppRemindersPage() {
         items.push({ patient, session });
       }
     });
-    // console.log("WhatsApp Page: Final reminderItems:", items.length, items.map(i => ({name: i.patient.name, sessionTime: i.session.startTime})));
     return items.sort((a,b) => {
         try {
             if (typeof a.session.startTime !== 'string' || typeof b.session.startTime !== 'string') return 0;
@@ -289,3 +292,4 @@ export default function WhatsAppRemindersPage() {
     </div>
   );
 }
+    
