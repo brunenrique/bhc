@@ -23,12 +23,13 @@ import { FloatingChatButton } from '@/features/chat/components/FloatingChatButto
 import { SimulatedNotificationManager } from '@/features/notifications/components/SimulatedNotificationManager';
 import { OfflineIndicator } from '@/components/layout/OfflineIndicator';
 
-const CUSTOM_THEME_LS_KEY = 'psiguard-custom-theme';
-const ALL_CUSTOM_THEME_CLASSES = ["theme-modern", "theme-light-gray", "theme-lilac"];
+// A lógica de aplicar o tema customizado do localStorage foi movida para CustomThemeInitializer no RootLayout.
+// const CUSTOM_THEME_LS_KEY = 'psiguard-custom-theme';
+// const ALL_CUSTOM_THEME_CLASSES = ["theme-modern", "theme-light-gray", "theme-lilac"];
 
 
 function ThemeToggle() {
-  const { setTheme, theme } = useTheme(); // useTheme from next-themes
+  const { setTheme, theme } = useTheme(); 
 
   return (
     <Button
@@ -56,33 +57,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
   }, [isAuthenticated, isLoading, router]);
 
-  // Apply custom theme from localStorage on initial client-side load
-  useEffect(() => {
-    const savedCustomTheme = localStorage.getItem(CUSTOM_THEME_LS_KEY);
-    const htmlElement = document.documentElement;
-
-    // Remove any existing custom theme classes first
-    ALL_CUSTOM_THEME_CLASSES.forEach(cls => htmlElement.classList.remove(cls));
-
-    if (savedCustomTheme && ALL_CUSTOM_THEME_CLASSES.includes(savedCustomTheme)) {
-      htmlElement.classList.add(savedCustomTheme);
-    } else {
-      // If no saved theme or invalid, default to one of them (e.g., theme-lilac as set in RootLayout)
-      // or remove all custom themes to fallback to the :root default.
-      // For this example, RootLayout html tag has theme-lilac, so if localStorage is empty, it will use that.
-      // If you want a "no custom theme" default, you'd ensure RootLayout's html tag has no custom theme class
-      // and then *not* add one here if localStorage is empty.
-      // Since RootLayout might already have a default, this logic primarily ensures localStorage overrides it.
-      if (!htmlElement.classList.contains('theme-lilac') && !htmlElement.classList.contains('theme-modern') && !htmlElement.classList.contains('theme-light-gray')) {
-         // If no custom theme is set from localStorage and RootLayout didn't set one, we could apply a default here too.
-         // But for now, we rely on RootLayout's initial class or the :root CSS if no custom theme is applied.
-         // To be safe, if RootLayout had 'theme-lilac' and localStorage has empty/invalid, we don't want to remove it here
-         // unless we intend to revert to the absolute base theme (no custom class).
-         // The current logic is: if localStorage has a valid custom theme, apply it. Otherwise, what RootLayout set initially persists.
-         // If RootLayout has 'theme-lilac' and localStorage has 'theme-modern', 'theme-lilac' is removed and 'theme-modern' is added.
-      }
-    }
-  }, []);
+  // REMOVIDO: O useEffect para aplicar o tema customizado foi movido para CustomThemeInitializer.
+  // useEffect(() => {
+  //   const savedCustomTheme = localStorage.getItem(CUSTOM_THEME_LS_KEY);
+  //   const htmlElement = document.documentElement;
+  //   ALL_CUSTOM_THEME_CLASSES.forEach(cls => htmlElement.classList.remove(cls));
+  //   if (savedCustomTheme && ALL_CUSTOM_THEME_CLASSES.includes(savedCustomTheme)) {
+  //     htmlElement.classList.add(savedCustomTheme);
+  //   } else {
+  //     // Apply default if none saved, or rely on RootLayout's default
+  //     // htmlElement.classList.add('theme-lilac'); // Example default
+  //   }
+  // }, []);
 
 
   if (isLoading || !isAuthenticated) {

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "next-themes"; 
+import { CustomThemeInitializer } from '@/components/layout/CustomThemeInitializer'; // Importado
 
 export const metadata: Metadata = {
   title: 'PsiGuard - Gestão de Clínica Psicológica',
@@ -15,7 +16,7 @@ export default function RootLayout({
 }>) {
   return (
     // Aplicando 'theme-lilac' como classe padrão inicial.
-    // A lógica no AppLayout (via settings ou useEffect) poderá sobrescrever isso com a preferência do usuário.
+    // CustomThemeInitializer cuidará de aplicar a preferência do usuário do localStorage.
     <html lang="pt-BR" suppressHydrationWarning className="theme-lilac">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -29,9 +30,8 @@ export default function RootLayout({
           defaultTheme="system" // next-themes gerencia light/dark
           enableSystem
           disableTransitionOnChange
-          // O ThemeProvider do next-themes não gerenciará nossas classes de tema customizadas diretamente.
-          // Faremos isso manualmente no AppLayout e Settings.
         >
+          <CustomThemeInitializer /> 
           {children}
           <Toaster />
         </ThemeProvider>
