@@ -1,33 +1,57 @@
+
 rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    // Default deny all access unless explicitly allowed
+
+    // Helper function to check if the user is an admin
+    function isAdmin() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Helper function to check if the user is the assigned psychologist for the patient
+    function isPatientOwner(pacienteId) {
+      return request.auth.uid == get(/databases/$(database)/documents/pacientes/$(pacienteId)).data.assignedTo;
+    }
+
+    // Attachments: /attachments/{pacienteId}/{fileUniqueId}
+    // - pacienteId: The ID of the patient document in Firestore
+    // - fileUniqueId: A unique identifier for the file (e.g., UUID generated on client)
+    match /attachments/{pacienteId}/{fileUniqueId} {
+      // Allow read if the user is an admin or the assigned psychologist for this patient.
+      allow read: if request.auth != null && (isAdmin() || isPatientOwner(pacienteId));
+
+      // Allow write (create, update, delete) if the user is an admin or the assigned psychologist.
+      // Further, for create/update, validate file size and type.
+      allow write: if request.auth != null && (isAdmin() || isPatientOwner(pacienteId));
+
+      // Create:
+      // - User must be admin or assigned psychologist.
+      // - File size must be less than 10MB.
+      // - File type must be one of the allowed types.
+      // - The uploadedBy field in Firestore metadata (not checked here directly, but client should set it)
+      //   should match the uploader's UID.
+      allow create: if request.auth != null && (isAdmin() || isPatientOwner(pacienteId))
+                    && request.resource.size < 10 * 1024 * 1024 // 10MB
+                    && request.resource.contentType.matches('application/pdf|image/jpeg|image/png|application/vnd.openxmlformats-officedocument.wordprocessingml.document|text/plain');
+                    // For DOCX: application/vnd.openxmlformats-officedocument.wordprocessingml.document
+                    // For DOC: application/msword (less common now)
+                    // For TXT: text/plain
+
+      // Update: Generally, files are not "updated" by overwriting. New versions might be new files.
+      // For simplicity, we use the same rule as create if updates were allowed.
+      // Metadata updates happen in Firestore.
+      allow update: if request.auth != null && (isAdmin() || isPatientOwner(pacienteId))
+                     && request.resource.size < 10 * 1024 * 1024
+                     && request.resource.contentType.matches('application/pdf|image/jpeg|image/png|application/vnd.openxmlformats-officedocument.wordprocessingml.document|text/plain');
+
+      // Delete: User must be admin or assigned psychologist.
+      allow delete: if request.auth != null && (isAdmin() || isPatientOwner(pacienteId));
+    }
+
+    // Fallback: Disallow access to any other paths by default
     match /{allPaths=**} {
       allow read, write: if false;
     }
-
-    // Example: Allow authenticated users to upload to a 'user_uploads/{userId}' path
-    // and read their own files.
-    match /user_uploads/{userId}/{allPaths=**} {
-      allow read: if request.auth != null && request.auth.uid == userId;
-      allow write: if request.auth != null && request.auth.uid == userId;
-    }
-
-    // Example: Allow users to upload profile pictures to 'profile_pictures/{userId}'
-    // Ensure file size and type validation if needed.
-    match /profile_pictures/{userId}/{fileName} {
-      allow read: if true; // Profile pictures are often public
-      allow write: if request.auth != null && request.auth.uid == userId;
-    }
-    
-    // Example: Allow public read for general resources like shared documents if any
-    match /public_documents/{allPaths=**} {
-        allow read: if true;
-        allow write: if request.auth != null; // Or restrict to specific roles like admin
-    }
-
-    // Note: For production, these rules should be more granular.
-    // Consider file size limits, content type validation, etc.
   }
 }

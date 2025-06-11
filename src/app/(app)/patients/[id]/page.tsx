@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { RichTextEditor } from '@/components/shared/RichTextEditor'; 
-import { ArrowLeft, Edit, Mail, Phone, CalendarDays, FileText as FileTextIconLucide, PlusCircle, Repeat, Eye, EyeOff, Lock, History, Info, BookMarked, Fingerprint, ShieldCheck, ShieldX, ShieldAlert, UploadCloud, ListChecks, BarChart3, FileSignature, CalendarCheck2, CalendarX2, UserCheck, UserX, AlertTriangle, CaseSensitive, Bot, FileText as FileTextIcon, DownloadCloud, Edit3, ShieldQuestion } from 'lucide-react';
+import { ArrowLeft, Edit, Mail, Phone, CalendarDays, FileText as FileTextIconLucide, PlusCircle, Repeat, Eye, EyeOff, Lock, History, Info, BookMarked, Fingerprint, ShieldCheck, ShieldX, ShieldAlert, UploadCloud, ListChecks, BarChart3, FileSignature, CalendarCheck2, CalendarX2, UserCheck, UserX, AlertTriangle, CaseSensitive, Bot, FileText as FileTextIcon, DownloadCloud, Edit3, ShieldQuestion, Paperclip } from 'lucide-react';
 import { PatientFormDialog } from '@/features/patients/components/PatientFormDialog';
 import { SessionFormDialog } from '@/features/scheduling/components/SessionFormDialog';
 import { Separator } from '@/components/ui/separator';
@@ -25,10 +25,11 @@ import { useToast } from '@/hooks/use-toast';
 import { PatientTherapeuticPlan } from '@/features/patients/components/PatientTherapeuticPlan';
 import { PatientAssessmentsSection } from '@/features/patients/components/PatientAssessmentsSection';
 import { PatientEvolutionChart } from '@/features/patients/components/PatientEvolutionChart';
+import { PatientAttachmentManager } from '@/features/patients/components/PatientAttachmentManager'; // Import the new component
 import { mockAssessmentsData as allMockAssessments } from '@/app/(app)/assessments/page'; 
 import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/ui/input';
-import { hasPermission } from '@/lib/permissions'; // Import hasPermission
+import { hasPermission } from '@/lib/permissions'; 
 
 const mockProntuarioAna: ProntuarioData = {
   identificacao: {
@@ -98,7 +99,6 @@ const mockProntuarioBruno: ProntuarioData = {
 const fetchPatientDetailsMock = async (id: string): Promise<Patient | null> => {
   await new Promise(resolve => setTimeout(resolve, 300)); 
   const baseDate = new Date();
-  // Use a consistent mock psychologist ID for assignedTo testing
   const mockPsychologistId = 'mock-user-psychologist-1234'; 
 
   const mockPatientBase = {
@@ -109,7 +109,7 @@ const fetchPatientDetailsMock = async (id: string): Promise<Patient | null> => {
     address: id === '1' ? 'Rua das Palmeiras, 45, Apto 101, Centro, Cidade Alegre - CA' : id === '2' ? 'Av. Principal, 789, Bairro Novo, Capital Estadual - ES' : 'Rua Fictícia, 123, Bairro Imaginário, Cidade Exemplo - UF',
     createdAt: subDays(baseDate, 30).toISOString(), 
     updatedAt: new Date().toISOString(),
-    assignedTo: id === '1' ? mockPsychologistId : 'other-psy-uid', // Assign Ana to mock psychologist
+    assignedTo: id === '1' ? mockPsychologistId : 'other-psy-uid', 
   };
   
   let specificData: Partial<Patient> = {};
@@ -185,26 +185,26 @@ const fetchPatientSessionsMock = async (patientId: string): Promise<Session[]> =
 
   if (patientId === '1') { 
     sessionsList.push(
-      { id: 's1_ana', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo Silva", startTime: subDays(baseDate, 1).toISOString(), endTime: new Date(subDays(baseDate, 1).getTime() + 60*60*1000).toISOString(), status: 'completed', recurring: 'weekly', notes: 'Discussão sobre pensamentos automáticos.'},
-      { id: 's2_ana', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo Silva", startTime: addDays(baseDate, 6).toISOString(), endTime: new Date(addDays(baseDate, 6).getTime() + 60*60*1000).toISOString(), status: 'scheduled', recurring: 'weekly', notes: 'Manutenção e prevenção de recaídas.'},
-      { id: 's3_ana', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo Silva", startTime: subDays(baseDate, 8).toISOString(), endTime: new Date(subDays(baseDate, 8).getTime() + 60*60*1000).toISOString(), status: 'completed'},
-      { id: 's4_ana', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo Silva", startTime: subDays(baseDate, 15).toISOString(), endTime: new Date(subDays(baseDate, 15).getTime() + 60*60*1000).toISOString(), status: 'completed'},
-      { id: 's5_ana', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo Silva", startTime: subDays(baseDate, 22).toISOString(), endTime: new Date(subDays(baseDate, 22).getTime() + 60*60*1000).toISOString(), status: 'completed'},
-      { id: 's6_ana_past_noshow', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo Silva", startTime: subDays(baseDate, 29).toISOString(), endTime: new Date(subDays(baseDate, 29).getTime() + 60*60*1000).toISOString(), status: 'no-show'},
-      { id: 's7_ana_past_cancelled', patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo Silva", startTime: subDays(baseDate, 36).toISOString(), endTime: new Date(subDays(baseDate, 36).getTime() + 60*60*1000).toISOString(), status: 'cancelled'}
+      { id: 's1_ana', patientId, psychologistId: 'mock-user-psychologist-1234', psychologistName: "Dr. Exemplo Silva", startTime: subDays(baseDate, 1).toISOString(), endTime: new Date(subDays(baseDate, 1).getTime() + 60*60*1000).toISOString(), status: 'completed', recurring: 'weekly', notes: 'Discussão sobre pensamentos automáticos.', createdAt: subDays(baseDate, 2).toISOString() },
+      { id: 's2_ana', patientId, psychologistId: 'mock-user-psychologist-1234', psychologistName: "Dr. Exemplo Silva", startTime: addDays(baseDate, 6).toISOString(), endTime: new Date(addDays(baseDate, 6).getTime() + 60*60*1000).toISOString(), status: 'scheduled', recurring: 'weekly', notes: 'Manutenção e prevenção de recaídas.', createdAt: subDays(baseDate, 1).toISOString() },
+      { id: 's3_ana', patientId, psychologistId: 'mock-user-psychologist-1234', psychologistName: "Dr. Exemplo Silva", startTime: subDays(baseDate, 8).toISOString(), endTime: new Date(subDays(baseDate, 8).getTime() + 60*60*1000).toISOString(), status: 'completed', createdAt: subDays(baseDate, 9).toISOString()},
+      { id: 's4_ana', patientId, psychologistId: 'mock-user-psychologist-1234', psychologistName: "Dr. Exemplo Silva", startTime: subDays(baseDate, 15).toISOString(), endTime: new Date(subDays(baseDate, 15).getTime() + 60*60*1000).toISOString(), status: 'completed', createdAt: subDays(baseDate, 16).toISOString()},
+      { id: 's5_ana', patientId, psychologistId: 'mock-user-psychologist-1234', psychologistName: "Dr. Exemplo Silva", startTime: subDays(baseDate, 22).toISOString(), endTime: new Date(subDays(baseDate, 22).getTime() + 60*60*1000).toISOString(), status: 'completed', createdAt: subDays(baseDate, 23).toISOString()},
+      { id: 's6_ana_past_noshow', patientId, psychologistId: 'mock-user-psychologist-1234', psychologistName: "Dr. Exemplo Silva", startTime: subDays(baseDate, 29).toISOString(), endTime: new Date(subDays(baseDate, 29).getTime() + 60*60*1000).toISOString(), status: 'no-show', createdAt: subDays(baseDate, 30).toISOString()},
+      { id: 's7_ana_past_cancelled', patientId, psychologistId: 'mock-user-psychologist-1234', psychologistName: "Dr. Exemplo Silva", startTime: subDays(baseDate, 36).toISOString(), endTime: new Date(subDays(baseDate, 36).getTime() + 60*60*1000).toISOString(), status: 'cancelled', createdAt: subDays(baseDate, 37).toISOString()}
     );
   } else if (patientId === '2') { 
      sessionsList.push(
-      { id: 's1_bruno', patientId, psychologistId: 'psy2', psychologistName: "Dra. Modelo Souza", startTime: subDays(baseDate, 3).toISOString(), endTime: new Date(subDays(baseDate, 3).getTime() + 60*60*1000).toISOString(), status: 'completed', notes: 'Discussão sobre barreiras para exercícios.'},
-      { id: 's2_bruno', patientId, psychologistId: 'psy2', psychologistName: "Dra. Modelo Souza", startTime: addDays(baseDate, 4).toISOString(), endTime: new Date(addDays(baseDate, 4).getTime() + 60*60*1000).toISOString(), status: 'scheduled', notes: 'Próxima etapa da exposição narrativa.'},
-      { id: 's3_bruno', patientId, psychologistId: 'psy2', psychologistName: "Dra. Modelo Souza", startTime: subDays(baseDate, 10).toISOString(), endTime: new Date(subDays(baseDate, 10).getTime() + 60*60*1000).toISOString(), status: 'completed'},
-      { id: 's4_bruno', patientId, psychologistId: 'psy2', psychologistName: "Dra. Modelo Souza", startTime: subDays(baseDate, 17).toISOString(), endTime: new Date(subDays(baseDate, 17).getTime() + 60*60*1000).toISOString(), status: 'completed'},
-      { id: 's5_bruno_past_noshow', patientId, psychologistId: 'psy2', psychologistName: "Dra. Modelo Souza", startTime: subDays(baseDate, 24).toISOString(), endTime: new Date(subDays(baseDate, 24).getTime() + 60*60*1000).toISOString(), status: 'no-show'}
+      { id: 's1_bruno', patientId, psychologistId: 'other-psy-uid', psychologistName: "Dra. Modelo Souza", startTime: subDays(baseDate, 3).toISOString(), endTime: new Date(subDays(baseDate, 3).getTime() + 60*60*1000).toISOString(), status: 'completed', notes: 'Discussão sobre barreiras para exercícios.', createdAt: subDays(baseDate, 4).toISOString()},
+      { id: 's2_bruno', patientId, psychologistId: 'other-psy-uid', psychologistName: "Dra. Modelo Souza", startTime: addDays(baseDate, 4).toISOString(), endTime: new Date(addDays(baseDate, 4).getTime() + 60*60*1000).toISOString(), status: 'scheduled', notes: 'Próxima etapa da exposição narrativa.', createdAt: subDays(baseDate, 1).toISOString()},
+      { id: 's3_bruno', patientId, psychologistId: 'other-psy-uid', psychologistName: "Dra. Modelo Souza", startTime: subDays(baseDate, 10).toISOString(), endTime: new Date(subDays(baseDate, 10).getTime() + 60*60*1000).toISOString(), status: 'completed', createdAt: subDays(baseDate, 11).toISOString()},
+      { id: 's4_bruno', patientId, psychologistId: 'other-psy-uid', psychologistName: "Dra. Modelo Souza", startTime: subDays(baseDate, 17).toISOString(), endTime: new Date(subDays(baseDate, 17).getTime() + 60*60*1000).toISOString(), status: 'completed', createdAt: subDays(baseDate, 18).toISOString()},
+      { id: 's5_bruno_past_noshow', patientId, psychologistId: 'other-psy-uid', psychologistName: "Dra. Modelo Souza", startTime: subDays(baseDate, 24).toISOString(), endTime: new Date(subDays(baseDate, 24).getTime() + 60*60*1000).toISOString(), status: 'no-show', createdAt: subDays(baseDate, 25).toISOString()}
     );
   } else { 
     sessionsList.push(
-      { id: `s1_gen_${patientId}`, patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo Silva", startTime: addDays(baseDate, 2).toISOString(), endTime: new Date(addDays(baseDate, 2).getTime() + 60*60*1000).toISOString(), status: 'scheduled', notes: 'Sessão de acompanhamento.'},
-      { id: `s2_gen_${patientId}`, patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo Silva", startTime: subDays(baseDate, 5).toISOString(), endTime: new Date(subDays(baseDate, 5).getTime() + 60*60*1000).toISOString(), status: 'completed'}
+      { id: `s1_gen_${patientId}`, patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo Silva", startTime: addDays(baseDate, 2).toISOString(), endTime: new Date(addDays(baseDate, 2).getTime() + 60*60*1000).toISOString(), status: 'scheduled', notes: 'Sessão de acompanhamento.', createdAt: subDays(baseDate, 1).toISOString()},
+      { id: `s2_gen_${patientId}`, patientId, psychologistId: 'psy1', psychologistName: "Dr. Exemplo Silva", startTime: subDays(baseDate, 5).toISOString(), endTime: new Date(subDays(baseDate, 5).getTime() + 60*60*1000).toISOString(), status: 'completed', createdAt: subDays(baseDate, 6).toISOString()}
     );
   }
   
@@ -423,7 +423,7 @@ export default function PatientDetailPage() {
   const [editingSession, setEditingSession] = useState<Session | null>(null);
   const [areNotesVisible, setAreNotesVisible] = useState(false);
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'evolution' | 'prontuario' | 'case_study' | 'pti' | 'scales' | 'analysis'>('evolution');
+  const [activeTab, setActiveTab] = useState<'evolution' | 'prontuario' | 'case_study' | 'pti' | 'scales' | 'analysis' | 'attachments'>('evolution');
   
   const [isProntuarioSignatureDetailsOpen, setIsProntuarioSignatureDetailsOpen] = useState(false);
 
@@ -456,7 +456,6 @@ export default function PatientDetailPage() {
 
         fetchedPatientData = await fetchPatientDetailsMock(patientId);
         fetchedSessionsData = await fetchPatientSessionsMock(patientId);
-        // Ensure mock data includes assignedTo
         fetchedPatientData = fetchedPatientData ? { ...fetchedPatientData, assignedTo: fetchedPatientData.assignedTo || (fetchedPatientData.id === '1' ? 'mock-user-psychologist-1234' : `other-psy-${fetchedPatientData.id}`) } : null;
 
         fetchedAssessmentsData = allMockAssessments.filter(asm => asm.patientId === patientId && asm.status === 'completed');
@@ -499,7 +498,6 @@ export default function PatientDetailPage() {
 
   const canEditClinicalNotes = useMemo(() => {
     if (!currentUser || !patient) return false;
-     // Admins can edit any, psychologists can edit if assigned.
     if (currentUser.role === 'admin') return true;
     return hasPermission(currentUser.role, 'CREATE_EDIT_CLINICAL_NOTES') && patient.assignedTo === currentUser.id;
   }, [currentUser, patient]);
@@ -564,6 +562,7 @@ export default function PatientDetailPage() {
     const psychologistNameMap: Record<string, string> = {
       psy1: 'Dr. Exemplo Silva',
       psy2: 'Dra. Modelo Souza',
+      'mock-user-psychologist-1234': 'Dr. Exemplo Silva',
     };
     const patientNameMap: Record<string, string> = { 
         '1': 'Ana Beatriz Silva',
@@ -586,7 +585,9 @@ export default function PatientDetailPage() {
         id: `s-${Date.now()}`, 
         patientId: patientId, 
         patientName: patient?.name, 
-        psychologistName: sessionData.psychologistId ? psychologistNameMap[sessionData.psychologistId] || 'Psicólogo Desconhecido' : 'Psicólogo Desconhecido',
+        psychologistId: currentUser?.id, // Assign current psychologist to new session
+        psychologistName: currentUser?.name,
+        createdAt: new Date().toISOString(),
       } as Session;
 
       const sessionsToAdd = [mainNewSession];
@@ -612,6 +613,7 @@ export default function PatientDetailPage() {
             status: 'scheduled',
             notes: mainNewSession.notes ? `${mainNewSession.notes} (Recorrência ${i})` : `Sessão recorrente ${i}`,
             recurring: 'none', 
+            createdAt: new Date().toISOString(),
           });
         }
       }
@@ -624,7 +626,7 @@ export default function PatientDetailPage() {
 
     setIsSessionFormOpen(false);
     setEditingSession(null);
-  }, [patientId, editingSession, patient?.name, sessions]);
+  }, [patientId, editingSession, patient?.name, sessions, currentUser]);
 
   const sessionStats = useMemo(() => {
     const nextScheduled = sessions
@@ -736,7 +738,9 @@ export default function PatientDetailPage() {
     );
   }
   
-  if (!canAccessClinicalData) {
+  const canViewClinicalData = hasPermission(currentUser?.role, 'ACCESS_PATIENT_CLINICAL_DATA', patient.assignedTo === currentUser?.id);
+
+  if (!canViewClinicalData) { // Basic check, detailed data visibility is handled by `areNotesVisible` and tabs
     return (
       <div className="text-center py-10">
         <ShieldQuestion className="mx-auto h-12 w-12 text-destructive mb-3" />
@@ -747,8 +751,10 @@ export default function PatientDetailPage() {
     );
   }
 
-
   const completedPatientAssessments = patientAssessments.filter(asm => asm.status === 'completed' && typeof asm.results?.score === 'number');
+
+  const TAB_KEYS = ['evolution', 'prontuario', 'case_study', 'pti', 'scales', 'analysis', 'attachments'] as const;
+  type PatientDetailTab = (typeof TAB_KEYS)[number];
 
 
   return (
@@ -789,15 +795,16 @@ export default function PatientDetailPage() {
           </div>
           <Separator />
           
-          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full">
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as PatientDetailTab)} className="w-full">
             <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
-              <TabsList className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-6 gap-1 w-full md:w-auto">
-                <TabsTrigger value="evolution" className="font-headline text-xs px-2 py-1.5 h-auto whitespace-nowrap"><FileTextIconLucide className="w-3.5 h-3.5 mr-1.5"/>Evolução Sessões</TabsTrigger>
+              <TabsList className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-1 w-full md:w-auto">
+                <TabsTrigger value="evolution" className="font-headline text-xs px-2 py-1.5 h-auto whitespace-nowrap"><FileTextIconLucide className="w-3.5 h-3.5 mr-1.5"/>Evolução</TabsTrigger>
                 <TabsTrigger value="prontuario" className="font-headline text-xs px-2 py-1.5 h-auto whitespace-nowrap"><BookMarked className="w-3.5 h-3.5 mr-1.5"/>Prontuário</TabsTrigger>
-                <TabsTrigger value="case_study" className="font-headline text-xs px-2 py-1.5 h-auto whitespace-nowrap"><CaseSensitive className="w-3.5 h-3.5 mr-1.5"/>Estudo de Caso</TabsTrigger>
+                <TabsTrigger value="case_study" className="font-headline text-xs px-2 py-1.5 h-auto whitespace-nowrap"><CaseSensitive className="w-3.5 h-3.5 mr-1.5"/>Estudo Caso</TabsTrigger>
                 <TabsTrigger value="pti" className="font-headline text-xs px-2 py-1.5 h-auto whitespace-nowrap"><ListChecks className="w-3.5 h-3.5 mr-1.5"/>PTI</TabsTrigger>
                 <TabsTrigger value="scales" className="font-headline text-xs px-2 py-1.5 h-auto whitespace-nowrap"><FileSignature className="w-3.5 h-3.5 mr-1.5"/>Escalas</TabsTrigger>
-                <TabsTrigger value="analysis" className="font-headline text-xs px-2 py-1.5 h-auto whitespace-nowrap"><BarChart3 className="w-3.5 h-3.5 mr-1.5"/>Análise Gráfica</TabsTrigger>
+                <TabsTrigger value="analysis" className="font-headline text-xs px-2 py-1.5 h-auto whitespace-nowrap"><BarChart3 className="w-3.5 h-3.5 mr-1.5"/>Análise</TabsTrigger>
+                <TabsTrigger value="attachments" className="font-headline text-xs px-2 py-1.5 h-auto whitespace-nowrap"><Paperclip className="w-3.5 h-3.5 mr-1.5"/>Anexos</TabsTrigger>
               </TabsList>
               <div className="flex gap-2 ml-auto">
                 { (activeTab === 'evolution' || activeTab === 'prontuario' || activeTab === 'pti' || activeTab === 'case_study') && patient.previousSessionNotes && patient.previousSessionNotes.length > 0 && activeTab === 'evolution' && (
@@ -812,7 +819,7 @@ export default function PatientDetailPage() {
               </div>
             </div>
 
-            {!areNotesVisible && (activeTab === 'evolution' || activeTab === 'prontuario' || activeTab === 'case_study' || activeTab === 'pti' || activeTab === 'scales' || activeTab === 'analysis') ? (
+            {!areNotesVisible && TAB_KEYS.includes(activeTab) ? (
               <Alert variant="default" className="bg-muted/40 border-primary/30 mt-2">
                 <Lock className="h-5 w-5 text-primary/80" />
                 <AlertTitle className="font-headline text-primary/90">Conteúdo Confidencial</AlertTitle>
@@ -886,6 +893,9 @@ export default function PatientDetailPage() {
                 <TabsContent value="analysis">
                      <PatientEvolutionChart patientName={patient.name} completedAssessments={completedPatientAssessments} />
                 </TabsContent>
+                 <TabsContent value="attachments">
+                     <PatientAttachmentManager patientId={patientId} patientName={patient.name} currentUser={currentUser} />
+                </TabsContent>
               </>
             )}
           </Tabs>
@@ -895,7 +905,7 @@ export default function PatientDetailPage() {
       <Card className="shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between pb-3">
             <CardTitle className="text-xl font-headline">Histórico e Resumo de Sessões</CardTitle>
-            { (currentUser?.role === 'admin' || currentUser?.role === 'psychologist') && (
+            { (currentUser?.role === 'admin' || (currentUser?.role === 'psychologist' && patient.assignedTo === currentUser.id )) && (
                 <Button onClick={handleNewSession} size="sm">
                     <PlusCircle className="mr-2 h-4 w-4" /> Nova Sessão
                 </Button>
@@ -967,10 +977,11 @@ export default function PatientDetailPage() {
                                       </Badge>
                                       {s.notes && <p className="text-xs text-muted-foreground mt-1 italic">Nota: {s.notes.substring(0,50)}...</p>}
                                   </div>
-                                  {(currentUser?.role === 'admin' || (currentUser?.role === 'psychologist' && (s.psychologistId === currentUser.id || patient.assignedTo === currentUser.id))) && (
-                                      <Button variant="ghost" size="sm" onClick={() => handleEditSession(s)}>
-                                          <Edit className="w-4 h-4 mr-1" /> Editar
-                                      </Button>
+                                  {/* Conditional Edit/Open Session Button */}
+                                  { (currentUser?.role === 'admin' || (currentUser?.role === 'psychologist' && s.psychologistId === currentUser.id)) && (
+                                    <Button variant="outline" size="sm" onClick={() => router.push(`/sessions/${s.id}?patientId=${patientId}`)}>
+                                      <Edit className="w-3.5 h-3.5 mr-1.5" /> Abrir Sessão
+                                    </Button>
                                   )}
                               </div>
                           </li>
@@ -997,7 +1008,9 @@ export default function PatientDetailPage() {
         onOpenChange={setIsSessionFormOpen}
         session={editingSession}
         onSave={handleSaveSession}
-        patientData={patient ? { id: patient.id, name: patient.name } : undefined}
+        // patientData is not strictly needed here if new sessions are for current patient
+        // but it's good practice if dialog could be used more generically.
+        patientData={patient ? { id: patient.id, name: patient.name, assignedTo: patient.assignedTo } : undefined}
       />
 
        <Dialog open={isHistoryDialogOpen && areNotesVisible && canAccessClinicalData && activeTab === 'evolution'} onOpenChange={setIsHistoryDialogOpen}>

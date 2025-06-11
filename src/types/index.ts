@@ -61,9 +61,7 @@ export interface ProntuarioData {
   demandaQueixaPrincipal?: string;
   procedimentosAnalise?: ProcedimentoAnaliseEntry[];
   conclusaoEncaminhamentoGeral?: string;
-
   localAssinatura?: string;
-
   signatureStatus?: DocumentSignatureStatus;
   signatureDetails?: DocumentSignatureDetails;
 }
@@ -86,6 +84,18 @@ export interface TherapeuticPlan {
   lastUpdatedAt: string; // ISO Date string
 }
 
+export interface PatientAttachment {
+  id: string; // Firestore document ID
+  fileUniqueId: string; // Unique ID used in Storage path (e.g., a UUID)
+  filename: string; // Original filename
+  size: number; // in bytes
+  type: string; // MIME type
+  url: string; // Firebase Storage download URL
+  storagePath: string; // Full path in Firebase Storage, e.g., attachments/{patientId}/{fileUniqueId}
+  uploadedBy: string; // UID of the uploader
+  uploadedAt: string; // ISO string for client, ServerTimestamp for Firestore write
+}
+
 export interface Patient {
   id: string;
   name: string;
@@ -99,6 +109,7 @@ export interface Patient {
   prontuario?: ProntuarioData;
   therapeuticPlan?: TherapeuticPlan;
   caseStudyNotes?: string;
+  attachments?: PatientAttachment[]; // Embedded for quick display, actual list from subcollection
   createdAt: string;
   updatedAt: string;
 }
@@ -110,13 +121,16 @@ export interface Session {
   id: string;
   patientId: string;
   patientName?: string;
-  psychologistId: string;
+  psychologistId: string; // UID of the psychologist conducting the session
   psychologistName?: string;
   startTime: string; // ISO Date string
   endTime: string; // ISO Date string
   status: "scheduled" | "completed" | "cancelled" | "no-show";
   recurring?: SessionRecurrence | null;
-  notes?: string;
+  notes?: string; // Main clinical note by psychologist
+  insightsAI?: string[]; // AI-generated insights based on the note
+  templateUsado?: string; // Name/ID of the AI template used
+  createdAt: string; // ISO Date string when session record was created
   isPendingSync?: boolean;
 }
 
@@ -182,13 +196,6 @@ export interface WaitingListEntry {
   criadoEm: string;           // ISO Date string (Firebase Timestamp on server)
   criadoPor: string;          // UID do usuário que adicionou
   status: "pendente" | "agendado" | "removido";
-  // Campos removidos da especificação anterior:
-  // patientId?: string;
-  // preferredPsychologistId?: string;
-  // preferredPsychologistName?: string;
-  // preferredDays?: string;
-  // preferredTimes?: string;
-  // notes?: string; // Motivo é o campo para observações agora
 }
 
 
@@ -236,4 +243,3 @@ export interface ProntuarioAppsScriptPayload {
   psicologo: ProntuarioGenerationDataPsicologo;
   data: ProntuarioGenerationDataData;
 }
-
