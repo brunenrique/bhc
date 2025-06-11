@@ -36,13 +36,6 @@ export default function PatientsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
-  const mapMockPsychologistIdToReal = (mockId: string | undefined, loggedInUser: typeof user): string | undefined => {
-    if (!loggedInUser || loggedInUser.role !== 'psychologist') return mockId;
-    if (mockId === 'psy1' && loggedInUser.name === 'Dr. Exemplo Silva') return loggedInUser.id;
-    if (mockId === 'psy2' && loggedInUser.name === 'Dra. Modelo Souza') return loggedInUser.id;
-    return mockId; // Return original if no match or not a psychologist
-  };
-
   useEffect(() => {
     let isMounted = true;
     const loadPatients = async () => {
@@ -57,22 +50,16 @@ export default function PatientsPage() {
         if (cachedPatients && cachedPatients.length > 0) {
           dataToSet = cachedPatients;
         } else {
-          dataToSet = [...mockPatientsData];
+          dataToSet = [...mockPatientsData]; // Use a copy
           // Persist initial mock data if cache was empty
           await cacheService.patients.setList(dataToSet);
         }
       } catch (error) {
-        dataToSet = [...mockPatientsData];
+        // console.warn("Error loading patients from cache:", error);
+        dataToSet = [...mockPatientsData]; // Use a copy on error
       }
       
       if (isMounted) {
-        // Always apply mapping if the user is a psychologist, regardless of cache status
-        if (user.role === 'psychologist') {
-            dataToSet = dataToSet.map(p => ({
-                ...p,
-                assignedTo: mapMockPsychologistIdToReal(p.assignedTo, user)
-            }));
-        }
         setPatients(dataToSet);
         setIsLoading(false);
       }
@@ -126,7 +113,6 @@ export default function PatientsPage() {
         return updatedPatientsList;
     });
     
-    // Ensure patient detail cache is also updated if editing
     if (selectedPatient && patientDataFromForm.id) {
       const updatedPatientDetail = {...selectedPatient, ...patientDataFromForm, updatedAt: new Date().toISOString()} as Patient;
       await cacheService.patients.setDetail(updatedPatientDetail.id, updatedPatientDetail);
@@ -139,14 +125,23 @@ export default function PatientsPage() {
   const filteredPatients = useMemo(() => {
     if (!user) return []; 
 
-    let displayPatients = patients;
-    // Filter by assignedTo only if the user is a psychologist and not an admin
-    // Admins should see all patients. Secretaries might also see all, or it depends on rules.
+    let patientsToFilter = patients;
+
     if (user.role === 'psychologist') {
-      displayPatients = displayPatients.filter(p => p.assignedTo === user.id);
+      patientsToFilter = patients.filter(p => {
+        // Direct assignment
+        if (p.assignedTo === user.id) return true;
+        // Mapping for mock psychologists by name
+        if (user.name === 'Dr. Exemplo Silva' && p.assignedTo === 'psy1') return true;
+        if (user.name === 'Dra. Modelo Souza' && p.assignedTo === 'psy2') return true;
+        // If the logged-in psychologist ID directly matches one of the other mock IDs
+        if (p.assignedTo === 'other-psy-uid' && user.id === 'other-psy-uid') return true; 
+        return false;
+      });
     }
+    // For other roles (admin, secretary), they see all patients before search term filtering
     
-    return displayPatients.filter(p => 
+    return patientsToFilter.filter(p => 
       p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (p.email && p.email.toLowerCase().includes(searchTerm.toLowerCase()))
     ).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
