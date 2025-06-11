@@ -27,7 +27,7 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <ThemeProvider
           attribute="class"
-          defaultTheme="system" // next-themes gerencia light/dark
+          defaultTheme="light" // Alterado de "system" para "light"
           enableSystem
           disableTransitionOnChange
         >
