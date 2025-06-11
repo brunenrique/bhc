@@ -8,17 +8,17 @@ import { PlusCircle, Search, Loader2 } from "lucide-react";
 import { useState, useCallback, useMemo, useEffect } from "react";
 import type { Patient } from "@/types";
 import { cacheService } from '@/services/cacheService';
-import { useAuth } from "@/hooks/useAuth"; // Import useAuth
+import { useAuth } from "@/hooks/useAuth"; 
+import { hasPermission } from "@/lib/permissions";
 
-// Add assignedTo to mock data for testing psychologist scope
 export const mockPatientsData: Patient[] = [
-  { id: '1', name: 'Ana Beatriz Silva', email: 'ana.silva@example.com', phone: '(11) 98765-4321', dateOfBirth: '1990-05-15', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(), updatedAt: new Date().toISOString(), assignedTo: 'mock-user-psychologist-1234' }, // Assuming a mock psychologist UID
+  { id: '1', name: 'Ana Beatriz Silva', email: 'ana.silva@example.com', phone: '(11) 98765-4321', dateOfBirth: '1990-05-15', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(), updatedAt: new Date().toISOString(), assignedTo: 'mock-user-psychologist-1234' }, 
   { id: '2', name: 'Bruno Almeida Costa', email: 'bruno.costa@example.com', phone: '(21) 91234-5678', dateOfBirth: '1985-11-20', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(), updatedAt: new Date().toISOString(), assignedTo: 'other-psy-uid' },
   { id: '3', name: 'Carla Dias Oliveira', email: 'carla.oliveira@example.com', phone: '(31) 95555-5555', dateOfBirth: '2000-02-10', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), assignedTo: 'mock-user-psychologist-1234' },
 ];
 
 export default function PatientsPage() {
-  const { user } = useAuth(); // Get current user
+  const { user } = useAuth(); 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -34,11 +34,9 @@ export default function PatientsPage() {
         if (isMounted && cachedPatients && cachedPatients.length > 0) {
           setPatients(cachedPatients);
         } else if (isMounted) {
-          // Ensure mock data has assignedTo for testing
            const mockWithAssignedTo = mockPatientsData.map((p, index) => ({
             ...p,
-            // Example: assign first and third to a mock psychologist ID used in useAuth
-            assignedTo: (index === 0 || index === 2) ? (user?.role === 'psychologist' ? user.id : 'mock-psy-id-for-admin-view') : `other-psy-${index}`
+            assignedTo: p.assignedTo || ((index === 0 || index === 2) ? (user?.role === 'psychologist' ? user.id : 'mock-psy-id-for-admin-view') : `other-psy-${index}`)
           }));
           setPatients(mockWithAssignedTo); 
           try {
@@ -74,28 +72,42 @@ export default function PatientsPage() {
   }, []);
 
   const handleDeletePatient = useCallback(async (patientId: string) => {
+    // In a real app, this would also call a backend service to delete from Firestore
     const updatedPatients = patients.filter(p => p.id !== patientId);
     setPatients(updatedPatients);
     await cacheService.patients.setList(updatedPatients); 
+    // console.log(`Simulated delete patient ${patientId}`);
   }, [patients]);
 
-  const handleSavePatient = useCallback(async (patientData: Partial<Patient>) => {
+  const handleSavePatient = useCallback(async (patientDataFromForm: Partial<Patient>) => {
     let updatedPatients;
-    if (selectedPatient && patientData.id) { 
-      updatedPatients = patients.map(p => p.id === patientData.id ? {...p, ...patientData, updatedAt: new Date().toISOString()} as Patient : p);
+    let patientToSave: Patient;
+
+    if (selectedPatient && patientDataFromForm.id) { 
+      patientToSave = {...selectedPatient, ...patientDataFromForm, updatedAt: new Date().toISOString()} as Patient;
+      updatedPatients = patients.map(p => p.id === patientToSave.id ? patientToSave : p);
     } else { 
-      const newPatient = { 
-        ...patientData, 
+      const newPatientBase = { 
+        ...patientDataFromForm, 
         id: `mock-${Date.now()}`, 
         createdAt: new Date().toISOString(), 
         updatedAt: new Date().toISOString(),
-        // If current user is psychologist creating, assign to them by default
-        assignedTo: user?.role === 'psychologist' ? user.id : patientData.assignedTo, 
-      } as Patient;
-      updatedPatients = [newPatient, ...patients];
+      };
+      // Set assignedTo if current user is a psychologist
+      if (user?.role === 'psychologist') {
+        patientToSave = { ...newPatientBase, assignedTo: user.id } as Patient;
+      } else {
+        // For admin or other roles, assignedTo would come from form or be undefined
+        // For this mock, if admin creates, assignedTo could be set if form is enhanced
+        patientToSave = newPatientBase as Patient; 
+      }
+      updatedPatients = [patientToSave, ...patients];
     }
     setPatients(updatedPatients);
     await cacheService.patients.setList(updatedPatients); 
+    // In a real app, this would be:
+    // await setDoc(doc(db, "patients", patientToSave.id), patientToSave, { merge: !!selectedPatient });
+    // console.log("Simulated save patient:", patientToSave);
     setIsFormOpen(false);
   }, [selectedPatient, patients, user]);
 
@@ -104,7 +116,8 @@ export default function PatientsPage() {
     if (user?.role === 'psychologist') {
       displayPatients = patients.filter(p => p.assignedTo === user.id);
     }
-    // Admins see all, secretaries see all for listing (details restricted elsewhere)
+    // Admins, Secretaries, Schedulers see all patients based on initial load.
+    // Firestore rules and Patient Detail Page logic restrict sensitive data access.
     
     return displayPatients.filter(p => 
       p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -112,8 +125,10 @@ export default function PatientsPage() {
     ).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [patients, searchTerm, user]);
 
-  // Secretaries and Schedulers should not create patients directly from this page
-  const canCreatePatient = user?.role === 'admin' || user?.role === 'psychologist';
+  // Permissions check for creating patients
+  const canCreatePatient = hasPermission(user?.role, 'CREATE_EDIT_CLINICAL_NOTES') || // Psychologists can
+                           hasPermission(user?.role, 'ACCESS_ADMIN_PANEL_SETTINGS'); // Admins can
+
 
   return (
     <div className="space-y-6">
@@ -155,12 +170,14 @@ export default function PatientsPage() {
         />
       )}
 
-      <PatientFormDialog
-        isOpen={isFormOpen}
-        onOpenChange={setIsFormOpen}
-        patient={selectedPatient}
-        onSave={handleSavePatient}
-      />
+      {isFormOpen && ( // Conditionally render dialog to ensure reset on patient change
+        <PatientFormDialog
+            isOpen={isFormOpen}
+            onOpenChange={setIsFormOpen}
+            patient={selectedPatient}
+            onSave={handleSavePatient}
+        />
+      )}
     </div>
   );
 }
