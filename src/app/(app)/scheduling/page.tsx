@@ -7,13 +7,14 @@ import { WaitingListEntryDialog } from "@/features/scheduling/components/Waiting
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PlusCircle, Loader2, WifiOff, Wifi, ListPlus } from "lucide-react";
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect } from "react";
 import type { Session, WaitingListEntry } from "@/types";
 import { addDays, addWeeks, addMonths, parseISO, subDays } from 'date-fns';
 import { cacheService } from '@/services/cacheService';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { hasPermission } from "@/lib/permissions";
+import { formatPhoneNumberToE164 } from "@/utils/formatter";
 
 const initialMockSessions: Session[] = [
   { id: 'sched1_ana_fut', patientId: '1', patientName: 'Ana Beatriz Silva', psychologistId: 'psy1', psychologistName: 'Dr. Exemplo Silva', startTime: new Date(new Date().setDate(new Date().getDate() + 2)).toISOString(), endTime: new Date(new Date(new Date().setDate(new Date().getDate() + 2)).setHours(new Date().getHours() + 1)).toISOString(), status: 'scheduled', recurring: 'weekly' },
@@ -25,14 +26,17 @@ const initialMockSessions: Session[] = [
   { id: 'sched7_carla_past_cancel', patientId: '3', patientName: 'Carla Dias Oliveira', psychologistId: 'psy2', psychologistName: 'Dra. Modelo Souza', startTime: subDays(new Date(), 12).toISOString(), endTime: new Date(subDays(new Date(), 12).getTime() + 60*60*1000).toISOString(), status: 'cancelled', notes: "Paciente remarcou." },
 ];
 
+// Updated mock data to match new WaitingListEntry structure
 const initialMockWaitingList: WaitingListEntry[] = [
-  { id: 'wl1', patientName: 'Mariana Lima', contactPhone: '(11) 99999-0001', reason: 'Primeira consulta, ansiedade', addedAt: subDays(new Date(), 2).toISOString(), status: 'waiting', preferredPsychologistName: 'Dra. Modelo Souza', preferredDays: 'Ter/Qui (Tarde)'},
-  { id: 'wl2', patientName: 'João Pedro Santos', contactPhone: '(21) 98888-0002', reason: 'Acompanhamento', addedAt: subDays(new Date(), 5).toISOString(), status: 'contacted', preferredTimes: 'Após 18h'},
-  { id: 'wl3', patientName: 'Sofia Oliveira', contactPhone: '(31) 97777-0003', reason: 'Retorno', addedAt: subDays(new Date(), 1).toISOString(), status: 'waiting'},
+  { id: 'wl1', nomeCompleto: 'Mariana F. Lima', cpf: '111.222.333-44', contato: formatPhoneNumberToE164('(11) 99999-0001'), motivo: 'Primeira consulta, ansiedade', prioridade: 'normal', criadoEm: subDays(new Date(), 2).toISOString(), criadoPor: 'mockAdminUID', status: 'pendente'},
+  { id: 'wl2', nomeCompleto: 'João Pedro S. Santos', cpf: '222.333.444-55', contato: formatPhoneNumberToE164('(21) 98888-0002'), motivo: 'Acompanhamento', prioridade: 'normal', criadoEm: subDays(new Date(), 5).toISOString(), criadoPor: 'mockPsychologistUID', status: 'pendente'}, // Changed to pendente to test agendado flow
+  { id: 'wl3', nomeCompleto: 'Sofia C. Oliveira', cpf: '333.444.555-66', contato: formatPhoneNumberToE164('(31) 97777-0003'), motivo: 'Retorno', prioridade: 'urgente', criadoEm: subDays(new Date(), 1).toISOString(), criadoPor: 'mockSecretaryUID', status: 'pendente'},
 ];
 
 export default function SchedulingPage() {
   const { user } = useAuth();
+  const { toast } = useToast();
+  
   const [isSessionFormOpen, setIsSessionFormOpen] = useState(false);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
@@ -44,7 +48,6 @@ export default function SchedulingPage() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isOnline, setIsOnline] = useState(true); 
-  const { toast } = useToast();
 
   useEffect(() => {
     let isMounted = true;
@@ -149,7 +152,7 @@ export default function SchedulingPage() {
   }, [isOnline, toast]);
 
   const handleNewSession = useCallback(() => {
-    if (!hasPermission(user?.role, 'SCHEDULE_FROM_WAITING_LIST') && !hasPermission(user?.role, 'CREATE_EDIT_CLINICAL_NOTES')) { // broader check for general scheduling
+    if (!hasPermission(user?.role, 'SCHEDULE_FROM_WAITING_LIST') && !hasPermission(user?.role, 'CREATE_EDIT_CLINICAL_NOTES')) {
         toast({ title: "Acesso Negado", description: "Você não tem permissão para criar novas sessões.", variant: "destructive"});
         return;
     }
@@ -158,7 +161,7 @@ export default function SchedulingPage() {
   }, [user, toast]);
 
   const handleEditSession = useCallback((session: Session) => {
-    if (!hasPermission(user?.role, 'SCHEDULE_FROM_WAITING_LIST') && !hasPermission(user?.role, 'CREATE_EDIT_CLINICAL_NOTES')) { // broader check for general scheduling
+    if (!hasPermission(user?.role, 'SCHEDULE_FROM_WAITING_LIST') && !hasPermission(user?.role, 'CREATE_EDIT_CLINICAL_NOTES')) {
         toast({ title: "Acesso Negado", description: "Você não tem permissão para editar sessões.", variant: "destructive"});
         return;
     }
@@ -181,9 +184,13 @@ export default function SchedulingPage() {
       '1': 'Ana Beatriz Silva', 
       '2': 'Bruno Almeida Costa', 
       '3': 'Carla Dias Oliveira',
-      'p1': 'Ana Silva', 
-      'p2': 'Bruno Costa', 
     };
+    // For WaitingList names that might not have an ID yet
+    const getPatientName = (idOrName: string | undefined) => {
+        if (!idOrName) return 'Paciente Desconhecido';
+        return patientNameMap[idOrName] || idOrName;
+    }
+
     const psychologistNameMap: Record<string, string> = {
       'psy1': 'Dr. Exemplo Silva',
       'psy2': 'Dra. Modelo Souza',
@@ -193,7 +200,7 @@ export default function SchedulingPage() {
       sessionToSave = { 
         ...selectedSession, 
         ...sessionData,
-        patientName: sessionData.patientId ? patientNameMap[sessionData.patientId] || selectedSession.patientName : selectedSession.patientName,
+        patientName: getPatientName(sessionData.patientId || selectedSession.patientName),
         psychologistName: sessionData.psychologistId ? psychologistNameMap[sessionData.psychologistId] || selectedSession.psychologistName : selectedSession.psychologistName,
       } as Session;
       updatedSessionsList = sessions.map(s => (s.id === sessionToSave.id ? sessionToSave : s));
@@ -201,7 +208,7 @@ export default function SchedulingPage() {
       const mainNewSession = { 
         ...sessionData, 
         id: `sess-${Date.now()}`, 
-        patientName: sessionData.patientId ? patientNameMap[sessionData.patientId] : 'Novo Paciente', 
+        patientName: getPatientName(sessionData.patientId || sessionData.patientName), 
         psychologistName: sessionData.psychologistId ? psychologistNameMap[sessionData.psychologistId] : 'Psicólogo Desconhecido', 
       } as Session;
       
@@ -272,38 +279,43 @@ export default function SchedulingPage() {
   }, [user, toast]);
 
   const handleEditWaitingListEntry = useCallback((entry: WaitingListEntry) => {
-    // Assume edit is allowed if user can see the table, specific edit permission not granularly defined in matrix for now
     setEditingWaitingListEntry(entry);
     setIsWaitingListEntryDialogOpen(true);
   }, []);
   
-  const handleSaveWaitingListEntry = useCallback(async (entryData: Partial<WaitingListEntry>) => {
+  const handleSaveWaitingListEntry = useCallback(async (entryData: Omit<WaitingListEntry, 'id' | 'criadoEm' | 'criadoPor'>, id?: string) => {
+    if (!user?.id) {
+        toast({ title: "Erro de Autenticação", description: "Não foi possível identificar o usuário logado.", variant: "destructive" });
+        return;
+    }
     let updatedList;
-    if (editingWaitingListEntry && entryData.id) {
-      updatedList = waitingList.map(e => e.id === entryData.id ? { ...e, ...entryData } as WaitingListEntry : e);
+    if (id && editingWaitingListEntry) { // Editing existing entry
+      const updatedEntry = { ...editingWaitingListEntry, ...entryData };
+      updatedList = waitingList.map(e => e.id === id ? updatedEntry : e);
       toast({ title: "Entrada Atualizada", description: "Dados da lista de espera atualizados." });
-    } else {
+    } else { // Creating new entry
       const newEntry: WaitingListEntry = {
         id: `wl-${Date.now()}`,
-        addedAt: new Date().toISOString(),
-        status: 'waiting',
+        criadoEm: new Date().toISOString(),
+        criadoPor: user.id,
+        status: 'pendente', // Default status for new entries
         ...entryData,
-      } as WaitingListEntry;
+      };
       updatedList = [newEntry, ...waitingList];
-      toast({ title: "Adicionado à Lista de Espera", description: `${newEntry.patientName} foi adicionado(a).` });
+      toast({ title: "Adicionado à Lista de Espera", description: `${newEntry.nomeCompleto} foi adicionado(a).` });
     }
-    setWaitingList(updatedList);
+    setWaitingList(updatedList.sort((a,b) => parseISO(b.criadoEm).getTime() - parseISO(a.criadoEm).getTime()));
     await cacheService.waitingList.setList(updatedList);
     setIsWaitingListEntryDialogOpen(false);
     setEditingWaitingListEntry(null);
-  }, [editingWaitingListEntry, waitingList, toast]);
+  }, [editingWaitingListEntry, waitingList, toast, user]);
 
   const handleDeleteWaitingListEntry = useCallback(async (entryId: string) => {
     const entryToDelete = waitingList.find(e => e.id === entryId);
     const updatedList = waitingList.filter(e => e.id !== entryId);
     setWaitingList(updatedList);
     await cacheService.waitingList.setList(updatedList);
-    toast({ title: "Removido da Lista", description: `${entryToDelete?.patientName || 'A entrada'} foi removida.`, variant: "destructive" });
+    toast({ title: "Removido da Lista", description: `${entryToDelete?.nomeCompleto || 'A entrada'} foi removida.`, variant: "destructive" });
   }, [waitingList, toast]);
 
   const handleChangeWaitingListStatus = useCallback(async (entryId: string, status: WaitingListEntry['status']) => {
@@ -311,9 +323,9 @@ export default function SchedulingPage() {
     if (!entryToUpdate) return;
 
     const updatedList = waitingList.map(e => e.id === entryId ? { ...e, status } : e);
-    setWaitingList(updatedList);
+    setWaitingList(updatedList.sort((a,b) => parseISO(b.criadoEm).getTime() - parseISO(a.criadoEm).getTime()));
     await cacheService.waitingList.setList(updatedList);
-    toast({ title: "Status Atualizado", description: `Status de ${entryToUpdate.patientName} alterado para "${status}".` });
+    toast({ title: "Status Atualizado", description: `Status de ${entryToUpdate.nomeCompleto} alterado para "${status}".` });
   }, [waitingList, toast]);
   
   const handleScheduleFromWaitingList = useCallback((entry: WaitingListEntry) => {
@@ -323,20 +335,21 @@ export default function SchedulingPage() {
     }
     setSelectedSession({
         id: '', 
-        patientName: entry.patientName,
-        patientId: entry.patientId || '', 
-        psychologistId: entry.preferredPsychologistId || '',
-        psychologistName: entry.preferredPsychologistName || '',
+        patientName: entry.nomeCompleto, // Use nomeCompleto for prefill
+        // patientId: entry.patientId || '', // If we had a patient record ID linked
         startTime: new Date().toISOString(), 
         endTime: new Date(new Date().getTime() + 60*60*1000).toISOString(),
         status: 'scheduled',
-        notes: `Agendado a partir da lista de espera. Motivo: ${entry.reason || 'N/A'}`,
+        notes: `Agendado a partir da lista de espera. Paciente: ${entry.nomeCompleto}, CPF: ${entry.cpf}, Contato: ${entry.contato}. Motivo na lista: ${entry.motivo || 'N/A'}`,
     });
     setIsSessionFormOpen(true);
-    handleChangeWaitingListStatus(entry.id, 'scheduled');
+    // Change status to 'agendado' after opening the dialog, or upon successful session save
+    // For now, let's optimistically change it here. User can cancel session creation.
+    // A better flow might be to change status *after* session is confirmed.
+    handleChangeWaitingListStatus(entry.id, 'agendado');
   }, [user, toast, handleChangeWaitingListStatus]);
 
-  const canCreateNewSession = hasPermission(user?.role, 'SCHEDULE_FROM_WAITING_LIST') || hasPermission(user?.role, 'CREATE_EDIT_CLINICAL_NOTES'); // Broader perm for creating general sessions
+  const canCreateNewSession = hasPermission(user?.role, 'SCHEDULE_FROM_WAITING_LIST') || hasPermission(user?.role, 'CREATE_EDIT_CLINICAL_NOTES');
   const canAddWaitingList = hasPermission(user?.role, 'ADD_PATIENT_TO_WAITING_LIST');
   
   return (

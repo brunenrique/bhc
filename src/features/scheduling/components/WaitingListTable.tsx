@@ -13,18 +13,23 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { WaitingListEntry, UserRole } from "@/types";
-import { MoreHorizontal, Edit, Trash2, CalendarPlus, UserCheck, PhoneCall, Clock4 } from "lucide-react";
+import { MoreHorizontal, Edit, Trash2, CalendarPlus, UserCheck, PhoneCall, Clock4, ShieldAlert, AlertTriangle, CalendarClock } from "lucide-react";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
   DropdownMenuLabel, 
   DropdownMenuSeparator, 
-  DropdownMenuTrigger 
+  DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuPortal,
+  DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { hasPermission } from "@/lib/permissions";
+import { formatCPF } from "@/utils/cpfValidator";
 
 interface WaitingListTableProps {
   entries: WaitingListEntry[];
@@ -36,10 +41,14 @@ interface WaitingListTableProps {
 }
 
 const statusMap: Record<WaitingListEntry["status"], { label: string; icon?: React.ElementType; color: string; badgeVariant: "default" | "secondary" | "outline" | "destructive" }> = {
-  waiting: { label: "Aguardando", icon: Clock4, color: "text-yellow-600 border-yellow-500 bg-yellow-500/10", badgeVariant: "outline" },
-  contacted: { label: "Contatado", icon: PhoneCall, color: "text-blue-600 border-blue-500 bg-blue-500/10", badgeVariant: "outline" },
-  scheduled: { label: "Agendado", icon: UserCheck, color: "text-green-600 border-green-500 bg-green-500/10", badgeVariant: "secondary" },
-  archived: { label: "Arquivado", color: "text-gray-500 border-gray-400 bg-gray-400/10", badgeVariant: "outline" },
+  pendente: { label: "Pendente", icon: Clock4, color: "text-yellow-600 border-yellow-500 bg-yellow-500/10", badgeVariant: "outline" },
+  agendado: { label: "Agendado", icon: UserCheck, color: "text-green-600 border-green-500 bg-green-500/10", badgeVariant: "secondary" },
+  removido: { label: "Removido", icon: Trash2, color: "text-gray-500 border-gray-400 bg-gray-400/10", badgeVariant: "outline" },
+};
+
+const priorityMap: Record<WaitingListEntry["prioridade"], { label: string; icon?: React.ElementType; color: string; badgeVariant: "default" | "secondary" | "outline" | "destructive" }> = {
+  normal: { label: "Normal", icon: CalendarClock, color: "text-blue-600 border-blue-500 bg-blue-500/10", badgeVariant: "outline" },
+  urgente: { label: "Urgente", icon: AlertTriangle, color: "text-red-600 border-red-500 bg-red-500/10", badgeVariant: "destructive"},
 };
 
 
@@ -49,10 +58,8 @@ export const WaitingListTable: React.FC<WaitingListTableProps> = ({ entries, onS
   }
 
   const canSchedule = hasPermission(currentUserRole, 'SCHEDULE_FROM_WAITING_LIST');
-  // Assuming admins and psychologists can also edit/delete if they can add/schedule
-  const canEdit = hasPermission(currentUserRole, 'ADD_PATIENT_TO_WAITING_LIST');
-  const canDelete = hasPermission(currentUserRole, 'ADD_PATIENT_TO_WAITING_LIST');
-  // All roles with access to the table can change status (scheduler, secretary, psychologist, admin)
+  const canEdit = hasPermission(currentUserRole, 'ADD_PATIENT_TO_WAITING_LIST'); // Assuming edit uses same perm as add for simplicity
+  const canDelete = hasPermission(currentUserRole, 'ADD_PATIENT_TO_WAITING_LIST'); // Assuming delete uses same perm as add for simplicity
   const canChangeStatus = hasPermission(currentUserRole, 'VIEW_WAITING_LIST_PATIENTS');
 
 
@@ -62,37 +69,41 @@ export const WaitingListTable: React.FC<WaitingListTableProps> = ({ entries, onS
         <TableHeader>
           <TableRow>
             <TableHead>Paciente</TableHead>
-            <TableHead className="hidden md:table-cell">Telefone</TableHead>
+            <TableHead className="hidden sm:table-cell">CPF</TableHead>
+            <TableHead className="hidden md:table-cell">Contato</TableHead>
             <TableHead className="hidden lg:table-cell">Adicionado em</TableHead>
+            <TableHead>Prioridade</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead className="hidden md:table-cell">Preferências</TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {entries.map((entry) => {
-            const statusInfo = statusMap[entry.status] || statusMap.waiting;
+            const statusInfo = statusMap[entry.status] || statusMap.pendente;
+            const priorityInfo = priorityMap[entry.prioridade] || priorityMap.normal;
             return (
               <TableRow key={entry.id} className="hover:bg-muted/50 transition-colors">
                 <TableCell>
-                  <div className="font-medium">{entry.patientName}</div>
-                  <div className="text-xs text-muted-foreground md:hidden">{entry.contactPhone || 'N/A'}</div>
+                  <div className="font-medium">{entry.nomeCompleto}</div>
+                  <div className="text-xs text-muted-foreground sm:hidden">{formatCPF(entry.cpf)}</div>
+                  <div className="text-xs text-muted-foreground md:hidden">{entry.contato}</div>
                 </TableCell>
-                <TableCell className="hidden md:table-cell">{entry.contactPhone || 'N/A'}</TableCell>
-                <TableCell className="hidden lg:table-cell">
-                  {format(parseISO(entry.addedAt), "dd/MM/yy HH:mm", { locale: ptBR })}
+                <TableCell className="hidden sm:table-cell text-xs">{formatCPF(entry.cpf)}</TableCell>
+                <TableCell className="hidden md:table-cell text-xs">{entry.contato}</TableCell>
+                <TableCell className="hidden lg:table-cell text-xs">
+                  {format(parseISO(entry.criadoEm), "dd/MM/yy HH:mm", { locale: ptBR })}
+                </TableCell>
+                <TableCell>
+                    <Badge variant={priorityInfo.badgeVariant} className={`capitalize ${priorityInfo.color}`}>
+                      {priorityInfo.icon && <priorityInfo.icon className={`mr-1.5 h-3.5 w-3.5`} />}
+                      {priorityInfo.label}
+                    </Badge>
                 </TableCell>
                 <TableCell>
                     <Badge variant={statusInfo.badgeVariant} className={`capitalize ${statusInfo.color}`}>
                       {statusInfo.icon && <statusInfo.icon className={`mr-1.5 h-3.5 w-3.5`} />}
                       {statusInfo.label}
                     </Badge>
-                </TableCell>
-                <TableCell className="hidden md:table-cell text-xs text-muted-foreground max-w-[200px] truncate" title={`${entry.preferredPsychologistName ? `Psic.: ${entry.preferredPsychologistName}. ` : ''}${entry.preferredDays ? `Dias: ${entry.preferredDays}. ` : ''}${entry.preferredTimes ? `Hor.: ${entry.preferredTimes}. ` : ''}${entry.reason || ''}`}>
-                  {entry.preferredPsychologistName && <div>Psic.: {entry.preferredPsychologistName}</div>}
-                  {entry.preferredDays && <div>Dias: {entry.preferredDays}</div>}
-                  {entry.preferredTimes && <div>Hor.: {entry.preferredTimes}</div>}
-                  {entry.reason && <div className="italic">Motivo: {entry.reason}</div>}
                 </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
@@ -105,7 +116,7 @@ export const WaitingListTable: React.FC<WaitingListTableProps> = ({ entries, onS
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Ações na Lista</DropdownMenuLabel>
                       {canSchedule && (
-                        <DropdownMenuItem onClick={() => onSchedule(entry)} disabled={entry.status === 'scheduled' || entry.status === 'archived'}>
+                        <DropdownMenuItem onClick={() => onSchedule(entry)} disabled={entry.status === 'agendado' || entry.status === 'removido'}>
                             <CalendarPlus className="mr-2 h-4 w-4" /> Agendar Sessão
                         </DropdownMenuItem>
                       )}
@@ -114,23 +125,33 @@ export const WaitingListTable: React.FC<WaitingListTableProps> = ({ entries, onS
                             <Edit className="mr-2 h-4 w-4" /> Editar Entrada
                         </DropdownMenuItem>
                       )}
+                      
                       { (canSchedule || canEdit) && <DropdownMenuSeparator /> }
                       
                       {canChangeStatus && (
-                        <>
-                            <DropdownMenuLabel>Alterar Status</DropdownMenuLabel>
-                            {Object.entries(statusMap).map(([statusKey, statusValue]) => (
-                                <DropdownMenuItem 
-                                key={statusKey} 
-                                onClick={() => onChangeStatus(entry.id, statusKey as WaitingListEntry['status'])}
-                                disabled={entry.status === statusKey}
-                                className={entry.status === statusKey ? "bg-muted" : ""}
-                                >
-                                {statusValue.icon && <statusValue.icon className={`mr-2 h-4 w-4 ${statusValue.color.split(' ')[0]}`} />}
-                                Marcar como {statusValue.label}
-                                </DropdownMenuItem>
-                            ))}
-                        </>
+                        <DropdownMenuSub>
+                            <DropdownMenuSubTrigger>
+                                <Edit className="mr-2 h-4 w-4" />
+                                <span>Alterar Status</span>
+                            </DropdownMenuSubTrigger>
+                            <DropdownMenuPortal>
+                                <DropdownMenuSubContent>
+                                     <DropdownMenuLabel>Novo Status</DropdownMenuLabel>
+                                     <DropdownMenuSeparator/>
+                                    {Object.entries(statusMap).map(([statusKey, statusValue]) => (
+                                        <DropdownMenuItem 
+                                        key={statusKey} 
+                                        onClick={() => onChangeStatus(entry.id, statusKey as WaitingListEntry['status'])}
+                                        disabled={entry.status === statusKey}
+                                        className={entry.status === statusKey ? "bg-muted" : ""}
+                                        >
+                                        {statusValue.icon && <statusValue.icon className={`mr-2 h-4 w-4 ${statusValue.color.split(' ')[0]}`} />}
+                                        {statusValue.label}
+                                        </DropdownMenuItem>
+                                    ))}
+                                </DropdownMenuSubContent>
+                            </DropdownMenuPortal>
+                        </DropdownMenuSub>
                       )}
                       {canDelete && (
                         <>

@@ -174,17 +174,21 @@ export interface EvolutionDataPoint {
 
 export interface WaitingListEntry {
   id: string;
-  patientName: string;
-  patientId?: string; 
-  contactPhone?: string;
-  reason?: string; 
-  preferredPsychologistId?: string;
-  preferredPsychologistName?: string;
-  preferredDays?: string; 
-  preferredTimes?: string; 
-  addedAt: string; // ISO Date string
-  status: 'waiting' | 'contacted' | 'scheduled' | 'archived';
-  notes?: string;
+  nomeCompleto: string;       // Nome completo conforme documento oficial
+  cpf: string;                // formato: 999.999.999-99 (validação obrigatória)
+  contato: string;            // telefone no formato internacional +5511999999999
+  motivo?: string;             // opcional ou texto livre
+  prioridade: "urgente" | "normal";
+  criadoEm: string;           // ISO Date string (Firebase Timestamp on server)
+  criadoPor: string;          // UID do usuário que adicionou
+  status: "pendente" | "agendado" | "removido";
+  // Campos removidos da especificação anterior:
+  // patientId?: string;
+  // preferredPsychologistId?: string;
+  // preferredPsychologistName?: string;
+  // preferredDays?: string;
+  // preferredTimes?: string;
+  // notes?: string; // Motivo é o campo para observações agora
 }
 
 
