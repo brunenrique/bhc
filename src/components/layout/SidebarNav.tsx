@@ -20,7 +20,8 @@ import {
   ListTodo, 
   BookOpenText,
   AreaChart, 
-  ExternalLink, // Adicionado ExternalLink
+  ExternalLink,
+  Wand2, // Adicionado ícone para Insights IA
   LucideIcon,
 } from "lucide-react";
 import { WithRole } from '@/components/auth/WithRole';
@@ -32,7 +33,7 @@ interface NavItem {
   icon: LucideIcon;
   roles?: UserRole[]; 
   anchor?: boolean;
-  external?: boolean; // Nova propriedade para links externos
+  external?: boolean;
 }
 
 const navItems: NavItem[] = [
@@ -42,6 +43,7 @@ const navItems: NavItem[] = [
   { href: "/patients", label: "Pacientes", icon: Users, roles: ['admin', 'psychologist', 'secretary'] }, 
   { href: "/assessments", label: "Avaliações", icon: ClipboardList, roles: ['admin', 'psychologist'] },
   { href: "/documents", label: "Documentos", icon: FileText, roles: ['admin', 'psychologist', 'secretary'] }, 
+  { href: "/ai-insights", label: "Insights IA", icon: Wand2, roles: ['admin', 'psychologist'] }, // Novo item
   { href: "/whatsapp-reminders", label: "Lembretes WhatsApp", icon: MessageSquare, roles: ['admin', 'psychologist', 'secretary'] },
   { 
     href: "https://intranet.santanadeparnaiba.sp.gov.br/SIGEM/login", 
@@ -64,7 +66,6 @@ export function SidebarNav() {
       if (typeof window !== 'undefined' && window.location.hash === `#${anchor}` && currentPath === basePath) return true;
       return currentPath === basePath && currentPath.endsWith(itemHref); 
     }
-    // Para links externos, isActive será sempre false, o que é correto.
     if (itemHref.startsWith('http://') || itemHref.startsWith('https://')) {
       return false;
     }
@@ -117,7 +118,6 @@ export function SidebarNav() {
         }
         return <SidebarMenuItem key={item.href}>{menuItemContent}</SidebarMenuItem>;
       })}
-      {/* Admin Metrics specific link */}
       <SidebarMenuItem key="/admin/metrics">
         <WithRole role="admin">
           <SidebarMenuButton

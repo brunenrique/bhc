@@ -1,2 +1,6 @@
-// This file is intentionally left empty as it's being deleted.
-// The build system will handle the removal.
+import { config } from 'dotenv';
+config();
+
+import './flows/generate-session-insights'; // Importação do fluxo de insights de sessão
+import './flows/analyze-complaints-flow'; 
+import './flows/analyze-correlation-flow';

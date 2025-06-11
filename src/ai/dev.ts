@@ -2,6 +2,6 @@
 import { config } from 'dotenv';
 config();
 
-// The import for generate-session-insights.ts has been removed as the file is deleted.
-import './flows/analyze-complaints-flow'; // Import the new flow
-import './flows/analyze-correlation-flow'; // Import the correlation analysis flow
+import './flows/generate-session-insights'; // Importação do fluxo de insights de sessão
+import './flows/analyze-complaints-flow'; 
+import './flows/analyze-correlation-flow'; 
