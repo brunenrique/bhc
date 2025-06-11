@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    /* Tema Padrão (Light) */
+    /* Tema Padrão (Light) - Azul/Lavanda */
     --background: 207 100% 97%; /* Very Light Blue - #E3F2FD */
     --foreground: 210 40% 15%; /* Dark Blue/Grey */
 
@@ -53,7 +53,7 @@
   }
 
   .dark {
-    /* Tema Padrão (Dark) */
+    /* Tema Padrão (Dark) - Azul/Lavanda */
     --background: 210 30% 12%; /* Dark Blue */
     --foreground: 210 40% 95%; /* Light Gray/Blue */
 
@@ -100,13 +100,17 @@
   }
 
   /*
-    Tema Moderno Alternativo
-    Para ativar, adicione a classe "theme-modern" ao elemento <html> em src/app/layout.tsx.
-    Exemplo: <html lang="pt-BR" suppressHydrationWarning className="theme-modern">
+    Para ativar um tema específico, adicione a classe correspondente 
+    ao elemento <html> em src/app/layout.tsx.
+    Exemplos:
+    <html lang="pt-BR" suppressHydrationWarning className="theme-modern">
+    <html lang="pt-BR" suppressHydrationWarning className="theme-light-gray">
+    <html lang="pt-BR" suppressHydrationWarning className="theme-lilac">
     O ThemeProvider existente (next-themes) continuará a gerenciar os modos light/dark.
   */
+
+  /* === TEMA MODERNO (TEAL/LARANJA) === */
   .theme-modern {
-    /* Tema Moderno (Light) - sobrescreve :root quando .theme-modern está presente */
     --background: 220 20% 98%;      /* Cinza muito claro e frio */
     --foreground: 220 15% 20%;      /* Cinza escuro e frio */
     --muted: 220 20% 92%;
@@ -142,7 +146,6 @@
   }
 
   .dark.theme-modern {
-    /* Tema Moderno (Dark) - sobrescreve .dark e .theme-modern quando ambos estão presentes */
     --background: 220 20% 10%;      /* Cinza-azulado escuro e frio */
     --foreground: 220 20% 90%;      /* Cinza claro e frio */
     --muted: 220 20% 18%;
@@ -169,11 +172,147 @@
 
     --sidebar-background: 220 20% 8%;
     --sidebar-foreground: 220 20% 85%;
-    /* sidebar-primary, etc., herdarão de .theme-modern se não forem sobrescritos aqui, usando as vars modernas */
     --sidebar-accent: 220 20% 15%;
     --sidebar-accent-foreground: 220 20% 88%;
     --sidebar-border: 220 20% 20%;
   }
+
+  /* === TEMA CINZA CLARO === */
+  .theme-light-gray {
+    --background: 220 12% 96%;
+    --foreground: 220 10% 25%;
+    --muted: 220 12% 90%;
+    --muted-foreground: 220 10% 50%;
+    --popover: 220 12% 99%;
+    --popover-foreground: 220 10% 25%;
+    --card: 220 12% 98%;
+    --card-foreground: 220 10% 25%;
+    --border: 220 10% 85%;
+    --input: 220 10% 92%;
+    --primary: 210 60% 55%; /* Azul Acinzentado Médio */
+    --primary-foreground: 210 100% 98%;
+    --secondary: 220 10% 88%; /* Cinza Claro */
+    --secondary-foreground: 220 10% 30%;
+    --accent: 160 50% 60%; /* Verde-água Suave */
+    --accent-foreground: 160 100% 15%;
+    --ring: 210 60% 50%;
+
+    --chart-1: 210 55% 60%;
+    --chart-2: 160 45% 65%;
+    --chart-3: 200 50% 60%;
+    --chart-4: 30 50% 60%;
+    --chart-5: 0 40% 65%;
+
+    --sidebar-background: 220 15% 94%;
+    --sidebar-foreground: 220 10% 30%;
+    --sidebar-primary: var(--primary);
+    --sidebar-primary-foreground: var(--primary-foreground);
+    --sidebar-accent: 220 15% 88%;
+    --sidebar-accent-foreground: 220 10% 25%;
+    --sidebar-border: 220 10% 80%;
+    --sidebar-ring: var(--ring);
+  }
+
+  .dark.theme-light-gray {
+    --background: 220 10% 15%;
+    --foreground: 220 10% 85%;
+    --muted: 220 10% 22%;
+    --muted-foreground: 220 10% 60%;
+    --popover: 220 10% 12%;
+    --popover-foreground: 220 10% 85%;
+    --card: 220 10% 12%;
+    --card-foreground: 220 10% 85%;
+    --border: 220 10% 30%;
+    --input: 220 10% 25%;
+    --primary: 210 55% 65%; /* Azul Acinzentado Mais Brilhante */
+    --primary-foreground: 210 100% 10%;
+    --secondary: 220 10% 25%; /* Cinza Escuro */
+    --secondary-foreground: 220 10% 80%;
+    --accent: 160 45% 70%; /* Verde-água Mais Brilhante */
+    --accent-foreground: 160 100% 15%;
+    --ring: 210 55% 60%;
+
+    --chart-1: 210 50% 70%;
+    --chart-2: 160 40% 75%;
+    --chart-3: 200 45% 70%;
+    --chart-4: 30 45% 70%;
+    --chart-5: 0 35% 75%;
+
+    --sidebar-background: 220 10% 10%;
+    --sidebar-foreground: 220 10% 80%;
+    --sidebar-accent: 220 10% 20%;
+    --sidebar-accent-foreground: 220 10% 85%;
+    --sidebar-border: 220 10% 22%;
+  }
+
+  /* === TEMA LILÁS === */
+  .theme-lilac {
+    --background: 275 35% 97%;
+    --foreground: 275 30% 20%;
+    --muted: 275 30% 92%;
+    --muted-foreground: 275 25% 45%;
+    --popover: 275 35% 99%;
+    --popover-foreground: 275 30% 20%;
+    --card: 275 35% 98%;
+    --card-foreground: 275 30% 20%;
+    --border: 275 25% 88%;
+    --input: 275 30% 94%;
+    --primary: 275 65% 70%; /* Lilás Principal */
+    --primary-foreground: 275 100% 10%;
+    --secondary: 275 40% 90%; /* Lilás Mais Claro */
+    --secondary-foreground: 275 30% 25%;
+    --accent: 300 60% 75%; /* Rosa-Púrpura Suave */
+    --accent-foreground: 300 100% 15%;
+    --ring: 275 65% 65%;
+
+    --chart-1: 275 60% 70%;
+    --chart-2: 300 55% 75%;
+    --chart-3: 260 60% 70%;
+    --chart-4: 330 55% 75%;
+    --chart-5: 240 60% 70%;
+
+    --sidebar-background: 275 40% 95%;
+    --sidebar-foreground: 275 30% 25%;
+    --sidebar-primary: var(--primary);
+    --sidebar-primary-foreground: var(--primary-foreground);
+    --sidebar-accent: 275 40% 90%;
+    --sidebar-accent-foreground: 275 30% 20%;
+    --sidebar-border: 275 30% 85%;
+    --sidebar-ring: var(--ring);
+  }
+
+  .dark.theme-lilac {
+    --background: 275 25% 12%;
+    --foreground: 275 25% 92%;
+    --muted: 275 20% 20%;
+    --muted-foreground: 275 20% 65%;
+    --popover: 275 25% 10%;
+    --popover-foreground: 275 25% 92%;
+    --card: 275 25% 10%;
+    --card-foreground: 275 25% 92%;
+    --border: 275 20% 28%;
+    --input: 275 20% 22%;
+    --primary: 275 60% 75%; /* Lilás Mais Brilhante */
+    --primary-foreground: 275 100% 15%;
+    --secondary: 275 20% 25%; /* Roxo Escuro */
+    --secondary-foreground: 275 20% 85%;
+    --accent: 300 55% 80%; /* Rosa-Púrpura Mais Brilhante */
+    --accent-foreground: 300 100% 20%;
+    --ring: 275 60% 70%;
+
+    --chart-1: 275 55% 75%;
+    --chart-2: 300 50% 80%;
+    --chart-3: 260 55% 75%;
+    --chart-4: 330 50% 80%;
+    --chart-5: 240 55% 75%;
+
+    --sidebar-background: 275 25% 9%;
+    --sidebar-foreground: 275 25% 88%;
+    --sidebar-accent: 275 20% 18%;
+    --sidebar-accent-foreground: 275 25% 90%;
+    --sidebar-border: 275 20% 20%;
+  }
+
 }
 
 @layer base {
