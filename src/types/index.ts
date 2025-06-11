@@ -134,6 +134,27 @@ export interface Session {
   isPendingSync?: boolean;
 }
 
+// Mock Firestore Timestamp structure for typing purposes
+export interface MockTimestamp {
+  seconds: number;
+  nanoseconds: number;
+  toDate: () => Date;
+}
+
+export interface FirestoreSessionData {
+  id: string; // Firestore document ID
+  pacienteId: string;
+  psicologoId: string;
+  data: MockTimestamp; // Using MockTimestamp for compatibility if Firebase SDK isn't fully used
+  status: "agendada" | "concluída" | "cancelada";
+  titulo?: string;
+  // For constructing titles, we might need patient/psychologist names
+  // These might be fetched separately or denormalized in Firestore documents
+  patientName?: string;
+  psychologistName?: string;
+}
+
+
 export interface AssessmentResultDetails {
   score: number;
   level: string;
