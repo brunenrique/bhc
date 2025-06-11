@@ -40,20 +40,38 @@ export default function PatientsPage() {
   useEffect(() => {
     let isMounted = true;
     const loadPatients = async () => {
+      if (!user) { // Don't load if user is not yet available
+        setIsLoading(true); // Keep loading state until user is resolved
+        return;
+      }
       setIsLoading(true);
       try {
         const cachedPatients = await cacheService.patients.getList();
         if (isMounted && cachedPatients && cachedPatients.length > 0) {
           setPatients(cachedPatients);
         } else if (isMounted) {
-           const mockWithAssignedTo = mockPatientsData.map((p) => {
-            if (p.assignedTo === 'psy1' && user?.role === 'psychologist' && user.name === 'Dr. Exemplo Silva') return {...p, assignedTo: user.id};
-            if (p.assignedTo === 'psy2' && user?.role === 'psychologist' && user.name === 'Dra. Modelo Souza') return {...p, assignedTo: user.id};
-            return p;
-          });
-          setPatients(mockWithAssignedTo); 
+           let initialData = [...mockPatientsData]; // Create a mutable copy
+          if (user.role === 'psychologist') {
+            initialData = initialData.map((p) => {
+              if (p.assignedTo === 'psy1' && user.name === 'Dr. Exemplo Silva') {
+                return {...p, assignedTo: user.id};
+              }
+              if (p.assignedTo === 'psy2' && user.name === 'Dra. Modelo Souza') {
+                return {...p, assignedTo: user.id};
+              }
+              // If the mock user from useAuth is neither of these names,
+              // we can assign some patients to the logged-in psychologist generically.
+              // For simplicity, let's assume 'psy1' maps to the first default psychologist and 'psy2' to another.
+              // This logic ensures that the default "Dr. Exemplo Silva" (usually the first psy to log in) gets 'psy1' patients.
+              // And if another psychologist logs in, they might not see patients unless their mock name matches,
+              // or we assign some 'other-psy-uid' patients to them here.
+              // For this fix, we specifically target the known mock names.
+              return p;
+            });
+          }
+          setPatients(initialData); 
           try {
-            await cacheService.patients.setList(mockWithAssignedTo);
+            await cacheService.patients.setList(initialData);
           } catch (error) {
             // console.warn("Error saving initial patients to cache:", error);
           }
@@ -72,7 +90,7 @@ export default function PatientsPage() {
 
     loadPatients();
     return () => { isMounted = false; };
-  }, [user]);
+  }, [user]); // Depend on user to reload/re-filter when user changes
 
   const handleNewPatient = useCallback(() => {
     setSelectedPatient(null);
@@ -107,6 +125,8 @@ export default function PatientsPage() {
       if (user?.role === 'psychologist') {
         patientToSave = { ...newPatientBase, assignedTo: user.id } as Patient;
       } else {
+        // For admin/secretary, assignedTo might be selected in the form or left undefined
+        // For this mock, we'll leave it as is or potentially assign to a default if logic was added in form
         patientToSave = newPatientBase as Patient; 
       }
       updatedPatients = [patientToSave, ...patients];
@@ -117,14 +137,15 @@ export default function PatientsPage() {
   }, [selectedPatient, patients, user]);
 
   const filteredPatients = useMemo(() => {
+    if (!user) return []; // Return empty if user is not loaded
+
     let displayPatients = patients;
-    if (user?.role === 'psychologist') {
-      // For mock purposes, "Dr. Exemplo Silva" corresponds to 'psy1' or user.id, "Dra. Modelo Souza" to 'psy2' or user.id
-      // This simplified logic assumes the mock user IDs for psychologists are 'psy1' or 'psy2' if not the current user.
-      // A more robust solution would map names to static IDs or use the actual user.id if it's known.
-      const psychologistMockId = user.name === 'Dr. Exemplo Silva' ? 'psy1' : user.name === 'Dra. Modelo Souza' ? 'psy2' : user.id;
-      displayPatients = patients.filter(p => p.assignedTo === psychologistMockId || p.assignedTo === user.id);
+    if (user.role === 'psychologist') {
+      // Psychologists only see patients directly assigned to their user.id
+      displayPatients = patients.filter(p => p.assignedTo === user.id);
     }
+    // Admins, Secretaries, etc., see all patients based on the current `patients` state
+    // (which for admins/secretaries is the full list from cache/mock).
     
     return displayPatients.filter(p => 
       p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -136,17 +157,25 @@ export default function PatientsPage() {
                            hasPermission(user?.role, 'ACCESS_ADMIN_PANEL_SETTINGS');
 
 
+  if (isLoading || !user) { // Also check if user is loaded
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-3xl font-headline font-semibold">Pacientes</h1>
-        <div className="flex gap-2">
-          <div className="relative">
+        <div className="flex gap-2 w-full sm:w-auto">
+          <div className="relative flex-grow sm:flex-grow-0">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input 
               type="search" 
               placeholder="Buscar paciente..." 
-              className="pl-8 sm:w-[200px] md:w-[300px]"
+              className="pl-8 w-full sm:w-[200px] md:w-[300px]"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -164,9 +193,11 @@ export default function PatientsPage() {
         {user?.role === 'psychologist' && " Você está visualizando apenas pacientes atribuídos a você."}
       </p>
       
-      {isLoading && patients.length === 0 ? (
-        <div className="flex justify-center items-center h-64">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      {filteredPatients.length === 0 && !isLoading ? ( // Show message only if not loading
+        <div className="text-center py-10 text-muted-foreground">
+          <Users className="mx-auto h-12 w-12 mb-2 opacity-50" />
+          Nenhum paciente encontrado para os filtros atuais
+          {user?.role === 'psychologist' && " ou atribuído a você"}.
         </div>
       ) : (
         <PatientListTable 
