@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { RichTextEditor } from '@/components/shared/RichTextEditor'; 
-import { ArrowLeft, Edit, Mail, Phone, CalendarDays, FileText as FileTextIconLucide, PlusCircle, Repeat, Eye, EyeOff, Lock, History, Info, BookMarked, Fingerprint, ShieldCheck, ShieldX, ShieldAlert, UploadCloud, ListChecks, BarChart3, FileSignature, CalendarCheck2, CalendarX2, UserCheck, UserX, AlertTriangle, CaseSensitive, Bot, FileText as FileTextIcon, DownloadCloud, Edit3, ShieldQuestion, Paperclip } from 'lucide-react';
+import { ArrowLeft, Edit, Mail, Phone, CalendarDays, FileText as FileTextIconLucide, PlusCircle, Repeat, Eye, EyeOff, Lock, History, Info, BookMarked, Fingerprint, ShieldCheck, ShieldX, ShieldAlert, UploadCloud, ListChecks, BarChart3, FileSignature, CalendarCheck2, CalendarX2, UserCheck, UserX, AlertTriangle, CaseSensitive, Bot, FileText as FileTextIcon, DownloadCloud, Edit3, ShieldQuestion, Paperclip, Wand2, Loader2 as Loader2Icon } from 'lucide-react';
 import { PatientFormDialog } from '@/features/patients/components/PatientFormDialog';
 import { SessionFormDialog } from '@/features/scheduling/components/SessionFormDialog';
 import { Separator } from '@/components/ui/separator';
@@ -25,11 +25,12 @@ import { useToast } from '@/hooks/use-toast';
 import { PatientTherapeuticPlan } from '@/features/patients/components/PatientTherapeuticPlan';
 import { PatientAssessmentsSection } from '@/features/patients/components/PatientAssessmentsSection';
 import { PatientEvolutionChart } from '@/features/patients/components/PatientEvolutionChart';
-import { PatientAttachmentManager } from '@/features/patients/components/PatientAttachmentManager'; // Import the new component
+import { PatientAttachmentManager } from '@/features/patients/components/PatientAttachmentManager';
 import { mockAssessmentsData as allMockAssessments } from '@/app/(app)/assessments/page'; 
 import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/ui/input';
 import { hasPermission } from '@/lib/permissions'; 
+import { summarizeClinicalNotes, type SummarizeClinicalNotesInput, type SummarizeClinicalNotesOutput } from '@/ai/flows/summarize-clinical-notes-flow';
 
 const mockProntuarioAna: ProntuarioData = {
   identificacao: {
@@ -407,6 +408,13 @@ const ProntuarioDisplay: React.FC<{
   );
 };
 
+// Helper to strip HTML for plain text version (simple version)
+function stripHtml(html: string): string {
+  if (typeof window === 'undefined') return html; // SSR guard
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  return doc.body.textContent || "";
+}
+
 export default function PatientDetailPage() {
   const router = useRouter();
   const params = useParams();
@@ -427,11 +435,15 @@ export default function PatientDetailPage() {
   
   const [isProntuarioSignatureDetailsOpen, setIsProntuarioSignatureDetailsOpen] = useState(false);
 
+  const [aiSummary, setAiSummary] = useState<string | null>(null);
+  const [isAiSummaryLoading, setIsAiSummaryLoading] = useState(false);
+
   useEffect(() => {
     let isMounted = true;
     if (patientId) {
       const loadPatientData = async () => {
         setIsLoadingPage(true);
+        setAiSummary(null); // Reset AI summary on patient change
         
         let fetchedPatientData: Patient | null = null;
         let fetchedSessionsData: Session[] = [];
@@ -585,7 +597,7 @@ export default function PatientDetailPage() {
         id: `s-${Date.now()}`, 
         patientId: patientId, 
         patientName: patient?.name, 
-        psychologistId: currentUser?.id, // Assign current psychologist to new session
+        psychologistId: currentUser?.id, 
         psychologistName: currentUser?.name,
         createdAt: new Date().toISOString(),
       } as Session;
@@ -696,9 +708,45 @@ export default function PatientDetailPage() {
   const handleExportProntuarioToPDF = useCallback(() => {
     toast({
       title: "Exportar para PDF (Simulado)",
-      description: `O prontuário de ${patient?.name} seria exportado para PDF.`,
+      description: `O prontuário de ${patient?.name} seria exportado para PDF. Esta funcionalidade será implementada com @react-pdf/renderer.`,
     });
   }, [patient, toast]);
+
+  const handleGenerateAiSummary = useCallback(async () => {
+    if (!patient || !patient.prontuario) {
+        toast({ title: "Dados Insuficientes", description: "Não há dados de prontuário suficientes para gerar um resumo.", variant: "destructive" });
+        return;
+    }
+    setIsAiSummaryLoading(true);
+    setAiSummary(null);
+
+    let clinicalText = `Queixa Principal: ${patient.prontuario.demandaQueixaPrincipal || 'Não informado'}\n\n`;
+    clinicalText += `Entrada na Unidade: ${patient.prontuario.entradaUnidade?.descricaoEntrada || 'Não informado'}\n\n`;
+    
+    clinicalText += "Histórico de Evoluções (Procedimento/Análise):\n";
+    if (patient.prontuario.procedimentosAnalise && patient.prontuario.procedimentosAnalise.length > 0) {
+        patient.prontuario.procedimentosAnalise.forEach(entry => {
+            clinicalText += `Data: ${format(parseISO(entry.date), "dd/MM/yyyy HH:mm", { locale: ptBR })}\nConteúdo: ${stripHtml(entry.content)}\n\n`;
+        });
+    } else {
+        clinicalText += "Nenhuma evolução registrada.\n\n";
+    }
+    clinicalText += `Conclusão/Encaminhamento Geral: ${patient.prontuario.conclusaoEncaminhamentoGeral || 'Não informado'}\n`;
+
+    try {
+        const input: SummarizeClinicalNotesInput = { clinicalNotes: clinicalText };
+        const output: SummarizeClinicalNotesOutput = await summarizeClinicalNotes(input);
+        setAiSummary(output.summary);
+        toast({ title: "Resumo Clínico Gerado por IA", description: "O resumo foi gerado com sucesso.", className: "bg-primary text-primary-foreground"});
+    } catch (error: any) {
+        // console.error("Error generating AI summary:", error);
+        setAiSummary("Falha ao gerar o resumo clínico. Tente novamente.");
+        toast({ title: "Erro ao Gerar Resumo", description: error.message || "Ocorreu um erro com o serviço de IA.", variant: "destructive" });
+    } finally {
+        setIsAiSummaryLoading(false);
+    }
+  }, [patient, toast]);
+
 
   if (authLoading || isLoadingPage) {
     return (
@@ -740,7 +788,7 @@ export default function PatientDetailPage() {
   
   const canViewClinicalData = hasPermission(currentUser?.role, 'ACCESS_PATIENT_CLINICAL_DATA', patient.assignedTo === currentUser?.id);
 
-  if (!canViewClinicalData) { // Basic check, detailed data visibility is handled by `areNotesVisible` and tabs
+  if (!canViewClinicalData) { 
     return (
       <div className="text-center py-10">
         <ShieldQuestion className="mx-auto h-12 w-12 text-destructive mb-3" />
@@ -841,7 +889,60 @@ export default function PatientDetailPage() {
                    <p className="text-xs text-muted-foreground mt-2">Para editar esta nota ou ver o histórico de notas, clique no botão "Editar Paciente e Prontuário" no topo da página.</p>
                 </TabsContent>
                 <TabsContent value="prontuario">
-                   <ProntuarioDisplay 
+                  <div className="space-y-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="font-headline flex items-center"><FileTextIcon className="mr-2 h-5 w-5 text-primary"/>Indicadores Clínicos Rápidos</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
+                                <div className="p-2.5 border rounded-md bg-background shadow-sm">
+                                    <div className="flex items-center text-primary mb-1"><CalendarCheck2 className="w-4 h-4 mr-1.5" /> <span className="font-medium">Próxima Sessão</span></div>
+                                    {sessionStats.nextScheduled ? (
+                                    <> <p>{format(parseISO(sessionStats.nextScheduled.startTime), "dd/MM/yy 'às' HH:mm", { locale: ptBR })}</p> <p className="text-xs text-muted-foreground">Com: {sessionStats.nextScheduled.psychologistName}</p> </>) 
+                                    : (<p className="text-muted-foreground text-xs">Nenhuma futura.</p>)}
+                                </div>
+                                <div className="p-2.5 border rounded-md bg-background shadow-sm">
+                                    <div className="flex items-center text-green-600 mb-1"><UserCheck className="w-4 h-4 mr-1.5" /><span className="font-medium">Realizadas</span></div>
+                                    <p className="text-2xl font-bold">{sessionStats.completedCount}</p>
+                                </div>
+                                <div className="p-2.5 border rounded-md bg-background shadow-sm">
+                                    <div className="flex items-center text-red-600 mb-1"><UserX className="w-4 h-4 mr-1.5" /><span className="font-medium">Faltas</span></div>
+                                    <p className="text-2xl font-bold">{sessionStats.noShowCount}</p>
+                                </div>
+                                <div className="p-2.5 border rounded-md bg-background shadow-sm">
+                                    <div className="flex items-center text-amber-600 mb-1"><CalendarX2 className="w-4 h-4 mr-1.5" /><span className="font-medium">Canceladas</span></div>
+                                    <p className="text-2xl font-bold">{sessionStats.cancelledCount}</p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader className="flex flex-row justify-between items-center">
+                            <CardTitle className="font-headline flex items-center"><Bot className="mr-2 h-5 w-5 text-accent"/>Resumo Clínico por IA</CardTitle>
+                            <Button onClick={handleGenerateAiSummary} disabled={isAiSummaryLoading} size="sm">
+                                {isAiSummaryLoading ? <Loader2Icon className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
+                                Gerar/Atualizar Resumo IA
+                            </Button>
+                        </CardHeader>
+                        <CardContent>
+                            {isAiSummaryLoading && (
+                                <div className="flex items-center justify-center py-6">
+                                    <Loader2Icon className="h-8 w-8 animate-spin text-primary" />
+                                    <p className="ml-2 text-muted-foreground">Gerando resumo clínico...</p>
+                                </div>
+                            )}
+                            {aiSummary && !isAiSummaryLoading && (
+                                <div className="prose prose-sm dark:prose-invert max-w-none p-3 bg-muted/30 border rounded-md" dangerouslySetInnerHTML={{ __html: aiSummary.replace(/\n/g, '<br />') }} />
+                            )}
+                            {!aiSummary && !isAiSummaryLoading && (
+                                <p className="text-sm text-muted-foreground">Clique no botão para gerar um resumo clínico utilizando Inteligência Artificial.</p>
+                            )}
+                        </CardContent>
+                    </Card>
+                    
+                    <ProntuarioDisplay 
                       patient={patient}
                       currentUser={currentUser}
                       onInitiateSignature={handleInitiateProntuarioSignature}
@@ -849,6 +950,7 @@ export default function PatientDetailPage() {
                       onViewSignatureDetails={handleViewProntuarioSignatureDetails}
                       onExportToPDF={handleExportProntuarioToPDF}
                     />
+                  </div>
                 </TabsContent>
                  <TabsContent value="case_study">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -977,7 +1079,6 @@ export default function PatientDetailPage() {
                                       </Badge>
                                       {s.notes && <p className="text-xs text-muted-foreground mt-1 italic">Nota: {s.notes.substring(0,50)}...</p>}
                                   </div>
-                                  {/* Conditional Edit/Open Session Button */}
                                   { (currentUser?.role === 'admin' || (currentUser?.role === 'psychologist' && s.psychologistId === currentUser.id)) && (
                                     <Button variant="outline" size="sm" onClick={() => router.push(`/sessions/${s.id}?patientId=${patientId}`)}>
                                       <Edit className="w-3.5 h-3.5 mr-1.5" /> Abrir Sessão
@@ -1008,8 +1109,6 @@ export default function PatientDetailPage() {
         onOpenChange={setIsSessionFormOpen}
         session={editingSession}
         onSave={handleSaveSession}
-        // patientData is not strictly needed here if new sessions are for current patient
-        // but it's good practice if dialog could be used more generically.
         patientData={patient ? { id: patient.id, name: patient.name, assignedTo: patient.assignedTo } : undefined}
       />
 
@@ -1058,3 +1157,4 @@ export default function PatientDetailPage() {
     </div>
   );
 }
+
