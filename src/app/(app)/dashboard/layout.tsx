@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { LayoutDashboard, UserCircle, Activity, TrendingUp, ShieldAlert } from 'lucide-react'; 
 import type { UserRole } from '@/types';
+import { Button } from '@/components/ui/button'; // Import Button
 
 interface TabConfig {
   value: string;
@@ -19,7 +20,7 @@ interface TabConfig {
 }
 
 const allTabs: TabConfig[] = [
-  { value: 'overview', label: 'Visão Geral', href: '/dashboard', icon: LayoutDashboard, roles: ['admin', 'psychologist', 'secretary', 'scheduling'] },
+  { value: 'overview', label: 'Visão Geral', href: '/dashboard', icon: LayoutDashboard, roles: ['admin', 'psychologist', 'secretary'] }, // Removido 'scheduling'
   { value: 'my-panel', label: 'Meu Painel', href: '/dashboard/my-panel', icon: UserCircle, roles: ['psychologist', 'admin'] }, 
   { value: 'clinical-analysis', label: 'Análise Clínica', href: '/dashboard/clinical-analysis', icon: Activity, roles: ['admin', 'psychologist'] },
   { value: 'performance', label: 'Desempenho', href: '/dashboard/performance', icon: TrendingUp, roles: ['admin', 'secretary'] },
@@ -64,6 +65,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             router.replace('/'); // Fallback if no tabs are visible (should be handled by no visible tabs message)
         }
       } else if (!currentPathTab && pathname.startsWith('/dashboard/')) {
+        // If it's a dashboard path but not a configured tab (e.g. /dashboard/some-other-page)
+        // We still mark as authorized and let the page handle its own access if needed
         setAuthorized(true); 
       }
       else {
@@ -92,7 +95,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <h1 className="text-2xl font-headline font-semibold mb-2">Acesso Restrito</h1>
         <p className="text-muted-foreground">Sua função ({user.role}) não tem permissão para acessar nenhuma seção deste painel.</p>
         <p className="text-muted-foreground mt-1">Por favor, contate um administrador se você acredita que isso é um erro.</p>
-         <Link href="/login" passHref> {/* Changed to /login to allow role change */}
+         <Link href="/login" passHref>
             <Button variant="outline" className="mt-6">Voltar para Login</Button>
         </Link>
       </div>
@@ -106,7 +109,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </header>
       {visibleTabs.length > 0 && (
         <Tabs value={activeTabValue} className="w-full px-4 sm:px-6">
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-2 md:max-w-2xl lg:grid-cols-4"> {/* Adjusted grid for better responsiveness */}
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-2 md:max-w-2xl lg:grid-cols-4">
             {visibleTabs.map((tab) => (
                 <TabsTrigger key={tab.value} value={tab.value} asChild className="font-body">
                 <Link href={tab.href} className="flex items-center gap-2">
