@@ -20,6 +20,7 @@ import {
   ListTodo, 
   BookOpenText,
   AreaChart, 
+  ExternalLink, // Adicionado ExternalLink
   LucideIcon,
 } from "lucide-react";
 import { WithRole } from '@/components/auth/WithRole';
@@ -30,18 +31,25 @@ interface NavItem {
   label: string;
   icon: LucideIcon;
   roles?: UserRole[]; 
-  anchor?: boolean; 
+  anchor?: boolean;
+  external?: boolean; // Nova propriedade para links externos
 }
 
 const navItems: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ['admin', 'psychologist', 'secretary', 'scheduling'] },
   { href: "/scheduling", label: "Agendamentos", icon: CalendarDays, roles: ['admin', 'psychologist', 'secretary', 'scheduling'] },
   { href: "/scheduling#waiting-list", label: "Lista de Espera", icon: ListTodo, anchor: true, roles: ['admin', 'psychologist', 'secretary', 'scheduling'] },
-  { href: "/patients", label: "Pacientes", icon: Users, roles: ['admin', 'psychologist', 'secretary'] }, // Schedulers don't manage patient records directly
+  { href: "/patients", label: "Pacientes", icon: Users, roles: ['admin', 'psychologist', 'secretary'] }, 
   { href: "/assessments", label: "Avaliações", icon: ClipboardList, roles: ['admin', 'psychologist'] },
-  { href: "/documents", label: "Documentos", icon: FileText, roles: ['admin', 'psychologist', 'secretary'] }, // secretary might need to upload/manage some docs
+  { href: "/documents", label: "Documentos", icon: FileText, roles: ['admin', 'psychologist', 'secretary'] }, 
   { href: "/whatsapp-reminders", label: "Lembretes WhatsApp", icon: MessageSquare, roles: ['admin', 'psychologist', 'secretary'] },
-  // Admin-specific link will be wrapped with WithRole below
+  { 
+    href: "https://intranet.santanadeparnaiba.sp.gov.br/SIGEM/login", 
+    label: "Sigem", 
+    icon: ExternalLink, 
+    roles: ['admin', 'psychologist', 'secretary', 'scheduling'], 
+    external: true 
+  },
   { href: "/guide", label: "Guia de Uso", icon: BookOpenText, roles: ['admin', 'psychologist', 'secretary', 'scheduling'] },
   { href: "/settings", label: "Configurações", icon: Settings, roles: ['admin', 'psychologist', 'secretary', 'scheduling'] },
 ];
@@ -55,6 +63,10 @@ export function SidebarNav() {
       if (currentPath !== basePath && !currentPath.startsWith(basePath + '/')) return false;
       if (typeof window !== 'undefined' && window.location.hash === `#${anchor}` && currentPath === basePath) return true;
       return currentPath === basePath && currentPath.endsWith(itemHref); 
+    }
+    // Para links externos, isActive será sempre false, o que é correto.
+    if (itemHref.startsWith('http://') || itemHref.startsWith('https://')) {
+      return false;
     }
     return currentPath === itemHref || (itemHref !== "/" && itemHref !== "/dashboard" && currentPath.startsWith(itemHref + '/')) || (itemHref === "/dashboard" && currentPath === "/dashboard");
   };
@@ -85,6 +97,8 @@ export function SidebarNav() {
             <Link 
               href={item.href}
               onClick={item.anchor ? scrollHandler : undefined}
+              target={item.external ? "_blank" : undefined}
+              rel={item.external ? "noopener noreferrer" : undefined}
             >
               <item.icon className="mr-2 h-5 w-5 flex-shrink-0" />
               <span className="truncate font-body">{item.label}</span>
@@ -101,7 +115,6 @@ export function SidebarNav() {
             </SidebarMenuItem>
           );
         }
-        // This case is unlikely if all items have roles, but as a fallback
         return <SidebarMenuItem key={item.href}>{menuItemContent}</SidebarMenuItem>;
       })}
       {/* Admin Metrics specific link */}
