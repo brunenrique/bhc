@@ -8,32 +8,33 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
-import { Loader2, Save, UserCircle, Palette, Sun, Moon } from "lucide-react"; // Added Sun and Moon
+import { Loader2, Save, UserCircle, Palette, Sun, Moon } from "lucide-react";
 import { Switch } from "@/components/ui/switch"; 
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useTheme as useNextTheme } from 'next-themes'; // For light/dark mode toggle
+import { useTheme as useNextTheme } from 'next-themes';
 
 // Theme definitions
 const THEMES = [
-  { name: 'Padrão (Azul/Lavanda)', class: '' }, // Default, no extra class
-  { name: 'Moderno (Teal/Laranja)', class: 'theme-modern' },
-  { name: 'Cinza Claro', class: 'theme-light-gray' },
-  { name: 'Lilás', class: 'theme-lilac' },
+  { name: 'Padrão (Azul/Lavanda)', value: 'psiguard-default', className: '' },
+  { name: 'Moderno (Teal/Laranja)', value: 'theme-modern', className: 'theme-modern' },
+  { name: 'Cinza Claro', value: 'theme-light-gray', className: 'theme-light-gray' },
+  { name: 'Lilás', value: 'theme-lilac', className: 'theme-lilac' },
 ];
 const CUSTOM_THEME_LS_KEY = 'psiguard-custom-theme';
-const ALL_CUSTOM_THEME_CLASSES = THEMES.map(t => t.class).filter(Boolean);
+// This list should contain actual CSS class names for removal logic
+const ALL_CSS_THEME_CLASSES = THEMES.map(t => t.className).filter(Boolean);
 
 export default function SettingsPage() {
   const { user, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
-  const { theme: nextThemeMode, setTheme: setNextThemeMode } = useNextTheme(); // For light/dark
+  const { theme: nextThemeMode, setTheme: setNextThemeMode } = useNextTheme();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [enableNotifications, setEnableNotifications] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [selectedCustomTheme, setSelectedCustomTheme] = useState<string>('');
+  const [selectedCustomTheme, setSelectedCustomTheme] = useState<string>(THEMES.find(t => t.className === 'theme-lilac')?.value || 'theme-lilac'); // Default to lilac value
 
   useEffect(() => {
     if (user) {
@@ -41,15 +42,16 @@ export default function SettingsPage() {
       setEmail(user.email || '');
     }
     // Load custom theme preference
-    const savedCustomTheme = localStorage.getItem(CUSTOM_THEME_LS_KEY);
-    if (savedCustomTheme && ALL_CUSTOM_THEME_CLASSES.includes(savedCustomTheme)) {
-      setSelectedCustomTheme(savedCustomTheme);
+    const storedClassName = localStorage.getItem(CUSTOM_THEME_LS_KEY); // Can be null, '', 'theme-modern', etc.
+    
+    if (storedClassName !== null) { // If a value (even empty string for default) is in localStorage
+        const themeFromStorage = THEMES.find(t => t.className === storedClassName);
+        setSelectedCustomTheme(themeFromStorage ? themeFromStorage.value : THEMES.find(t => t.className === '')!.value); // Fallback to default theme's 'value'
     } else {
-      // Fallback to the default theme class from RootLayout or CSS if nothing is saved.
-      // For the select, if it's "Padrão", the class is empty.
-      const currentHtmlClass = document.documentElement.className;
-      const activeTheme = THEMES.find(t => t.class && currentHtmlClass.includes(t.class));
-      setSelectedCustomTheme(activeTheme?.class || '');
+        // No preference in localStorage, determine from current HTML class (set by CustomThemeInitializer or RootLayout default)
+        const htmlElement = document.documentElement;
+        const currentAppliedTheme = THEMES.find(t => t.className && htmlElement.classList.contains(t.className)) || THEMES.find(t => t.className === '');
+        setSelectedCustomTheme(currentAppliedTheme ? currentAppliedTheme.value : THEMES.find(t => t.className === '')!.value);
     }
   }, [user]);
 
@@ -59,31 +61,32 @@ export default function SettingsPage() {
     return (names[0][0] + (names[names.length - 1][0] || '')).toUpperCase();
   }
 
-  const handleCustomThemeChange = (newThemeClass: string) => {
-    setSelectedCustomTheme(newThemeClass);
-    const htmlElement = document.documentElement;
+  const handleCustomThemeChange = (selectedValue: string) => { // selectedValue is 'psiguard-default', 'theme-modern', etc.
+    setSelectedCustomTheme(selectedValue);
+    const themeToApply = THEMES.find(t => t.value === selectedValue);
+    
+    if (themeToApply) {
+      const cssClassName = themeToApply.className; // This is the actual class for CSS (can be '')
+      const htmlElement = document.documentElement;
 
-    // Remove all known custom theme classes
-    ALL_CUSTOM_THEME_CLASSES.forEach(cls => htmlElement.classList.remove(cls));
+      ALL_CSS_THEME_CLASSES.forEach(cls => htmlElement.classList.remove(cls));
 
-    // Add the new one if it's not the default (empty class)
-    if (newThemeClass) {
-      htmlElement.classList.add(newThemeClass);
+      if (cssClassName) {
+        htmlElement.classList.add(cssClassName);
+      }
+      localStorage.setItem(CUSTOM_THEME_LS_KEY, cssClassName); // Save the CSS class name or ''
+      toast({
+          title: "Tema Alterado",
+          description: `O tema da aplicação foi alterado para ${themeToApply.name}.`,
+      });
     }
-    localStorage.setItem(CUSTOM_THEME_LS_KEY, newThemeClass);
-    toast({
-        title: "Tema Alterado",
-        description: `O tema da aplicação foi alterado.`,
-    });
   };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
-    // Simulate API call to save settings
-    // console.log("Saving settings:", { name, email, enableNotifications, selectedCustomTheme });
+    // console.log("Saving settings:", { name, email, enableNotifications });
     await new Promise(resolve => setTimeout(resolve, 1500));
-    // Note: Custom theme is already saved to localStorage by handleCustomThemeChange
     setIsSaving(false);
     toast({
         title: "Configurações Salvas",
@@ -113,7 +116,7 @@ export default function SettingsPage() {
                   {user ? getInitials(name) : <UserCircle />}
                 </AvatarFallback>
               </Avatar>
-              <Button variant="outline" type="button">Alterar Foto</Button> {/* Placeholder */}
+              <Button variant="outline" type="button">Alterar Foto</Button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -149,7 +152,7 @@ export default function SettingsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   {THEMES.map(themeOption => (
-                    <SelectItem key={themeOption.class || 'default'} value={themeOption.class}>
+                    <SelectItem key={themeOption.value} value={themeOption.value}>
                       {themeOption.name}
                     </SelectItem>
                   ))}
