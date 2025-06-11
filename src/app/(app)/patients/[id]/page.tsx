@@ -129,7 +129,7 @@ export default function PatientDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("prontuario");
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [sessionNotesContent, setSessionNotesContent] = useState("<p></p>"); // For new session notes
+  // const [sessionNotesContent, setSessionNotesContent] = useState("<p></p>"); // No longer needed here, handled in form dialog
   const [isGenerateProntuarioDialogOpen, setIsGenerateProntuarioDialogOpen] = useState(false);
   const [aiSummary, setAiSummary] = useState<string | null>(null);
   const [isAiSummaryLoading, setIsAiSummaryLoading] = useState(false);
@@ -164,8 +164,7 @@ export default function PatientDetailPage() {
     
     if (foundPatient) {
       setPatient(foundPatient);
-      // Initialize sessionNotesContent for new entries, not from patient.sessionNotes (which is legacy now)
-      setSessionNotesContent("<p>Nova entrada de evolução da sessão...</p>");
+      // setSessionNotesContent("<p>Nova entrada de evolução da sessão...</p>");
     } else {
       toast({ title: "Erro", description: "Paciente não encontrado.", variant: "destructive" });
       router.push('/patients');
@@ -178,41 +177,20 @@ export default function PatientDetailPage() {
   }, [loadPatientData]);
 
   const handleOpenForm = useCallback(() => {
-    // Form dialog will initialize with patient data, including last session notes if available or new note placeholder
     setIsFormOpen(true);
   }, []);
 
-  const handleSavePatient = async (updatedData: Partial<Patient>) => {
+  const handleSavePatient = async (updatedDataFromForm: Partial<Patient>) => {
     if (!patient) return;
     
     const updatedPatient: Patient = { 
         ...patient, 
-        ...updatedData, 
+        ...updatedDataFromForm, 
         updatedAt: new Date().toISOString(),
-        prontuario: {
-            ...(patient.prontuario || { procedimentosAnalise: [] }),
-            ...(updatedData.prontuario || {}),
-            identificacao: {
-                ...(patient.prontuario?.identificacao || {}),
-                ...(updatedData.prontuario?.identificacao || {}),
-            },
-            entradaUnidade: {
-                ...(patient.prontuario?.entradaUnidade || {}),
-                ...(updatedData.prontuario?.entradaUnidade || {}),
-            },
-            // The logic in PatientFormDialog handles appending sessionNotes to procedimentosAnalise
-            procedimentosAnalise: updatedData.prontuario?.procedimentosAnalise || patient.prontuario?.procedimentosAnalise || [],
-        }
     };
-
-    // Reset sessionNotes on the main patient object if it's handled within prontuario.procedimentosAnalise now
-    // This depends on how PatientFormDialog is structured
-    // For safety, ensure it's not carrying over old direct sessionNotes if they are now part of prontuario
-    if (updatedPatientData.sessionNotes && updatedPatientData.sessionNotes.trim() !== "<p></p>" && updatedPatientData.sessionNotes.trim() !== "<p>Nova entrada de evolução da sessão...</p>") {
-        // This indicates new notes were likely entered, and PatientFormDialog should have handled appending them.
-        // We can clear the direct sessionNotes field on the patient object if it's purely for temporary input.
-        updatedPatient.sessionNotes = "<p>Nova entrada de evolução da sessão...</p>"; // Or however you manage the placeholder
-    }
+    
+    // The logic for appending sessionNotes to prontuario.procedimentosAnalise is handled in PatientFormDialog
+    // The `updatedDataFromForm` should already have the merged prontuario data.
 
     setPatient(updatedPatient);
     await cacheService.patients.setDetail(patientId, updatedPatient);
@@ -223,7 +201,7 @@ export default function PatientDetailPage() {
 
     toast({ title: "Sucesso", description: "Dados do paciente e prontuário atualizados." });
     setIsFormOpen(false);
-    loadPatientData(); 
+    loadPatientData(); // Reload to ensure all derived states are updated
   };
   
   const stripHtml = (html: string): string => {
@@ -248,7 +226,7 @@ export default function PatientDetailPage() {
     
     notesToSummarize += "Histórico de Evoluções das Sessões (Procedimento/Análise):\n";
     if (procedimentosAnalise && procedimentosAnalise.length > 0) {
-      procedimentosAnalise.slice().reverse().forEach(entry => { // Most recent first for summary context
+      procedimentosAnalise.slice().reverse().forEach(entry => { 
         notesToSummarize += `Data: ${format(parseISO(entry.date), "dd/MM/yyyy HH:mm", { locale: ptBR })}\nConteúdo: ${stripHtml(entry.content)}\n\n`;
       });
     } else {
@@ -352,13 +330,13 @@ export default function PatientDetailPage() {
       </header>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-6">
-          <TabsTrigger value="prontuario"><FileText className="mr-1 h-4 w-4 sm:mr-2"/>Prontuário</TabsTrigger>
-          <TabsTrigger value="estudo_de_caso"><ListChecks className="mr-1 h-4 w-4 sm:mr-2"/>Estudo de Caso</TabsTrigger>
-          <TabsTrigger value="pti"><Target className="mr-1 h-4 w-4 sm:mr-2"/>PTI</TabsTrigger>
-          <TabsTrigger value="escalas"><BarChart3 className="mr-1 h-4 w-4 sm:mr-2"/>Escalas</TabsTrigger>
-          <TabsTrigger value="analise_grafica"><TrendingUp className="mr-1 h-4 w-4 sm:mr-2"/>Análise Gráfica</TabsTrigger>
-          <TabsTrigger value="anexos"><Paperclip className="mr-1 h-4 w-4 sm:mr-2"/>Anexos</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 gap-x-2 gap-y-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+          <TabsTrigger value="prontuario"><FileText className="mr-1 h-4 w-4 sm:mr-2"/> <span className="truncate">Prontuário</span></TabsTrigger>
+          <TabsTrigger value="estudo_de_caso"><ListChecks className="mr-1 h-4 w-4 sm:mr-2"/> <span className="truncate">Estudo de Caso</span></TabsTrigger>
+          <TabsTrigger value="pti"><Target className="mr-1 h-4 w-4 sm:mr-2"/> <span className="truncate">PTI</span></TabsTrigger>
+          <TabsTrigger value="escalas"><BarChart3 className="mr-1 h-4 w-4 sm:mr-2"/> <span className="truncate">Escalas</span></TabsTrigger>
+          <TabsTrigger value="analise_grafica"><TrendingUp className="mr-1 h-4 w-4 sm:mr-2"/> <span className="truncate">Análise Gráfica</span></TabsTrigger>
+          <TabsTrigger value="anexos"><Paperclip className="mr-1 h-4 w-4 sm:mr-2"/> <span className="truncate">Anexos</span></TabsTrigger>
         </TabsList>
 
         <TabsContent value="prontuario" className="mt-4">
@@ -424,7 +402,7 @@ export default function PatientDetailPage() {
               <RichTextEditor
                 initialContent={patient.caseStudyNotes || "<p>Nenhuma nota de estudo de caso registrada.</p>"}
                 onUpdate={(content) => {
-                  // This is primarily for display. Editing is done via the main PatientFormDialog
+                  // Editing is done via the main PatientFormDialog
                 }}
                 editable={false} 
                 editorClassName="bg-transparent p-0"
@@ -470,5 +448,3 @@ export default function PatientDetailPage() {
     </div>
   );
 }
-
-    
