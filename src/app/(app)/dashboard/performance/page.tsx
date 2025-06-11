@@ -3,10 +3,10 @@
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { ChartContainer } from "@/components/ui/dashboard/ChartContainer";
-import { TrendingUp, Users, CalendarCheck2, Percent, AlertTriangle, BarChart3 } from "lucide-react";
-import { mockSessionsData } from '@/app/(app)/whatsapp-reminders/page'; // Using this as it has future sessions for mock
+import { TrendingUp, Users, CalendarCheck2, Percent, AlertTriangle, BarChart3, Filter as FunnelIcon } from "lucide-react"; // Renamed Filter to FunnelIcon for clarity
+import { mockSessionsData } from '@/app/(app)/whatsapp-reminders/page'; 
 import { WorkloadDistributionChart } from "@/components/charts/WorkloadDistributionChart";
-import { ChartPlaceholder } from "@/components/ui/dashboard/ChartPlaceholder";
+import { WaitingListFunnel, type WaitingListFunnelData } from "@/components/charts/WaitingListFunnel"; // Import the funnel chart
 import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Session } from "@/types";
@@ -17,6 +17,18 @@ export default function PerformancePage() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Mock data for WaitingListFunnel
+  const mockWaitingListData: WaitingListFunnelData = {
+    waiting: Math.floor(Math.random() * 20) + 10,    // e.g., 10-30
+    contacted: Math.floor(Math.random() * 15) + 5,  // e.g., 5-20 (should be <= waiting)
+    scheduled: Math.floor(Math.random() * 10) + 3,  // e.g., 3-13 (should be <= contacted)
+    archived: Math.floor(Math.random() * 5) + 1,     // e.g., 1-6
+  };
+  // Ensure contacted <= waiting and scheduled <= contacted for mock data logic
+  mockWaitingListData.contacted = Math.min(mockWaitingListData.contacted, mockWaitingListData.waiting);
+  mockWaitingListData.scheduled = Math.min(mockWaitingListData.scheduled, mockWaitingListData.contacted);
+
+
   useEffect(() => {
     let isMounted = true;
     const loadSessions = async () => {
@@ -26,14 +38,11 @@ export default function PerformancePage() {
         if (isMounted && cachedSessions && cachedSessions.length > 0) {
           setSessions(cachedSessions);
         } else if (isMounted) {
-          // Fallback to mock data if cache is empty or fails
           setSessions(mockSessionsData);
-          // Optionally, save mock data to cache if it wasn't there
           await cacheService.sessions.setList(mockSessionsData);
         }
       } catch (error) {
-        // console.warn("Error loading sessions from cache:", error);
-        if (isMounted) setSessions(mockSessionsData); // Fallback on error
+        if (isMounted) setSessions(mockSessionsData); 
       }
       if (isMounted) setIsLoading(false);
     };
@@ -46,9 +55,8 @@ export default function PerformancePage() {
   const completedSessions = sessions.filter(s => s.status === 'completed').length;
   const noShowRate = totalSessions > 0 ? ((sessions.filter(s => s.status === 'no-show').length / totalSessions) * 100).toFixed(1) + '%' : '0%';
   
-  // Mock data for other KPIs
-  const occupancyRate = `${Math.floor(Math.random() * 30) + 60}%`; // 60-90%
-  const avgWaitTime = `${Math.floor(Math.random() * 10) + 5} dias`; // 5-15 dias
+  const occupancyRate = `${Math.floor(Math.random() * 30) + 60}%`; 
+  const avgWaitTime = `${Math.floor(Math.random() * 10) + 5} dias`; 
 
   return (
     <div className="space-y-8">
@@ -77,7 +85,6 @@ export default function PerformancePage() {
             <Users className="h-5 w-5 text-accent" />
           </CardHeader>
           <CardContent>
-             {/* Mocked value */}
             <div className="text-3xl font-bold font-headline">{occupancyRate}</div>
             <p className="text-xs text-muted-foreground">Média de horários preenchidos.</p>
           </CardContent>
@@ -98,7 +105,6 @@ export default function PerformancePage() {
             <TrendingUp className="h-5 w-5 text-green-500" />
           </CardHeader>
           <CardContent>
-            {/* Mocked value */}
             <div className="text-3xl font-bold font-headline">{avgWaitTime}</div>
             <p className="text-xs text-muted-foreground">Da lista de espera para 1ª sessão.</p>
           </CardContent>
@@ -118,9 +124,9 @@ export default function PerformancePage() {
         description="Visualização das etapas da lista de espera até o agendamento."
         className="shadow-lg"
       >
-        {/* Placeholder for WaitingListFunnelChart - to be implemented later */}
-        <ChartPlaceholder message="Gráfico de Funil da Lista de Espera aparecerá aqui." icon="Filter" />
+        <WaitingListFunnel data={mockWaitingListData} />
       </ChartContainer>
     </div>
   );
 }
+    

@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { ChartContainer } from "@/components/ui/dashboard/ChartContainer";
-import { Activity, Filter, TrendingUp, Search, Tags, Brain } from "lucide-react";
+import { Activity, Filter, TrendingUp, Search, Tags, Brain, Users, BarChart } from "lucide-react";
 import { DatePickerWithRange } from "@/components/ui/date-picker-with-range";
 import type { DateRange } from "react-day-picker";
 import { subDays } from 'date-fns';
@@ -17,6 +17,8 @@ import { mockAssessmentsData } from '@/app/(app)/assessments/page';
 import type { Assessment } from '@/types';
 import { CorrelationAnalysis } from '@/components/ai/CorrelationAnalysis'; 
 import { ChartPlaceholder } from '@/components/ui/dashboard/ChartPlaceholder';
+import { ResponsiveContainer, BarChart as RechartsBarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Bar as RechartsBar } from 'recharts';
+import { ChartTooltipContent } from '@/components/ui/chart';
 
 const mockPsychologists = [
   { id: 'all', name: 'Todos Psicólogos' },
@@ -37,31 +39,19 @@ const mockProfessionalSituations = [
 ];
 
 const mockComplaintsData = [
-  "Sinto muita ansiedade no trabalho e em situações sociais.",
-  "Tenho tido problemas para dormir, acordo cansado.",
-  "Estou desmotivado e sem energia para fazer as coisas que gostava.",
-  "Muita tristeza e choro fácil nos últimos meses.",
-  "Dificuldade de concentração e foco nas tarefas diárias.",
-  "Preocupação excessiva com o futuro, medo de que algo ruim aconteça.",
-  "Irritabilidade constante, perco a paciência facilmente.",
-  "Problemas de relacionamento com meu parceiro(a).",
-  "Sentimento de solidão, mesmo rodeado de pessoas.",
-  "Baixa autoestima e insegurança sobre minhas capacidades.",
-  "Ataques de pânico recorrentes, com falta de ar e taquicardia.",
-  "Estresse crônico devido às pressões do trabalho.",
-  "Não consigo relaxar, sempre tenso e alerta.",
-  "Pensamentos negativos e pessimistas sobre mim e sobre a vida.",
-  "Perda de interesse em atividades que antes eram prazerosas.",
-  "Medo de falhar e decepcionar os outros.",
-  "Dificuldade em tomar decisões, mesmo as mais simples.",
-  "Procrastinação constante, adiando tarefas importantes.",
-  "Sentimento de culpa por coisas do passado.",
-  "Isolamento social, evitando contato com amigos e familiares.",
-  "Fadiga persistente, mesmo após descanso.",
-  "Alterações de apetite, comendo demais ou de menos.",
-  "Dores de cabeça frequentes e tensão muscular.",
-  "Preocupações financeiras e instabilidade no emprego.",
-  "Dificuldade em lidar com críticas ou feedback negativo.",
+  "Sinto muita ansiedade no trabalho e em situações sociais.", "Tenho tido problemas para dormir, acordo cansado.",
+  "Estou desmotivado e sem energia para fazer as coisas que gostava.", "Muita tristeza e choro fácil nos últimos meses.",
+  "Dificuldade de concentração e foco nas tarefas diárias.", "Preocupação excessiva com o futuro, medo de que algo ruim aconteça.",
+  "Irritabilidade constante, perco a paciência facilmente.", "Problemas de relacionamento com meu parceiro(a).",
+  "Sentimento de solidão, mesmo rodeado de pessoas.", "Baixa autoestima e insegurança sobre minhas capacidades.",
+  "Ataques de pânico recorrentes, com falta de ar e taquicardia.", "Estresse crônico devido às pressões do trabalho.",
+  "Não consigo relaxar, sempre tenso e alerta.", "Pensamentos negativos e pessimistas sobre mim e sobre a vida.",
+  "Perda de interesse em atividades que antes eram prazerosas.", "Medo de falhar e decepcionar os outros.",
+  "Dificuldade em tomar decisões, mesmo as mais simples.", "Procrastinação constante, adiando tarefas importantes.",
+  "Sentimento de culpa por coisas do passado.", "Isolamento social, evitando contato com amigos e familiares.",
+  "Fadiga persistente, mesmo após descanso.", "Alterações de apetite, comendo demais ou de menos.",
+  "Dores de cabeça frequentes e tensão muscular.", "Preocupações financeiras e instabilidade no emprego.",
+  "Dificuldade em lidar com críticas ou feedback negativo.", "Relacionamento abusivo", "Problemas familiares", "Insônia", "Medo de dirigir", "Ansiedade social"
 ];
 
 interface Filters {
@@ -73,6 +63,14 @@ interface Filters {
   tagsTerm: string;
   assessmentTypeFilter: string | undefined;
 }
+
+const mockDemographicData = [
+    { name: '18-25', value: Math.floor(Math.random() * 20) + 5, fill: 'hsl(var(--chart-1))' },
+    { name: '26-35', value: Math.floor(Math.random() * 30) + 10, fill: 'hsl(var(--chart-2))' },
+    { name: '36-45', value: Math.floor(Math.random() * 25) + 8, fill: 'hsl(var(--chart-3))' },
+    { name: '46-55', value: Math.floor(Math.random() * 15) + 5, fill: 'hsl(var(--chart-4))' },
+    { name: '55+', value: Math.floor(Math.random() * 10) + 3, fill: 'hsl(var(--chart-5))' },
+];
 
 export default function ClinicalAnalysisPage() {
   const [filters, setFilters] = useState<Filters>({
@@ -93,7 +91,7 @@ export default function ClinicalAnalysisPage() {
   const availableAssessmentTitles = useMemo(() => {
     const titles = new Set<string>();
     mockAssessmentsData.forEach(assessment => {
-      if (assessment.title) { // For filtering by type, not just completed with score
+      if (assessment.title) { 
         titles.add(assessment.title);
       }
     });
@@ -125,11 +123,6 @@ export default function ClinicalAnalysisPage() {
     const { name, value } = e.target;
     setFilters(prev => ({...prev, [name]: value}));
   }
-
-  useEffect(() => {
-    // console.log("Filters changed, would refetch data:", filters);
-  }, [filters]);
-
 
   return (
     <div className="space-y-6">
@@ -238,10 +231,19 @@ export default function ClinicalAnalysisPage() {
           <div className="space-y-8 mt-8">
             <ChartContainer
               title="Perfil Demográfico dos Pacientes (Filtrado)"
-              description="Distribuição demográfica dos pacientes com base nos filtros aplicados."
+              description="Distribuição de pacientes por faixa etária (exemplo)."
               className="shadow-md hover:shadow-lg transition-shadow"
             >
-               <ChartPlaceholder message="Gráfico de perfil demográfico (Ex: idade, sexo) com base nos filtros aparecerá aqui." icon="Activity" />
+              <ResponsiveContainer width="100%" height={350}>
+                <RechartsBarChart data={mockDemographicData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                  <Tooltip content={<ChartTooltipContent />} />
+                  <Legend wrapperStyle={{fontSize: '0.8rem'}} />
+                  <RechartsBar dataKey="value" name="Pacientes" radius={[4, 4, 0, 0]} />
+                </RechartsBarChart>
+              </ResponsiveContainer>
             </ChartContainer>
 
             <ChartContainer
@@ -252,7 +254,7 @@ export default function ClinicalAnalysisPage() {
               <MainComplaintsCloud complaints={complaintsForCloud} />
             </ChartContainer>
             
-            <div className="lg:col-span-1"> {/* Changed from lg:col-span-2 to make it single column */}
+            <div className="lg:col-span-1">
                 <Label htmlFor="assessment-type-trend-filter" className="text-sm font-medium">Selecionar Escala para Gráfico de Tendência</Label>
                 <Select
                     value={filters.assessmentTypeForTrend}

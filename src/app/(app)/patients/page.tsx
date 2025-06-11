@@ -4,7 +4,7 @@ import { PatientListTable } from "@/features/patients/components/PatientListTabl
 import { PatientFormDialog } from "@/features/patients/components/PatientFormDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PlusCircle, Search, Loader2, Users } from "lucide-react"; // Added Users here
+import { PlusCircle, Search, Loader2, Users } from "lucide-react";
 import { useState, useCallback, useMemo, useEffect } from "react";
 import type { Patient } from "@/types";
 import { cacheService } from '@/services/cacheService';
@@ -12,7 +12,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { hasPermission } from "@/lib/permissions";
 import { subDays } from 'date-fns';
 
-// Função auxiliar para criar datas no passado
 const createPastDate = (days: number): string => subDays(new Date(), days).toISOString();
 
 export const mockPatientsData: Patient[] = [
@@ -23,7 +22,7 @@ export const mockPatientsData: Patient[] = [
   { id: '5', name: 'Eduarda Gomes Ferreira', email: 'eduarda.ferreira@example.com', phone: '(51) 93333-1111', dateOfBirth: '1998-03-30', createdAt: createPastDate(45), updatedAt: new Date().toISOString(), assignedTo: 'psy2' },
   { id: '6', name: 'Felipe Nogueira Moreira', email: 'felipe.moreira@example.com', phone: '(61) 92222-1111', dateOfBirth: '1995-09-12', createdAt: createPastDate(15), updatedAt: new Date().toISOString(), assignedTo: 'psy2' },
   { id: '7', name: 'Gabriela Martins Azevedo', email: 'gabriela.azevedo@example.com', phone: '(71) 91111-2222', dateOfBirth: '1993-01-25', createdAt: createPastDate(60), updatedAt: new Date().toISOString(), assignedTo: 'psy1' },
-  { id: '8', name: 'Hugo Pereira da Silva', email: 'hugo.pereira@example.com', phone: '(81) 90000-3333', dateOfBirth: '1988-08-05', createdAt: createPastDate(3), updatedAt: new Date().toISOString(), assignedTo: 'other-psy-uid' }, // Outro psicólogo
+  { id: '8', name: 'Hugo Pereira da Silva', email: 'hugo.pereira@example.com', phone: '(81) 90000-3333', dateOfBirth: '1988-08-05', createdAt: createPastDate(3), updatedAt: new Date().toISOString(), assignedTo: 'other-psy-uid' }, 
   { id: '9', name: 'Isabela Santos Rocha', email: 'isabela.santos@example.com', phone: '(91) 98888-4444', dateOfBirth: '2002-12-12', createdAt: createPastDate(90), updatedAt: new Date().toISOString(), assignedTo: 'psy2' },
   { id: '10', name: 'Lucas Mendes Oliveira', email: 'lucas.mendes@example.com', phone: '(12) 97777-5555', dateOfBirth: '1975-06-18', createdAt: createPastDate(120), updatedAt: new Date().toISOString(), assignedTo: 'psy1' },
 ];
@@ -37,6 +36,13 @@ export default function PatientsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
+  const mapMockPsychologistIdToReal = (mockId: string | undefined, loggedInUser: typeof user): string | undefined => {
+    if (!loggedInUser || loggedInUser.role !== 'psychologist') return mockId;
+    if (mockId === 'psy1' && loggedInUser.name === 'Dr. Exemplo Silva') return loggedInUser.id;
+    if (mockId === 'psy2' && loggedInUser.name === 'Dra. Modelo Souza') return loggedInUser.id;
+    return mockId; // Return original if no match or not a psychologist
+  };
+
   useEffect(() => {
     let isMounted = true;
     const loadPatients = async () => {
@@ -45,38 +51,29 @@ export default function PatientsPage() {
         return;
       }
       setIsLoading(true);
+      let dataToSet: Patient[];
       try {
         const cachedPatients = await cacheService.patients.getList();
-        if (isMounted && cachedPatients && cachedPatients.length > 0) {
-          setPatients(cachedPatients);
-        } else if (isMounted) {
-           let initialData = [...mockPatientsData]; 
-          if (user.role === 'psychologist') {
-            initialData = initialData.map((p) => {
-              if (p.assignedTo === 'psy1' && user.name === 'Dr. Exemplo Silva') {
-                return {...p, assignedTo: user.id};
-              }
-              if (p.assignedTo === 'psy2' && user.name === 'Dra. Modelo Souza') {
-                return {...p, assignedTo: user.id};
-              }
-              return p;
-            });
-          }
-          setPatients(initialData); 
-          try {
-            await cacheService.patients.setList(initialData);
-          } catch (error) {
-            // console.warn("Error saving initial patients to cache:", error);
-          }
+        if (cachedPatients && cachedPatients.length > 0) {
+          dataToSet = cachedPatients;
+        } else {
+          dataToSet = [...mockPatientsData];
+          // Persist initial mock data if cache was empty
+          await cacheService.patients.setList(dataToSet);
         }
       } catch (error) {
-        // console.warn("Error loading patients from cache:", error);
-        if (isMounted) {
-           setPatients(mockPatientsData); 
-        }
+        dataToSet = [...mockPatientsData];
       }
       
       if (isMounted) {
+        // Always apply mapping if the user is a psychologist, regardless of cache status
+        if (user.role === 'psychologist') {
+            dataToSet = dataToSet.map(p => ({
+                ...p,
+                assignedTo: mapMockPsychologistIdToReal(p.assignedTo, user)
+            }));
+        }
+        setPatients(dataToSet);
         setIsLoading(false);
       }
     };
@@ -96,43 +93,57 @@ export default function PatientsPage() {
   }, []);
 
   const handleDeletePatient = useCallback(async (patientId: string) => {
-    const updatedPatients = patients.filter(p => p.id !== patientId);
-    setPatients(updatedPatients);
-    await cacheService.patients.setList(updatedPatients); 
-  }, [patients]);
+    setPatients(prev => {
+        const updated = prev.filter(p => p.id !== patientId);
+        cacheService.patients.setList(updated);
+        return updated;
+    });
+  }, []);
 
   const handleSavePatient = useCallback(async (patientDataFromForm: Partial<Patient>) => {
-    let updatedPatients;
-    let patientToSave: Patient;
+    setPatients(prevPatients => {
+        let updatedPatientsList;
+        let patientToSave: Patient;
 
-    if (selectedPatient && patientDataFromForm.id) { 
-      patientToSave = {...selectedPatient, ...patientDataFromForm, updatedAt: new Date().toISOString()} as Patient;
-      updatedPatients = patients.map(p => p.id === patientToSave.id ? patientToSave : p);
-    } else { 
-      const newPatientBase = { 
-        ...patientDataFromForm, 
-        id: `mock-${Date.now()}`, 
-        createdAt: new Date().toISOString(), 
-        updatedAt: new Date().toISOString(),
-      };
-      if (user?.role === 'psychologist') {
-        patientToSave = { ...newPatientBase, assignedTo: user.id } as Patient;
-      } else {
-        patientToSave = newPatientBase as Patient; 
-      }
-      updatedPatients = [patientToSave, ...patients];
+        if (selectedPatient && patientDataFromForm.id) { 
+        patientToSave = {...selectedPatient, ...patientDataFromForm, updatedAt: new Date().toISOString()} as Patient;
+        updatedPatientsList = prevPatients.map(p => p.id === patientToSave.id ? patientToSave : p);
+        } else { 
+        const newPatientBase = { 
+            ...patientDataFromForm, 
+            id: `mock-${Date.now()}`, 
+            createdAt: new Date().toISOString(), 
+            updatedAt: new Date().toISOString(),
+        };
+        if (user?.role === 'psychologist') {
+            patientToSave = { ...newPatientBase, assignedTo: user.id } as Patient;
+        } else {
+            patientToSave = newPatientBase as Patient; 
+        }
+        updatedPatientsList = [patientToSave, ...prevPatients];
+        }
+        cacheService.patients.setList(updatedPatientsList);
+        return updatedPatientsList;
+    });
+    
+    // Ensure patient detail cache is also updated if editing
+    if (selectedPatient && patientDataFromForm.id) {
+      const updatedPatientDetail = {...selectedPatient, ...patientDataFromForm, updatedAt: new Date().toISOString()} as Patient;
+      await cacheService.patients.setDetail(updatedPatientDetail.id, updatedPatientDetail);
     }
-    setPatients(updatedPatients);
-    await cacheService.patients.setList(updatedPatients); 
+
     setIsFormOpen(false);
-  }, [selectedPatient, patients, user]);
+    setSelectedPatient(null);
+  }, [selectedPatient, user]);
 
   const filteredPatients = useMemo(() => {
     if (!user) return []; 
 
     let displayPatients = patients;
+    // Filter by assignedTo only if the user is a psychologist and not an admin
+    // Admins should see all patients. Secretaries might also see all, or it depends on rules.
     if (user.role === 'psychologist') {
-      displayPatients = patients.filter(p => p.assignedTo === user.id);
+      displayPatients = displayPatients.filter(p => p.assignedTo === user.id);
     }
     
     return displayPatients.filter(p => 
@@ -206,3 +217,4 @@ export default function PatientsPage() {
     </div>
   );
 }
+    
