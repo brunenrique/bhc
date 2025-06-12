@@ -21,7 +21,6 @@ import {
   BookOpenText,
   AreaChart, 
   ExternalLink,
-  Wand2, // Adicionado ícone para Insights IA
   LucideIcon,
 } from "lucide-react";
 import { WithRole } from '@/components/auth/WithRole';
@@ -43,7 +42,6 @@ const navItems: NavItem[] = [
   { href: "/patients", label: "Pacientes", icon: Users, roles: ['admin', 'psychologist', 'secretary'] }, 
   { href: "/assessments", label: "Avaliações", icon: ClipboardList, roles: ['admin', 'psychologist'] },
   { href: "/documents", label: "Documentos", icon: FileText, roles: ['admin', 'psychologist', 'secretary'] }, 
-  { href: "/ai-insights", label: "Insights IA", icon: Wand2, roles: ['admin', 'psychologist'] }, // Novo item
   { href: "/whatsapp-reminders", label: "Lembretes WhatsApp", icon: MessageSquare, roles: ['admin', 'psychologist', 'secretary'] },
   { 
     href: "https://intranet.santanadeparnaiba.sp.gov.br/SIGEM/login", 

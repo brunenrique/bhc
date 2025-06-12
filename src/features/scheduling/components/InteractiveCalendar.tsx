@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -11,8 +10,8 @@ import { useAuth } from '@/hooks/useAuth';
 import type { UserRole } from '@/types'; 
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, MapPin } from 'lucide-react';
-import { addDays, subDays, startOfWeek } from 'date-fns';
+import { Loader2, MapPin, Clock } from 'lucide-react'; // Adicionado Clock icon
+import { addDays, subDays, startOfWeek, isWithinInterval, parseISO } from 'date-fns'; // Adicionado isWithinInterval e parseISO
 
 // Helper para criar datas ISO para os mocks
 const createIsoDateTime = (daysOffset: number, hour: number, minute: number = 0): string => {
@@ -70,6 +69,7 @@ export function InteractiveCalendar({ locationName }: InteractiveCalendarProps) 
   const { user, isLoading: authLoading } = useAuth();
   const [availabilityEvents, setAvailabilityEvents] = useState<EventInput[]>([]);
   const [isLoadingCalendar, setIsLoadingCalendar] = useState(true);
+  const [freeSlotsCount, setFreeSlotsCount] = useState(0); // Estado para o contador
   const { toast } = useToast();
 
   const fetchAndSetAvailability = useCallback(async () => {
@@ -92,7 +92,19 @@ export function InteractiveCalendar({ locationName }: InteractiveCalendarProps) 
     }
     // Admins, Secretaries, Schedulers veem todos os slots do local
 
-    const calendarEvents = relevantSlots.map((slot: MockAvailabilitySlot) => ({
+    const today = new Date();
+    const startOfCurrentWeek = startOfWeek(today, { weekStartsOn: 1 });
+    const startOfTwoWeeksLater = addDays(startOfCurrentWeek, 14);
+
+    // Filtrar slots dentro do intervalo visível do calendário (Semana atual + Próxima Semana) E no novo range de horário (7h-13h)
+    const visibleSlots = relevantSlots.filter(slot => 
+        isWithinInterval(parseISO(slot.startTime), { start: startOfCurrentWeek, end: startOfTwoWeeksLater }) &&
+        parseISO(slot.startTime).getHours() >= 7 && parseISO(slot.startTime).getHours() < 13 
+    );
+
+    setFreeSlotsCount(visibleSlots.length); // Atualiza o contador
+
+    const calendarEvents = visibleSlots.map((slot: MockAvailabilitySlot) => ({
       id: slot.id,
       title: `Disponível - ${slot.psychologistName}`,
       start: slot.startTime,
@@ -123,13 +135,17 @@ export function InteractiveCalendar({ locationName }: InteractiveCalendarProps) 
       title: "Disponibilidade Movida (Simulado)",
       description: `Horário de ${dropInfo.event.extendedProps.psychologistName} movido para ${dropInfo.event.start?.toLocaleString()} no local ${locationName}. (Esta ação seria restrita).`,
     });
+    // Manter a lista de eventos localmente consistente após o "drop" simulado
     setAvailabilityEvents(prevEvents => prevEvents.map(event => {
       if (event.id === dropInfo.event.id) {
         return { ...event, start: dropInfo.event.start, end: dropInfo.event.end };
       }
       return event;
     }));
+    // Não recalculamos o contador aqui porque o número de slots não muda, apenas suas datas/horas.
+    // Se a funcionalidade de drop permitisse remover slots, o contador precisaria ser atualizado.
   };
+
 
   const handleEventClick = (clickInfo: EventClickArg) => {
     const { psychologistName, location } = clickInfo.event.extendedProps;
@@ -140,7 +156,7 @@ export function InteractiveCalendar({ locationName }: InteractiveCalendarProps) 
   };
 
   const today = new Date();
-  const startOfCurrentWeek = startOfWeek(today, { weekStartsOn: 1 }); 
+  const startOfCurrentWeek = startOfWeek(today, { weekStartsOn: 1 });
   const startOfTwoWeeksLater = addDays(startOfCurrentWeek, 14);
 
   const validDateRange = {
@@ -165,7 +181,14 @@ export function InteractiveCalendar({ locationName }: InteractiveCalendarProps) 
   return (
     <Card className="shadow-lg">
       <CardHeader>
-        <CardTitle className="font-headline flex items-center"><MapPin className="mr-2 h-5 w-5 text-muted-foreground" /> {locationName}</CardTitle>
+        <div className="flex items-center justify-between"> {/* Flex container para alinhar */}
+          <CardTitle className="font-headline flex items-center"><MapPin className="mr-2 h-5 w-5 text-muted-foreground" /> {locationName}</CardTitle>
+          {/* Contador de horários livres */}
+          <div className="flex items-center text-sm text-muted-foreground">
+            <Clock className="mr-1 h-4 w-4" />
+            <span>{freeSlotsCount} horários livres</span>
+          </div>
+        </div>
         <CardDescription>Horários disponíveis dos psicólogos (semana atual e próxima).</CardDescription>
       </CardHeader>
       <CardContent>
@@ -184,49 +207,49 @@ export function InteractiveCalendar({ locationName }: InteractiveCalendarProps) 
             buttonText={{
                 today:    'Hoje',
             }}
-            allDaySlot={false} 
-            events={availabilityEvents} 
+            allDaySlot={false}
+            events={availabilityEvents}
             editable={user?.role === 'admin'} // Somente admin pode arrastar/modificar disponibilidade (simulado)
-            droppable={false} 
-            eventDrop={handleEventDrop} 
-            eventClick={handleEventClick} 
+            droppable={false}
+            eventDrop={handleEventDrop}
+            eventClick={handleEventClick}
             selectable={true} // Permite selecionar slots de tempo
             select={(selectInfo) => {
               // Aqui, futuramente, abriria um modal para criar um AGENDAMENTO nesse slot selecionado
               toast({ title: "Seleção de Horário para Agendamento", description: `Horário selecionado de ${selectInfo.startStr} a ${selectInfo.endStr} no local ${locationName}. (Abriria modal de agendamento).`});
             }}
-            height="100%" 
+            height="100%"
             contentHeight="auto"
-            slotMinTime="08:00:00" 
-            slotMaxTime="21:00:00" 
+            slotMinTime="07:00:00" /* Alterado para 07:00 */
+            slotMaxTime="13:00:00" /* Alterado para 13:00 */
             nowIndicator={true}
-            scrollTime={'09:00:00'} 
+            scrollTime={'07:00:00'} /* Ajustado scrollTime para o novo início */
             eventTimeFormat={{
                 hour: '2-digit',
                 minute: '2-digit',
                 meridiem: false,
                 hour12: false
             }}
-            slotLabelFormat={{ 
+            slotLabelFormat={{
                 hour: '2-digit',
                 minute: '2-digit',
                 meridiem: false,
                 hour12: false
             }}
-            dayHeaderFormat={{ 
-                weekday: 'short', 
-                day: 'numeric',   
-                month: 'numeric', 
+            dayHeaderFormat={{
+                weekday: 'short',
+                day: 'numeric',
+                month: 'numeric',
                 omitCommas: true
             }}
-            weekends={true} 
-            businessHours={{ 
+            weekends={false} /* Alterado para false para ocultar finais de semana */
+            businessHours={{
               daysOfWeek: [ 1, 2, 3, 4, 5 ], // Segunda a Sexta
-              startTime: '08:00',
-              endTime: '20:00', // Horário comercial expandido
+              startTime: '07:00', /* Alterado para 07:00 */
+              endTime: '13:00', // Alterado para 13:00
             }}
-            eventDisplay="block" 
-            displayEventEnd={true} 
+            eventDisplay="block"
+            displayEventEnd={true}
           />
         </div>
       </CardContent>
