@@ -8,7 +8,7 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import type { EventInput, EventDropArg, EventClickArg } from '@fullcalendar/core';
 import { useAuth } from '@/hooks/useAuth';
-import type { UserRole } from '@/types'; // MockTimestamp e FirestoreSessionData não são mais necessários aqui
+import type { UserRole } from '@/types'; 
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, MapPin } from 'lucide-react';
@@ -169,7 +169,7 @@ export function InteractiveCalendar({ locationName }: InteractiveCalendarProps) 
         <CardDescription>Horários disponíveis dos psicólogos (semana atual e próxima).</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="h-[650px] text-sm"> 
+        <div className="h-[600px] text-sm"> {/* Altura do container do calendário reduzida */}
           <FullCalendar
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
             headerToolbar={{
@@ -233,3 +233,5 @@ export function InteractiveCalendar({ locationName }: InteractiveCalendarProps) 
     </Card>
   );
 }
+
+    
