@@ -11,8 +11,8 @@ import { useAuth } from '@/hooks/useAuth';
 import type { FirestoreSessionData, UserRole, MockTimestamp } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, CalendarDays } from 'lucide-react';
-import { addDays, subDays, startOfWeek } from 'date-fns'; // Adicionado startOfWeek
+import { Loader2, CalendarDays, MapPin } from 'lucide-react';
+import { addDays, subDays, startOfWeek } from 'date-fns';
 
 const timestampToDate = (timestamp: MockTimestamp): Date => {
   return new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
@@ -24,7 +24,6 @@ const dateToMockTimestamp = (date: Date): MockTimestamp => {
   return { seconds, nanoseconds, toDate: () => date };
 };
 
-// Helper para criar datas ISO, usado pelos mocks
 const createFutureDateISO = (daysInFuture: number, hour: number = 10, minute: number = 0): string => {
   const date = addDays(new Date(), daysInFuture);
   date.setHours(hour, minute, 0, 0);
@@ -37,7 +36,6 @@ const createPastDateISO = (daysInPast: number, hour: number = 10, minute: number
   return date.toISOString();
 };
 
-// Reconvertendo as datas mockadas para usar as helpers ISO e depois para o formato timestamp
 const MOCK_SESSIONS: FirestoreSessionData[] = [
   { id: 'cal_sess1', pacienteId: '1', psicologoId: 'psy1', data: dateToMockTimestamp(new Date(createFutureDateISO(1, 10))), status: 'agendada', patientName: 'Ana Beatriz Silva', psychologistName: 'Dr. Exemplo Silva' },
   { id: 'cal_sess2', pacienteId: '2', psicologoId: 'psy1', data: dateToMockTimestamp(new Date(createFutureDateISO(2, 14))), status: 'agendada', patientName: 'Bruno Almeida Costa', psychologistName: 'Dr. Exemplo Silva' },
@@ -53,8 +51,11 @@ const MOCK_SESSIONS: FirestoreSessionData[] = [
   { id: 'cal_sess12', pacienteId: '2', psicologoId: 'psy1', data: dateToMockTimestamp(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 2, 16, 0)), status: 'agendada', patientName: 'Bruno A. Costa (Próx. Mês)', psychologistName: 'Dr. Exemplo Silva' },
 ];
 
+interface InteractiveCalendarProps {
+  locationName: 'Centro' | 'Fazendinha';
+}
 
-export function InteractiveCalendar() {
+export function InteractiveCalendar({ locationName }: InteractiveCalendarProps) {
   const { user, isLoading: authLoading } = useAuth();
   const [events, setEvents] = useState<EventInput[]>([]);
   const [isLoadingCalendar, setIsLoadingCalendar] = useState(true);
@@ -69,18 +70,19 @@ export function InteractiveCalendar() {
 
     await new Promise(resolve => setTimeout(resolve, 700)); 
 
+    // TODO: Adapt this logic to filter sessions/availability by `locationName`
     let filteredSessions: FirestoreSessionData[] = [];
     if (user.role === 'admin') {
-      filteredSessions = MOCK_SESSIONS;
+      filteredSessions = MOCK_SESSIONS; // Admins see all for now
     } else if (user.role === 'psychologist') {
       const psychologistMockId = user.name === 'Dr. Exemplo Silva' ? 'psy1' : user.name === 'Dra. Modelo Souza' ? 'psy2' : user.id;
       filteredSessions = MOCK_SESSIONS.filter(session => session.psicologoId === psychologistMockId || session.psicologoId === user.id);
     } else { 
-      filteredSessions = MOCK_SESSIONS;
+      filteredSessions = MOCK_SESSIONS; // Other roles see all for now
     }
 
     const calendarEvents = filteredSessions.map((session: FirestoreSessionData) => ({
-      id: session.id,
+      id: session.id + `_${locationName}`, // Make event IDs unique per calendar instance
       title: session.titulo || `Sessão: ${session.patientName || 'Paciente'} (${session.psychologistName || 'Psicólogo'})`,
       start: timestampToDate(session.data),
       allDay: false, 
@@ -90,7 +92,9 @@ export function InteractiveCalendar() {
         status: session.status,
         patientName: session.patientName,
         psychologistName: session.psychologistName,
+        location: locationName, // Add location to extendedProps
       },
+      // For now, using same colors. Will change when showing availability.
       backgroundColor: session.status === 'concluída' ? 'hsl(var(--muted))' : session.status === 'cancelada' ? 'hsl(var(--destructive) / 0.7)' : 'hsl(var(--primary))',
       borderColor: session.status === 'concluída' ? 'hsl(var(--muted-foreground))' : session.status === 'cancelada' ? 'hsl(var(--destructive))' : 'hsl(var(--primary))',
       textColor: session.status === 'concluída' ? 'hsl(var(--muted-foreground))' : session.status === 'cancelada' ? 'hsl(var(--primary-foreground))' : 'hsl(var(--primary-foreground))',
@@ -98,7 +102,7 @@ export function InteractiveCalendar() {
 
     setEvents(calendarEvents);
     setIsLoadingCalendar(false);
-  }, [user, authLoading]);
+  }, [user, authLoading, locationName]); // Add locationName to dependencies
 
   useEffect(() => {
     fetchAndSetSessions();
@@ -107,7 +111,7 @@ export function InteractiveCalendar() {
   const handleEventDrop = async (dropInfo: EventDropArg) => {
     toast({
       title: "Sessão Reagendada (Simulado)",
-      description: `Sessão "${dropInfo.event.title}" movida para ${dropInfo.event.start?.toLocaleString()}.`,
+      description: `Sessão "${dropInfo.event.title}" movida para ${dropInfo.event.start?.toLocaleString()} no local ${locationName}.`,
     });
      setEvents(prevEvents => prevEvents.map(event => {
       if (event.id === dropInfo.event.id) {
@@ -118,29 +122,28 @@ export function InteractiveCalendar() {
   };
 
   const handleEventClick = (clickInfo: EventClickArg) => {
-    const { patientName, psychologistName, status } = clickInfo.event.extendedProps;
+    const { patientName, psychologistName, status, location } = clickInfo.event.extendedProps;
     toast({
-      title: `Sessão: ${patientName || 'Paciente'} com ${psychologistName || 'Psicólogo'}`,
+      title: `Sessão: ${patientName || 'Paciente'} com ${psychologistName || 'Psicólogo'} (${location})`,
       description: `Início: ${clickInfo.event.start?.toLocaleString()}. Status: ${status}. (Clique simulado para edição/detalhes)`,
     });
   };
 
-  // Calculate valid range for the calendar: current week and next week
   const today = new Date();
-  const startOfCurrentWeek = startOfWeek(today, { weekStartsOn: 1 }); // Monday of current week
-  const startOfTwoWeeksLater = addDays(startOfCurrentWeek, 14); // Monday two weeks from current week's start
+  const startOfCurrentWeek = startOfWeek(today, { weekStartsOn: 1 }); 
+  const startOfTwoWeeksLater = addDays(startOfCurrentWeek, 14);
 
   const validDateRange = {
     start: startOfCurrentWeek,
-    end: startOfTwoWeeksLater, // FullCalendar's end is exclusive
+    end: startOfTwoWeeksLater,
   };
 
   if (authLoading || isLoadingCalendar) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline flex items-center"><CalendarDays className="mr-2 h-6 w-6 text-primary" /> Calendário Interativo</CardTitle>
-          <CardDescription>Carregando sessões...</CardDescription>
+          <CardTitle className="font-headline flex items-center"><MapPin className="mr-2 h-5 w-5 text-muted-foreground" /> {locationName}</CardTitle>
+          <CardDescription>Carregando horários...</CardDescription>
         </CardHeader>
         <CardContent className="h-[600px] flex items-center justify-center">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -152,8 +155,8 @@ export function InteractiveCalendar() {
   return (
     <Card className="shadow-lg">
       <CardHeader>
-        <CardTitle className="font-headline flex items-center"><CalendarDays className="mr-2 h-6 w-6 text-primary" /> Calendário Interativo</CardTitle>
-        <CardDescription>Visualize, agende e arraste sessões. Os dados são simulados. Limitado à semana atual e próxima.</CardDescription>
+        <CardTitle className="font-headline flex items-center"><MapPin className="mr-2 h-5 w-5 text-muted-foreground" /> {locationName}</CardTitle>
+        <CardDescription>Horários disponíveis (semana atual e próxima). Dados simulados.</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="h-[650px] text-sm"> 
@@ -162,24 +165,24 @@ export function InteractiveCalendar() {
             headerToolbar={{
               left: 'prev,next today',
               center: 'title',
-              right: '' // Visualização semanal é a única, botões de troca removidos
+              right: '' 
             }}
             initialView="timeGridWeek"
-            initialDate={today.toISOString()} // Garante que comece na semana atual
-            validRange={validDateRange} // Restringe a navegação
+            initialDate={today.toISOString()}
+            validRange={validDateRange}
             locale="pt-br"
             buttonText={{
                 today:    'Hoje',
             }}
             allDaySlot={false} 
-            events={events}
+            events={events} // Later, this will be availability slots
             editable={true} 
             droppable={false} 
-            eventDrop={handleEventDrop}
-            eventClick={handleEventClick}
+            eventDrop={handleEventDrop} // Will need to adapt for availability
+            eventClick={handleEventClick} // Will be "select availability slot"
             selectable={true} 
             select={(selectInfo) => {
-              toast({ title: "Seleção de Horário (Simulado)", description: `Novo evento de ${selectInfo.startStr} a ${selectInfo.endStr}. Implementar abertura de modal.`});
+              toast({ title: "Seleção de Horário (Simulado)", description: `Novo evento de ${selectInfo.startStr} a ${selectInfo.endStr} no local ${locationName}. Implementar abertura de modal.`});
             }}
             height="100%" 
             contentHeight="auto"
@@ -220,4 +223,3 @@ export function InteractiveCalendar() {
   );
 }
 
-    

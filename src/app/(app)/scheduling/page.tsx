@@ -5,7 +5,7 @@ import { WaitingListEntryDialog } from "@/features/scheduling/components/Waiting
 import { InteractiveCalendar } from "@/features/scheduling/components/InteractiveCalendar"; 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlusCircle, Loader2, WifiOff, Wifi, ListPlus, CalendarDays } from "lucide-react"; 
+import { PlusCircle, Loader2, WifiOff, Wifi, ListPlus, CalendarDays, MapPin } from "lucide-react"; 
 import { useState, useCallback, useEffect } from "react";
 import type { WaitingListEntry } from "@/types"; 
 import { parseISO, subDays } from 'date-fns'; 
@@ -171,7 +171,7 @@ export default function SchedulingPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-3">
             <CalendarDays className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-headline font-semibold">Agendamentos</h1>
+            <h1 className="text-3xl font-headline font-semibold">Agendamentos por Local</h1>
         </div>
         <div className="flex items-center gap-2">
            {isOnline ? <Wifi className="h-5 w-5 text-green-500" /> : <WifiOff className="h-5 w-5 text-destructive" />}
@@ -181,8 +181,8 @@ export default function SchedulingPage() {
         </div>
       </div>
       <p className="text-muted-foreground font-body">
-        Visualize e gerencie os agendamentos de sessões no calendário interativo.
-        {isOnline ? "" : " Você está offline. As sessões criadas/alteradas no calendário podem não ser sincronizadas imediatamente."}
+        Visualize os horários disponíveis dos psicólogos por local (semana atual e próxima).
+        {isOnline ? "" : " Você está offline. Os calendários podem não refletir a disponibilidade mais recente."}
       </p>
       
       {isLoading && waitingList.length === 0 ? ( 
@@ -191,7 +191,10 @@ export default function SchedulingPage() {
         </div>
       ) : (
         <>
-        <InteractiveCalendar /> 
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <InteractiveCalendar locationName="Centro" />
+          <InteractiveCalendar locationName="Fazendinha" />
+        </div>
         
         <div id="waiting-list" className="pt-12"> 
             <Card className="shadow-lg">
@@ -232,4 +235,4 @@ export default function SchedulingPage() {
     </div>
   );
 }
-    
+
