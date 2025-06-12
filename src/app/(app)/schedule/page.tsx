@@ -19,7 +19,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar"; 
+import dynamic from "next/dynamic";
+const CalendarComponent = dynamic(() => import("@/components/ui/calendar").then(m => m.Calendar), { ssr: false });
 import { Label } from '@/components/ui/label';
 import { format, getDay, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isWithinInterval, parse } from 'date-fns';
 import { ptBR } from 'date-fns/locale';

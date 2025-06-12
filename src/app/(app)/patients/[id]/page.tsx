@@ -38,13 +38,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Calendar } from "@/components/ui/calendar";
+import dynamic from "next/dynamic";
+const Calendar = dynamic(() => import("@/components/ui/calendar").then(m => m.Calendar), { ssr: false });
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { generateSessionInsights, type GenerateSessionInsightsOutput } from '@/ai/flows/generate-session-insights'; 
+import { generateSessionInsights, type GenerateSessionInsightsOutput } from '@/ai/flows/generate-session-insights';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import dynamic from "next/dynamic";
 import { gerarProntuario } from "@/services/prontuarioService";
 
 const PatientProgressChart = dynamic(() => import("@/components/patients/patient-progress-chart"), {

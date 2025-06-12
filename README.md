@@ -71,3 +71,21 @@ No Firebase Console, acesse **Functions > Logs** para acompanhar a execução da
 
 For a full blueprint of the application, see [docs/blueprint.md](docs/blueprint.md).
 
+
+## Deploy Final
+
+1. Mescle a branch de funcionalidade na `main`:
+   ```bash
+   git checkout main
+   git merge <feature/branch>
+   ```
+2. Aguarde o CI finalizar com sucesso no GitHub.
+3. O push na `main` aciona o deploy automático no Vercel. Em seguida execute:
+   ```bash
+   firebase deploy --only hosting,firestore
+   ```
+4. Verifique o status dos deploys no painel do Vercel e no Firebase Console.
+5. Para rollback utilize:
+   ```bash
+   firebase deploy --only hosting@<versao>
+   ```
