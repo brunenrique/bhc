@@ -27,13 +27,13 @@ const dateToMockTimestamp = (date: Date): MockTimestamp => {
 const createFutureDate = (daysInFuture: number, hour: number = 10, minute: number = 0): Date => {
   const date = addDays(new Date(), daysInFuture);
   date.setHours(hour, minute, 0, 0);
-  return date;
+  return date.toISOString();
 };
 
 const createPastDate = (daysInPast: number, hour: number = 10, minute: number = 0): Date => {
   const date = subDays(new Date(), daysInPast);
   date.setHours(hour, minute, 0, 0);
-  return date;
+  return date.toISOString();
 };
 
 
@@ -72,10 +72,9 @@ export function InteractiveCalendar() {
     if (user.role === 'admin') {
       filteredSessions = MOCK_SESSIONS;
     } else if (user.role === 'psychologist') {
-      // Mocking psychologist assignment, replace 'psy1'/'psy2' with actual logic or user.id
       const psychologistMockId = user.name === 'Dr. Exemplo Silva' ? 'psy1' : user.name === 'Dra. Modelo Souza' ? 'psy2' : user.id;
       filteredSessions = MOCK_SESSIONS.filter(session => session.psicologoId === psychologistMockId || session.psicologoId === user.id);
-    } else { // Secretaries and Schedulers might see all or based on complex rules not mocked here
+    } else { 
       filteredSessions = MOCK_SESSIONS;
     }
 
@@ -152,15 +151,13 @@ export function InteractiveCalendar() {
             headerToolbar={{
               left: 'prev,next today',
               center: 'title',
-              right: 'dayGridMonth,timeGridWeek,timeGridDay'
+              right: '' // Removido 'dayGridMonth,timeGridWeek,timeGridDay'
             }}
-            initialView="timeGridWeek"
+            initialView="timeGridWeek" // Visualização padrão é semanal
             locale="pt-br"
             buttonText={{
                 today:    'Hoje',
-                month:    'Mês',
-                week:     'Semana',
-                day:      'Dia',
+                // Não precisamos mais de month, week, day aqui pois não haverá botões
             }}
             allDaySlot={false} 
             events={events}
@@ -210,4 +207,3 @@ export function InteractiveCalendar() {
     </Card>
   );
 }
-    
