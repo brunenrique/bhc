@@ -26,6 +26,7 @@ import { cn } from "@/shared/utils";
 import { format } from "date-fns";
 import { ptBR } from 'date-fns/locale';
 import { useToast } from "@/hooks/use-toast";
+import { createPatient, updatePatient } from '@/services/patientService';
 
 const patientFormSchema = z.object({
   name: z.string().min(2, { message: "O nome completo deve ter pelo menos 2 caracteres." }),
@@ -64,27 +65,33 @@ export default function PatientForm({ patientData }: PatientFormProps) {
 
   async function onSubmit(data: PatientFormValues) {
     setIsLoading(true);
-    
-    // TODO: Implementar criptografia do lado do cliente aqui (AES) antes de enviar ao backend.
-    // Exemplo:
-    // const encryptedData = {
-    //   ...data,
-    //   name: data.name, // Nome pode ou não ser criptografado, dependendo da política
-    //   email: data.email, // Email geralmente não é criptografado para permitir login/comunicação
-    //   medicalHistory: data.medicalHistory ? encrypt(data.medicalHistory, userKey) : undefined,
-    //   // ... outros campos sensíveis
-    // };
-    // await savePatientToFirestore(encryptedData);
+    try {
+      const payload = {
+        ...data,
+        dob: data.dob ? format(data.dob, 'yyyy-MM-dd') : undefined,
+      };
 
-    
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsLoading(false);
-    toast({
-      title: patientData?.id ? "Paciente Atualizado (Simulado)" : "Paciente Adicionado (Simulado)",
-      description: `${data.name} foi ${patientData?.id ? 'atualizado(a)' : 'adicionado(a)'} com sucesso.`,
-    });
-    
-    router.push(patientData?.id ? `/patients/${patientData.id}` : "/patients");
+      if (patientData?.id) {
+        await updatePatient(patientData.id, payload);
+      } else {
+        await createPatient(payload as Omit<PatientFormValues, 'dob'> & { dob?: string });
+      }
+
+      toast({
+        title: patientData?.id ? 'Paciente Atualizado' : 'Paciente Adicionado',
+        description: `${data.name} foi ${patientData?.id ? 'atualizado(a)' : 'adicionado(a)'} com sucesso.`,
+      });
+
+      router.push(patientData?.id ? `/patients/${patientData.id}` : '/patients');
+    } catch (e) {
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível salvar os dados do paciente.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (

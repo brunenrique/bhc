@@ -4,9 +4,17 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { UserPlus, Search, Filter, Users } from "lucide-react";
 import Link from "next/link";
 import PatientListItem from "@/components/patients/patient-list-item";
-import { mockPatients } from "@/mocks/patients";
+import { listPatients, Patient } from '@/services/patientService';
+import React from 'react';
 
 export default function PatientsPage() {
+  const [patients, setPatients] = React.useState<Patient[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    listPatients().then((data) => setPatients(data)).finally(() => setLoading(false));
+  }, []);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -36,9 +44,11 @@ export default function PatientsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {mockPatients.length > 0 ? (
+          {loading ? (
+            <p>Carregando...</p>
+          ) : patients.length > 0 ? (
             <div className="space-y-4">
-              {mockPatients.map(patient => (
+              {patients.map(patient => (
                 <PatientListItem key={patient.id} patient={patient} />
               ))}
             </div>

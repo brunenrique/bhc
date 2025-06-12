@@ -33,8 +33,6 @@ async function requestAI<T>(url: string, body: unknown): Promise<T> {
   }
 }
 
-}
-
 export async function generateSessionInsights(
   input: GenerateSessionInsightsInput,
 ): Promise<GenerateSessionInsightsOutput> {

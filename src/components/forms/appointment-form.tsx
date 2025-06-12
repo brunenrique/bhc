@@ -30,25 +30,13 @@ import { ptBR } from 'date-fns/locale';
 import { useToast } from "@/hooks/use-toast";
 import type { Appointment } from "@/types/appointment";
 import { useAppointmentStore } from "@/stores/appointmentStore";
-import { hasScheduleConflict } from "@/services/appointmentService";
+import { hasScheduleConflict, createAppointment } from "@/services/appointmentService";
+import { listPatients, Patient } from '@/services/patientService';
 
-const mockPatients = [
-  { id: "1", name: "Alice Wonderland" },
-  { id: "2", name: "Bob O Construtor" },
-  { id: "3", name: "Charlie Brown" },
-  { id: "wl1", name: "Edward Mãos de Tesoura"}, 
-  { id: "wl2", name: "Fiona Gallagher"},
-  { id: "wl3", name: "George Jetson"},
-  { id: "wl4", name: "Harry Potter"},
-  { id: "apptToday1", name: "Paciente Teste Hoje"},
-  { id: "apptToday2", name: "Diana Prince"},
-  { id: "apptOld1", name: "Old Patient"},
-  { id: "apptFuture1", name: "Future Patient"},
-];
 const mockPsychologists = [
   { id: "psy1", name: "Dr. Silva" },
   { id: "psy2", name: "Dra. Jones" },
-  { id: "any", name: "Qualquer Psicólogo(a)" }, 
+  { id: "any", name: "Qualquer Psicólogo(a)" },
 ];
 const appointmentTypes = ["Consulta Inicial", "Acompanhamento", "Sessão de Terapia", "Revisão de Avaliação", "Sessão em Grupo"];
 const daysOfWeek = [
@@ -141,6 +129,20 @@ export default function AppointmentForm({ appointmentData }: AppointmentFormProp
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
+  const [patients, setPatients] = React.useState<Patient[]>([]);
+
+  React.useEffect(() => {
+    listPatients().then((data) => setPatients(data)).catch(() => {});
+  }, []);
+
+  React.useEffect(() => {
+    if (patients.length && prefilledPatientNameParam && !appointmentData?.patientId) {
+      const match = patients.find(p => p.name === prefilledPatientNameParam);
+      if (match) {
+        form.setValue('patientId', match.id);
+      }
+    }
+  }, [patients, prefilledPatientNameParam, appointmentData?.patientId, form]);
 
   const prefilledPatientNameParam = searchParams.get("patientName");
   const prefilledPsychologistIdParam = searchParams.get("psychologistId");
@@ -150,7 +152,7 @@ export default function AppointmentForm({ appointmentData }: AppointmentFormProp
     ? parse(prefilledDateParam, "yyyy-MM-dd", new Date()) 
     : (appointmentData?.appointmentDate ? new Date(appointmentData.appointmentDate) : undefined);
   
-  const foundPatient = mockPatients.find(p => p.name === prefilledPatientNameParam);
+  const foundPatient = React.useMemo(() => patients.find(p => p.name === prefilledPatientNameParam), [patients, prefilledPatientNameParam]);
   const initialPatientId = appointmentData?.patientId || (foundPatient ? foundPatient.id : "");
   const initialPrefilledPatientName = !foundPatient && prefilledPatientNameParam ? prefilledPatientNameParam : appointmentData?.prefilledPatientName || "";
   
@@ -206,7 +208,7 @@ export default function AppointmentForm({ appointmentData }: AppointmentFormProp
 
     const finalData: Partial<Appointment> & { appointmentDateFormatted: string; prefilledPatientName?: string } = {
         id: appointmentData?.id || `appt_${Date.now()}`,
-        patient: data.prefilledPatientName || mockPatients.find(p => p.id === data.patientId)?.name || "N/A",
+        patient: data.prefilledPatientName || patients.find(p => p.id === data.patientId)?.name || "N/A",
         psychologistId: data.psychologistId,
         appointmentDateFormatted: format(data.appointmentDate, "yyyy-MM-dd"),
         startTime: data.startTime,
@@ -230,15 +232,24 @@ export default function AppointmentForm({ appointmentData }: AppointmentFormProp
       return;
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    addAppointment(dateKey, finalData as Appointment);
-    setIsLoading(false);
+    try {
+      const saved = await createAppointment({
+        ...(finalData as any),
+        date: dateKey,
+        patientId: data.patientId,
+      });
+      addAppointment(dateKey, saved as Appointment);
 
-    toast({
-      title: appointmentData?.id ? "Agendamento Atualizado" : (data.isBlockTime ? "Horário Bloqueado" : "Agendamento Criado"),
-      description: `O ${data.isBlockTime ? 'horário' : 'agendamento'} para ${data.isBlockTime ? data.blockReason : finalData.patient} em ${format(data.appointmentDate, "P", {locale: ptBR})} foi ${appointmentData?.id ? 'atualizado' : 'criado'} com sucesso.`,
-    });
-    router.push("/schedule");
+      toast({
+        title: appointmentData?.id ? "Agendamento Atualizado" : (data.isBlockTime ? "Horário Bloqueado" : "Agendamento Criado"),
+        description: `O ${data.isBlockTime ? 'horário' : 'agendamento'} para ${data.isBlockTime ? data.blockReason : finalData.patient} em ${format(data.appointmentDate, "P", {locale: ptBR})} foi ${appointmentData?.id ? 'atualizado' : 'criado'} com sucesso.`,
+      });
+      router.push("/schedule");
+    } catch (e) {
+      toast({ title: 'Erro', description: 'Não foi possível salvar o agendamento.', variant: 'destructive' });
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -306,7 +317,9 @@ export default function AppointmentForm({ appointmentData }: AppointmentFormProp
                                 </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                                {mockPatients.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                                {patients.map(p => (
+                                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                                ))}
                             </SelectContent>
                             </Select>
                             <FormMessage />

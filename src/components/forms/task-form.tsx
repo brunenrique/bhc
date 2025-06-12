@@ -27,7 +27,9 @@ import { cn } from "@/shared/utils";
 import { format } from "date-fns";
 import { ptBR } from 'date-fns/locale';
 import { useToast } from "@/hooks/use-toast";
-import type { Task, TaskPriority, TaskStatus } from "@/types"; 
+import type { Task, TaskPriority, TaskStatus } from "@/types";
+import { listPatients, Patient } from '@/services/patientService';
+import { createTask, updateTask } from '@/services/taskService';
 
 const taskFormSchema = z.object({
   title: z.string().min(3, { message: "O título deve ter pelo menos 3 caracteres." }),
@@ -45,12 +47,6 @@ type TaskFormValues = z.infer<typeof taskFormSchema>;
 const mockAssignees = ["Dr. Silva", "Dra. Jones", "Secretaria", "Admin"];
 const mockPriorities: TaskPriority[] = ["Alta", "Média", "Baixa"];
 const mockStatuses: TaskStatus[] = ["Pendente", "Em Progresso", "Concluída"];
-const mockPatientsForSelect = [
-  { id: "1", name: "Alice Wonderland" },
-  { id: "2", name: "Bob O Construtor" },
-  { id: "3", name: "Charlie Brown" },
-  { id: "4", name: "Diana Prince" },
-];
 
 interface TaskFormProps {
   initialData?: Task;
@@ -61,6 +57,11 @@ export default function TaskForm({ initialData, isEditMode = false }: TaskFormPr
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
+  const [patients, setPatients] = React.useState<Patient[]>([]);
+
+  React.useEffect(() => {
+    listPatients().then(setPatients).catch(() => {});
+  }, []);
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
@@ -84,23 +85,32 @@ export default function TaskForm({ initialData, isEditMode = false }: TaskFormPr
 
   async function onSubmit(data: TaskFormValues) {
     setIsLoading(true);
-    const dataToSave = {
-      ...initialData, // Spread initialData first to retain 'id' if editing
+    const payload = {
       ...data,
-      dueDate: format(data.dueDate, "yyyy-MM-dd"), // Format date to string for saving
+      dueDate: format(data.dueDate, 'yyyy-MM-dd'),
     };
 
-    // In a real app, you would send dataToSave to your backend/API
-    
-    await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
+    try {
+      if (isEditMode && initialData?.id) {
+        await updateTask(initialData.id, payload);
+      } else {
+        await createTask(payload as Omit<Task, 'id'>);
+      }
 
-    setIsLoading(false);
-    toast({
-      title: isEditMode ? "Tarefa Atualizada (Simulado)" : "Tarefa Criada (Simulado)",
-      description: `A tarefa "${data.title}" foi ${isEditMode ? 'atualizada' : 'criada'} com sucesso.`,
-    });
-
-    router.push("/tasks");
+      toast({
+        title: isEditMode ? 'Tarefa Atualizada' : 'Tarefa Criada',
+        description: `A tarefa "${data.title}" foi ${isEditMode ? 'atualizada' : 'criada'} com sucesso.`,
+      });
+      router.push('/tasks');
+    } catch (e) {
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível salvar a tarefa.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -246,7 +256,9 @@ export default function TaskForm({ initialData, isEditMode = false }: TaskFormPr
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="">Nenhum</SelectItem>
-                      {mockPatientsForSelect.map(patient => <SelectItem key={patient.id} value={patient.id}>{patient.name}</SelectItem>)}
+                      {patients.map(patient => (
+                        <SelectItem key={patient.id} value={patient.id}>{patient.name}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
