@@ -5,8 +5,9 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Brain, FileText, Tag, Lightbulb, BarChart3, Edit, Trash2, AlertTriangleIcon, CheckCircle, ShieldAlert, FilePlus2 } from "lucide-react";
-import { generateSessionInsights, type GenerateSessionInsightsOutput } from '@/ai'; // Updated import
-import { generateReportDraft, type GenerateReportDraftInput, type GenerateReportDraftOutput } from '@/ai'; // Updated import
+import { generateSessionInsights, generateReportDraft } from '@/services/aiService';
+import type { GenerateSessionInsightsOutput } from '@/ai/flows/generate-session-insights';
+import type { GenerateReportDraftInput } from '@/ai/flows/generate-report-draft-flow';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from '../ui/skeleton';
@@ -61,24 +62,16 @@ function SessionNoteCardComponent({ note, patientName, therapistName = "Psicólo
     setIsLoadingInsights(true);
     setErrorInsights(null);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setInsights({
-        keywords: note.keywords || ["Insight Palavra 1", "Insight Palavra 2"],
-        themes: note.themes || ["Insight Tema 1", "Insight Tema 2"],
-        symptomEvolution: "Evolução simulada dos sintomas mostra melhora.",
-        suggestiveInsights: "Sugestão simulada: Continuar explorando coping skills.",
-        therapeuticMilestones: ["Marco simulado: Paciente demonstrou progresso."],
-        potentialRiskAlerts: [],
-        inventoryComparisonInsights: "Comparação simulada: Níveis de ansiedade diminuíram."
-      });
-      toast({title: "Simulado: Insights Gerados"});
+      const result = await generateSessionInsights({ sessionNotes: note.summary });
+      setInsights(result);
+      toast({ title: "Insights Gerados" });
     } catch (e) {
       console.error("Falha ao gerar insights:", e);
       setErrorInsights("Falha ao gerar insights. Por favor, tente novamente.");
     } finally {
       setIsLoadingInsights(false);
     }
-  }, [note.keywords, note.themes, toast]);
+  }, [note.summary, toast]);
 
   const getReportTypeName = useCallback((type: GenerateReportDraftInput["reportType"]): string => {
     if (type === "progress_report") return "Relatório de Progresso";
@@ -93,19 +86,24 @@ function SessionNoteCardComponent({ note, patientName, therapistName = "Psicólo
     setReportDraft(null);
     const reportTypeName = getReportTypeName(reportType);
     setCurrentReportType(reportTypeName);
-    setIsReportDialogVisible(true); 
+    setIsReportDialogVisible(true);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setReportDraft(`Este é um rascunho simulado de ${reportTypeName} para ${patientName} baseado na sessão de ${format(new Date(note.date), "P", {locale:ptBR})}.\n\n${note.summary}`);
-      toast({title: "Simulado: Rascunho de relatório gerado"});
+      const result = await generateReportDraft({
+        sessionNotes: note.summary,
+        patientName,
+        reportType,
+        therapistName,
+      });
+      setReportDraft(result.draftContent);
+      toast({ title: "Rascunho de relatório gerado" });
     } catch (e) {
       console.error("Falha ao gerar rascunho de relatório:", e);
       setErrorReport(`Falha ao gerar rascunho de ${reportTypeName}. Por favor, tente novamente.`);
     } finally {
       setIsGeneratingReport(false);
     }
-  }, [getReportTypeName, patientName, note.date, note.summary, toast]);
+  }, [getReportTypeName, patientName, note.summary, therapistName, toast]);
 
   const handleCopyReportDraft = useCallback(() => {
     if (reportDraft) {
