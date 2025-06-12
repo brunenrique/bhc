@@ -12,6 +12,12 @@ const baseMockUser: Omit<User, 'role' | 'email' | 'name' | 'id'> = {
   crp: '06/123456',
 };
 
+// Definindo IDs fixos para psicólogos mockados principais
+const MOCK_PSYCHOLOGIST_DR_SILVA_ID = 'mock-psy-dr-silva';
+const MOCK_PSYCHOLOGIST_DRA_SOUZA_ID = 'mock-psy-dra-souza';
+const MOCK_PSYCHOLOGIST_DR_CONVIDADO_ID = 'mock-psy-dr-convidado';
+
+
 const authAtom = atom<User | null>(null);
 const loadingAtom = atom<boolean>(true);
 
@@ -38,27 +44,46 @@ export function useAuth() {
     await new Promise(resolve => setTimeout(resolve, 500));
     
     let userName = 'Usuário';
+    let userId = `mock-user-${role}-${Date.now().toString().slice(-4)}`;
     let userSpecificData: Partial<User> = {};
 
     switch(role) {
       case 'admin':
         userName = 'Admin Geral';
+        userId = 'mock-admin-geral';
         break;
       case 'psychologist':
-        userName = 'Dr. Exemplo Silva';
+        // Para simplificar, vamos alternar entre os psicólogos mockados se o email for genérico
+        // Ou podemos definir emails específicos para cada um se necessário no futuro
+        if (email.includes("silva")) {
+            userName = 'Dr. Exemplo Silva';
+            userId = MOCK_PSYCHOLOGIST_DR_SILVA_ID;
+        } else if (email.includes("souza")) {
+            userName = 'Dra. Modelo Souza';
+            userId = MOCK_PSYCHOLOGIST_DRA_SOUZA_ID;
+        } else if (email.includes("convidado")) {
+            userName = 'Dr. Convidado';
+            userId = MOCK_PSYCHOLOGIST_DR_CONVIDADO_ID;
+        } else {
+            // Default psychologist if no specific email match
+            userName = 'Dr. Exemplo Silva';
+            userId = MOCK_PSYCHOLOGIST_DR_SILVA_ID;
+        }
         userSpecificData.crp = baseMockUser.crp;
         break;
       case 'secretary':
         userName = 'Secretária Exemplo';
+        userId = 'mock-secretary-exemplo';
         break;
       case 'scheduling':
         userName = 'Agendador(a) Psi';
+        userId = 'mock-scheduler-psi';
         break;
     }
 
     const loggedInUser: User = { 
       ...baseMockUser,
-      id: `mock-user-${role}-${Date.now().toString().slice(-4)}`, // More unique mock ID
+      id: userId,
       email, 
       role, 
       name: userName,
@@ -78,9 +103,6 @@ export function useAuth() {
     setIsLoading(false);
     router.push('/login');
   };
-
-  // Register function might be needed if users can sign up themselves,
-  // for now, login assigns roles for mock purposes.
 
   return { user, isLoading, login, logout, isAuthenticated: !!user };
 }
