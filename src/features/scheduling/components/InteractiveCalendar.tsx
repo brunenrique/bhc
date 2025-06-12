@@ -12,7 +12,7 @@ import type { FirestoreSessionData, UserRole, MockTimestamp } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, CalendarDays } from 'lucide-react';
-import { addDays, subDays } from 'date-fns';
+import { addDays, subDays, startOfWeek } from 'date-fns'; // Adicionado startOfWeek
 
 const timestampToDate = (timestamp: MockTimestamp): Date => {
   return new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
@@ -24,30 +24,31 @@ const dateToMockTimestamp = (date: Date): MockTimestamp => {
   return { seconds, nanoseconds, toDate: () => date };
 };
 
-const createFutureDate = (daysInFuture: number, hour: number = 10, minute: number = 0): Date => {
+// Helper para criar datas ISO, usado pelos mocks
+const createFutureDateISO = (daysInFuture: number, hour: number = 10, minute: number = 0): string => {
   const date = addDays(new Date(), daysInFuture);
   date.setHours(hour, minute, 0, 0);
   return date.toISOString();
 };
 
-const createPastDate = (daysInPast: number, hour: number = 10, minute: number = 0): Date => {
+const createPastDateISO = (daysInPast: number, hour: number = 10, minute: number = 0): string => {
   const date = subDays(new Date(), daysInPast);
   date.setHours(hour, minute, 0, 0);
   return date.toISOString();
 };
 
-
+// Reconvertendo as datas mockadas para usar as helpers ISO e depois para o formato timestamp
 const MOCK_SESSIONS: FirestoreSessionData[] = [
-  { id: 'cal_sess1', pacienteId: '1', psicologoId: 'psy1', data: dateToMockTimestamp(createFutureDate(1, 10)), status: 'agendada', patientName: 'Ana Beatriz Silva', psychologistName: 'Dr. Exemplo Silva' },
-  { id: 'cal_sess2', pacienteId: '2', psicologoId: 'psy1', data: dateToMockTimestamp(createFutureDate(2, 14)), status: 'agendada', patientName: 'Bruno Almeida Costa', psychologistName: 'Dr. Exemplo Silva' },
-  { id: 'cal_sess3', pacienteId: '3', psicologoId: 'psy2', data: dateToMockTimestamp(createPastDate(1, 11)), status: 'concluída', titulo: 'Sessão Concluída - Carla', patientName: 'Carla Dias Oliveira', psychologistName: 'Dra. Modelo Souza' },
-  { id: 'cal_sess4', pacienteId: '4', psicologoId: 'psy1', data: dateToMockTimestamp(createFutureDate(0, 16)), status: 'agendada', patientName: 'Daniel Farias Lima', psychologistName: 'Dr. Exemplo Silva' },
-  { id: 'cal_sess5', pacienteId: '1', psicologoId: 'psy1', data: dateToMockTimestamp(createFutureDate(3, 11)), status: 'cancelada', patientName: 'Ana Beatriz Silva', psychologistName: 'Dr. Exemplo Silva' },
-  { id: 'cal_sess6', pacienteId: '7', psicologoId: 'psy1', data: dateToMockTimestamp(createFutureDate(1, 15)), status: 'agendada', patientName: 'Gabriela Martins Azevedo', psychologistName: 'Dr. Exemplo Silva' },
-  { id: 'cal_sess7', pacienteId: '8', psicologoId: 'other-psy-uid', data: dateToMockTimestamp(createFutureDate(4, 9)), status: 'agendada', patientName: 'Hugo Pereira da Silva', psychologistName: 'Dr. Convidado' },
-  { id: 'cal_sess8', pacienteId: '9', psicologoId: 'psy2', data: dateToMockTimestamp(createFutureDate(2, 17)), status: 'agendada', patientName: 'Isabela Santos Rocha', psychologistName: 'Dra. Modelo Souza' },
-  { id: 'cal_sess9', pacienteId: '10', psicologoId: 'psy1', data: dateToMockTimestamp(createPastDate(3, 14)), status: 'concluída', patientName: 'Lucas Mendes Oliveira', psychologistName: 'Dr. Exemplo Silva' },
-  { id: 'cal_sess10', pacienteId: '5', psicologoId: 'psy2', data: dateToMockTimestamp(createFutureDate(5, 10)), status: 'agendada', patientName: 'Eduarda Gomes Ferreira', psychologistName: 'Dra. Modelo Souza' },
+  { id: 'cal_sess1', pacienteId: '1', psicologoId: 'psy1', data: dateToMockTimestamp(new Date(createFutureDateISO(1, 10))), status: 'agendada', patientName: 'Ana Beatriz Silva', psychologistName: 'Dr. Exemplo Silva' },
+  { id: 'cal_sess2', pacienteId: '2', psicologoId: 'psy1', data: dateToMockTimestamp(new Date(createFutureDateISO(2, 14))), status: 'agendada', patientName: 'Bruno Almeida Costa', psychologistName: 'Dr. Exemplo Silva' },
+  { id: 'cal_sess3', pacienteId: '3', psicologoId: 'psy2', data: dateToMockTimestamp(new Date(createPastDateISO(1, 11))), status: 'concluída', titulo: 'Sessão Concluída - Carla', patientName: 'Carla Dias Oliveira', psychologistName: 'Dra. Modelo Souza' },
+  { id: 'cal_sess4', pacienteId: '4', psicologoId: 'psy1', data: dateToMockTimestamp(new Date(createFutureDateISO(0, 16))), status: 'agendada', patientName: 'Daniel Farias Lima', psychologistName: 'Dr. Exemplo Silva' },
+  { id: 'cal_sess5', pacienteId: '1', psicologoId: 'psy1', data: dateToMockTimestamp(new Date(createFutureDateISO(3, 11))), status: 'cancelada', patientName: 'Ana Beatriz Silva', psychologistName: 'Dr. Exemplo Silva' },
+  { id: 'cal_sess6', pacienteId: '7', psicologoId: 'psy1', data: dateToMockTimestamp(new Date(createFutureDateISO(1, 15))), status: 'agendada', patientName: 'Gabriela Martins Azevedo', psychologistName: 'Dr. Exemplo Silva' },
+  { id: 'cal_sess7', pacienteId: '8', psicologoId: 'other-psy-uid', data: dateToMockTimestamp(new Date(createFutureDateISO(4, 9))), status: 'agendada', patientName: 'Hugo Pereira da Silva', psychologistName: 'Dr. Convidado' },
+  { id: 'cal_sess8', pacienteId: '9', psicologoId: 'psy2', data: dateToMockTimestamp(new Date(createFutureDateISO(2, 17))), status: 'agendada', patientName: 'Isabela Santos Rocha', psychologistName: 'Dra. Modelo Souza' },
+  { id: 'cal_sess9', pacienteId: '10', psicologoId: 'psy1', data: dateToMockTimestamp(new Date(createPastDateISO(3, 14))), status: 'concluída', patientName: 'Lucas Mendes Oliveira', psychologistName: 'Dr. Exemplo Silva' },
+  { id: 'cal_sess10', pacienteId: '5', psicologoId: 'psy2', data: dateToMockTimestamp(new Date(createFutureDateISO(5, 10))), status: 'agendada', patientName: 'Eduarda Gomes Ferreira', psychologistName: 'Dra. Modelo Souza' },
   { id: 'cal_sess11', pacienteId: '1', psicologoId: 'psy1', data: dateToMockTimestamp(new Date(new Date().getFullYear(), new Date().getMonth(), 15, 11, 0)), status: 'agendada', patientName: 'Ana B. Silva (Mensal)', psychologistName: 'Dr. Exemplo Silva', titulo: 'Sessão Recorrente Ana' },
   { id: 'cal_sess12', pacienteId: '2', psicologoId: 'psy1', data: dateToMockTimestamp(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 2, 16, 0)), status: 'agendada', patientName: 'Bruno A. Costa (Próx. Mês)', psychologistName: 'Dr. Exemplo Silva' },
 ];
@@ -92,7 +93,7 @@ export function InteractiveCalendar() {
       },
       backgroundColor: session.status === 'concluída' ? 'hsl(var(--muted))' : session.status === 'cancelada' ? 'hsl(var(--destructive) / 0.7)' : 'hsl(var(--primary))',
       borderColor: session.status === 'concluída' ? 'hsl(var(--muted-foreground))' : session.status === 'cancelada' ? 'hsl(var(--destructive))' : 'hsl(var(--primary))',
-      textColor: session.status === 'concluída' ? 'hsl(var(--muted-foreground))' : 'hsl(var(--primary-foreground))',
+      textColor: session.status === 'concluída' ? 'hsl(var(--muted-foreground))' : session.status === 'cancelada' ? 'hsl(var(--primary-foreground))' : 'hsl(var(--primary-foreground))',
     }));
 
     setEvents(calendarEvents);
@@ -124,6 +125,16 @@ export function InteractiveCalendar() {
     });
   };
 
+  // Calculate valid range for the calendar: current week and next week
+  const today = new Date();
+  const startOfCurrentWeek = startOfWeek(today, { weekStartsOn: 1 }); // Monday of current week
+  const startOfTwoWeeksLater = addDays(startOfCurrentWeek, 14); // Monday two weeks from current week's start
+
+  const validDateRange = {
+    start: startOfCurrentWeek,
+    end: startOfTwoWeeksLater, // FullCalendar's end is exclusive
+  };
+
   if (authLoading || isLoadingCalendar) {
     return (
       <Card>
@@ -142,7 +153,7 @@ export function InteractiveCalendar() {
     <Card className="shadow-lg">
       <CardHeader>
         <CardTitle className="font-headline flex items-center"><CalendarDays className="mr-2 h-6 w-6 text-primary" /> Calendário Interativo</CardTitle>
-        <CardDescription>Visualize, agende e arraste sessões. Os dados são simulados.</CardDescription>
+        <CardDescription>Visualize, agende e arraste sessões. Os dados são simulados. Limitado à semana atual e próxima.</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="h-[650px] text-sm"> 
@@ -151,13 +162,14 @@ export function InteractiveCalendar() {
             headerToolbar={{
               left: 'prev,next today',
               center: 'title',
-              right: '' // Removido 'dayGridMonth,timeGridWeek,timeGridDay'
+              right: '' // Visualização semanal é a única, botões de troca removidos
             }}
-            initialView="timeGridWeek" // Visualização padrão é semanal
+            initialView="timeGridWeek"
+            initialDate={today.toISOString()} // Garante que comece na semana atual
+            validRange={validDateRange} // Restringe a navegação
             locale="pt-br"
             buttonText={{
                 today:    'Hoje',
-                // Não precisamos mais de month, week, day aqui pois não haverá botões
             }}
             allDaySlot={false} 
             events={events}
@@ -207,3 +219,5 @@ export function InteractiveCalendar() {
     </Card>
   );
 }
+
+    
