@@ -2,6 +2,7 @@
 import LoginForm from "@/components/forms/auth/login-form";
 import { Brain } from "lucide-react";
 import Link from "next/link";
+import { APP_ROUTES } from "@/lib/routes";
 
 export default function LoginPage() {
   return (
@@ -23,7 +24,7 @@ export default function LoginPage() {
         <p className="px-8 text-center text-sm text-muted-foreground">
           Não tem uma conta?{" "}
           <Link
-            href="/signup"
+            href={APP_ROUTES.signup}
             className="underline underline-offset-4 hover:text-primary"
           >
             Cadastre-se
@@ -31,7 +32,7 @@ export default function LoginPage() {
         </p>
          <p className="px-8 text-center text-sm text-muted-foreground">
           <Link
-            href="/forgot-password"
+            href={APP_ROUTES.forgotPassword}
             className="underline underline-offset-4 hover:text-primary"
           >
             Esqueceu a senha?

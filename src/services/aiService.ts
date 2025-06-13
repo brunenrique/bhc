@@ -13,6 +13,12 @@ import type {
   GenerateSessionNoteTemplateOutput,
 } from "@/ai/flows/generate-session-note-template";
 
+/**
+ * Helper for calling AI API routes.
+ *
+ * @param url - API endpoint.
+ * @param body - Request payload.
+ */
 async function requestAI<T>(url: string, body: unknown): Promise<T> {
   try {
     const res = await fetch(url, {
@@ -33,6 +39,9 @@ async function requestAI<T>(url: string, body: unknown): Promise<T> {
   }
 }
 
+/**
+ * Generates insights for a therapy session.
+ */
 export async function generateSessionInsights(
   input: GenerateSessionInsightsInput,
 ): Promise<GenerateSessionInsightsOutput> {
@@ -42,12 +51,18 @@ export async function generateSessionInsights(
   );
 }
 
+/**
+ * Creates a draft report using the AI service.
+ */
 export async function generateReportDraft(
   input: GenerateReportDraftInput,
 ): Promise<GenerateReportDraftOutput> {
   return requestAI<GenerateReportDraftOutput>("/api/ai/report-draft", input);
 }
 
+/**
+ * Generates a session note template assisted by AI.
+ */
 export async function generateSessionNoteTemplate(
   input: GenerateSessionNoteTemplateInput,
 ): Promise<GenerateSessionNoteTemplateOutput> {

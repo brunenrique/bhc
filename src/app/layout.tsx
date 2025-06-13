@@ -7,6 +7,7 @@ import useSessionTimeout from "@/hooks/use-session-timeout";
 import { signOut } from "firebase/auth";
 import { auth } from "@/services/firebase";
 import { useRouter } from "next/navigation";
+import { APP_ROUTES } from "@/lib/routes";
 
 
 export default function RootLayout({
@@ -18,7 +19,7 @@ export default function RootLayout({
   const router = useRouter();
   useSessionTimeout(async () => {
     await signOut(auth);
-    router.push("/login");
+    router.push(APP_ROUTES.login);
   });
   return (
     <html lang="pt-BR" suppressHydrationWarning>

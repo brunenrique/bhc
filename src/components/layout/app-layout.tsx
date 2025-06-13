@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useEffect } from 'react'; 
+import React from 'react';
 import {
   SidebarProvider,
   Sidebar,
@@ -17,9 +17,8 @@ import Link from "next/link";
 import { usePathname } from 'next/navigation';
 import ChatFloatingButton from '@/components/chat/ChatFloatingButton';
 import ChatWindow from '@/components/chat/ChatWindow';
-import { useChatStore } from '@/stores/chatStore';
-import { auth } from '@/services/firebase'; 
-import { onAuthStateChanged } from 'firebase/auth'; 
+import useAuth from '@/hooks/use-auth';
+import { APP_ROUTES } from '@/lib/routes';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -27,7 +26,7 @@ interface AppLayoutProps {
 
 export default function AppLayout({ children }: AppLayoutProps) {
   const pathname = usePathname();
-  const { setCurrentUser, currentUser } = useChatStore(); 
+  useAuth();
   
   const [defaultOpen, setDefaultOpen] = React.useState(true);
 
@@ -44,40 +43,13 @@ export default function AppLayout({ children }: AppLayoutProps) {
     }
   }, []);
 
-  // Listen for Firebase auth state changes
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setCurrentUser({
-          uid: user.uid,
-          displayName: user.displayName || "Usuário Anônimo", // Fallback name
-          avatarUrl: user.photoURL,
-        });
-      } else {
-        setCurrentUser({ uid: null, displayName: null, avatarUrl: null });
-      }
-    });
-    return () => unsubscribe(); // Cleanup subscription on unmount
-  }, [setCurrentUser]);
-  
-  // For local development/testing if Firebase auth is not fully setup
-  // This will run once after the initial auth check.
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'development' && !auth.currentUser && !currentUser?.uid) {
-      setCurrentUser({
-         uid: "dev-user-uid",
-         displayName: "Dev User",
-         avatarUrl: "https://placehold.co/40x40/orange/white?text=DU"
-      });
-    }
-  }, [setCurrentUser, currentUser?.uid]);
 
 
   return (
     <SidebarProvider defaultOpen={defaultOpen} open={defaultOpen} onOpenChange={(open) => setDefaultOpen(open)}>
       <Sidebar collapsible="icon" variant="sidebar" side="left">
         <SidebarHeader className="p-4">
-          <Link href="/dashboard" className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
+          <Link href={APP_ROUTES.dashboard} className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
             <Brain className="w-8 h-8 text-primary" />
             <span className="font-headline text-2xl font-bold text-primary group-data-[collapsible=icon]:hidden">PsiGuard</span>
           </Link>

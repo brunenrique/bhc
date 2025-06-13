@@ -2,6 +2,7 @@
 import ForgotPasswordForm from "@/components/forms/auth/forgot-password-form";
 import { Brain } from "lucide-react";
 import Link from "next/link";
+import { APP_ROUTES } from "@/lib/routes";
 
 export default function ForgotPasswordPage() {
   return (
@@ -23,7 +24,7 @@ export default function ForgotPasswordPage() {
         <p className="px-8 text-center text-sm text-muted-foreground">
           Lembrou sua senha?{" "}
           <Link
-            href="/login"
+            href={APP_ROUTES.login}
             className="underline underline-offset-4 hover:text-primary"
           >
             Entrar

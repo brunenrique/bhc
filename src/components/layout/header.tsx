@@ -17,6 +17,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search, Bell, UserCircle, Settings, LogOut, Moon, Sun } from "lucide-react";
 import Link from "next/link";
+import { APP_ROUTES } from "@/lib/routes";
 // import { useTheme } from "next-themes"; // Assuming next-themes is installed for theme toggling
 
 export default function AppHeader() {
@@ -52,7 +53,7 @@ export default function AppHeader() {
           {currentTheme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
         </Button>
         <Button variant="ghost" size="icon" asChild aria-label="Ver notificações">
-          <Link href="/notifications">
+          <Link href={APP_ROUTES.notifications}>
             <Bell className="h-5 w-5" />
           </Link>
         </Button>
@@ -71,13 +72,13 @@ export default function AppHeader() {
             <DropdownMenuLabel>Minha Conta{user.displayName ? ` - ${user.displayName}` : ''}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href="/profile">
+              <Link href={APP_ROUTES.profile}>
                 <UserCircle className="mr-2 h-4 w-4" />
                 <span>Perfil</span>
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/settings">
+              <Link href={APP_ROUTES.settings}>
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Configurações</span>
               </Link>

@@ -4,6 +4,12 @@ import { db } from './firebase';
 import { FIRESTORE_COLLECTIONS } from '@/lib/firestore-collections';
 import type { Assessment } from '@/types/assessment';
 
+/**
+ * Creates a new assessment document in Firestore.
+ *
+ * @param data - Assessment data without id and timestamps.
+ * @returns The id of the newly created assessment.
+ */
 export async function createAssessment(data: Omit<Assessment, 'id' | 'createdAt' | 'completedAt'>): Promise<string> {
   const docRef = await addDoc(collection(db, FIRESTORE_COLLECTIONS.ASSESSMENTS), {
     ...data,
@@ -12,6 +18,12 @@ export async function createAssessment(data: Omit<Assessment, 'id' | 'createdAt'
   return docRef.id;
 }
 
+/**
+ * Updates an assessment with the submitted responses.
+ *
+ * @param assessmentId - The id of the assessment document.
+ * @param responses - Answers keyed by question id.
+ */
 export async function submitAssessmentResponses(assessmentId: string, responses: Record<string, unknown>): Promise<void> {
   await updateDoc(doc(db, FIRESTORE_COLLECTIONS.ASSESSMENTS, assessmentId), {
     responses,
@@ -20,6 +32,12 @@ export async function submitAssessmentResponses(assessmentId: string, responses:
   });
 }
 
+/**
+ * Retrieves all assessments assigned to a patient.
+ *
+ * @param patientId - Patient identifier.
+ * @returns List of assessments for the patient.
+ */
 export async function getAssessmentsByPatient(patientId: string): Promise<Assessment[]> {
   const q = query(collection(db, FIRESTORE_COLLECTIONS.ASSESSMENTS), where('patientId', '==', patientId));
   const snapshot = await getDocs(q);

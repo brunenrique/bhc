@@ -9,19 +9,21 @@ import Link from "next/link";
 import NotificationItem from "@/components/notifications/notification-item";
 import { useNotifications } from "@/hooks/useNotifications";
 import { registerFcmToken } from "@/services/notificationService";
-import { auth } from "@/services/firebase";
+import useAuth from "@/hooks/use-auth";
+import { APP_ROUTES } from "@/lib/routes";
 
 export default function NotificationsPage() {
   const { notifications } = useNotifications();
+  const { user } = useAuth();
   const unreadCount = notifications.filter(n => !n.read).length;
 
   React.useEffect(() => {
-    if (Notification.permission === 'granted' && auth.currentUser?.uid) {
-      registerFcmToken(auth.currentUser.uid);
-    } else if (Notification.permission === 'default' && auth.currentUser?.uid) {
+    if (Notification.permission === 'granted' && user.uid) {
+      registerFcmToken(user.uid);
+    } else if (Notification.permission === 'default' && user.uid) {
       Notification.requestPermission().then((permission) => {
         if (permission === 'granted') {
-          registerFcmToken(auth.currentUser!.uid);
+          registerFcmToken(user.uid!);
         }
       });
     }
@@ -44,7 +46,7 @@ export default function NotificationsPage() {
                 <CheckCheck className="mr-2 h-4 w-4" /> Marcar Todas como Lidas
             </Button>
             <Button variant="outline" asChild>
-                <Link href="/settings?tab=notifications"> 
+                <Link href={`${APP_ROUTES.settings}?tab=notifications`}>
                     <Settings className="mr-2 h-4 w-4" /> Config. de Notificações
                 </Link>
             </Button>

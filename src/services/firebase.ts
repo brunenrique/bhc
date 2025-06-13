@@ -7,6 +7,7 @@ import { getMessaging, type Messaging } from 'firebase/messaging';
 // Para Functions, se for usar diretamente no cliente no futuro:
 // import { getFunctions, connectFunctionsEmulator, type Functions } from 'firebase/functions';
 
+/** Firebase configuration used to initialise the client SDK. */
 let firebaseConfig;
 const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
@@ -69,5 +70,8 @@ if (process.env.NODE_ENV === 'development') {
   }
 }
 
+/**
+ * Firebase app and service instances available to the application.
+ */
 export { app, auth, db, storage, messaging }; // Adicionar 'functions' aqui se for usá-las globalmente
     

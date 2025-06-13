@@ -13,21 +13,27 @@ export const mockTasksData: Task[] = [
   { id: "task5", title: "Atualizar documento de políticas da clínica", description: "Incorporar novas diretrizes de teleatendimento.", dueDate: "2024-08-01", assignedTo: "Admin", status: "Pendente", priority: "Média" },
 ];
 
-// Simula uma chamada de API para buscar todas as tarefas
+/**
+ * Retrieves all tasks (mocked).
+ */
 export async function getTasks(): Promise<Task[]> {
   // Simula um delay de rede
   await new Promise(resolve => setTimeout(resolve, 100));
   return [...mockTasksData]; // Retorna uma cópia para evitar mutações diretas no mock
 }
 
-// Simula uma chamada de API para buscar uma tarefa por ID
+/**
+ * Retrieves a task by id from the mock list.
+ */
 export async function getTaskById(id: string): Promise<Task | undefined> {
   // Simula um delay de rede
   await new Promise(resolve => setTimeout(resolve, 50));
   return mockTasksData.find(task => task.id === id);
 }
 
-// Simula uma chamada de API para buscar tarefas para uma data específica
+/**
+ * Returns tasks scheduled for a specific date (mocked).
+ */
 export async function getTasksForDate(date: Date): Promise<Task[]> {
   await new Promise(resolve => setTimeout(resolve, 80));
   return mockTasksData.filter(task => {

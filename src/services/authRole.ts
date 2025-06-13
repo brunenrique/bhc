@@ -5,6 +5,9 @@ import { getIdTokenResult } from 'firebase/auth';
 
 export type UserRole = 'Admin' | 'Psychologist' | 'Secretary';
 
+/**
+ * Obtains the role of the currently authenticated user.
+ */
 export async function getCurrentUserRole(): Promise<UserRole | null> {
   const user = auth.currentUser;
   if (!user) return null;
@@ -17,6 +20,9 @@ export async function getCurrentUserRole(): Promise<UserRole | null> {
   }
 }
 
+/**
+ * Checks if the current user has one of the required roles.
+ */
 export async function checkUserRole(required: UserRole | UserRole[]): Promise<boolean> {
   const role = await getCurrentUserRole();
   if (!role) return false;

@@ -123,30 +123,41 @@ export default function DashboardPage() {
  {isLoading && <Skeleton className="h-4 w-1/3" />}
           </CardHeader>
           <CardContent className="space-y-3">
- {isLoading ? (
+            {isLoading ? (
               <>
                 {[...Array(3)].map((_, i) => (
                   <SkeletonBox key={i} className="h-[60px] w-full" />
                 ))}
               </>
-            ) : (
- upcomingAppointments.length > 0 ? (
- upcomingAppointments.map(appt => (
- <div key={appt.id} className="flex items-center justify-between p-3 bg-secondary/50 rounded-md">
- <div>
- <p className="font-semibold">{appt.patientName}</p>
- <p className="text-sm text-muted-foreground">{appt.psychologist}</p>
+            ) : upcomingAppointments.length > 0 ? (
+              upcomingAppointments.map((appt) => (
+                <div
+                  key={appt.id}
+                  className="flex items-center justify-between p-3 bg-secondary/50 rounded-md"
+                >
+                  <div>
+                    <p className="font-semibold">{appt.patientName}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {appt.psychologist}
+                    </p>
                   </div>
                   <div className="text-right">
- <p className="font-medium">{appt.time}</p>
-                    <Button variant="link" size="sm" className="p-0 h-auto text-accent" asChild>
- <Link href={`/patients/${appt.id}`}>Ver Detalhes</Link>
+                    <p className="font-medium">{appt.time}</p>
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="p-0 h-auto text-accent"
+                      asChild
+                    >
+                      <Link href={`/patients/${appt.id}`}>Ver Detalhes</Link>
                     </Button>
                   </div>
                 </div>
               ))
             ) : (
-              <p className="text-muted-foreground">Nenhum próximo agendamento.</p>
+              <p className="text-muted-foreground">
+                Nenhum próximo agendamento.
+              </p>
             )}
           </CardContent>
         </Card>
@@ -156,19 +167,25 @@ export default function DashboardPage() {
             <CardTitle className="font-headline">Atividade Recente</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
- {isLoading ? (
+            {isLoading ? (
               <>
                 {[...Array(3)].map((_, i) => (
                   <SkeletonBox key={i} className="h-[60px] w-full" />
                 ))}
               </>
+            ) : recentActivities.length > 0 ? (
+              recentActivities.map((activity) => (
+                <RecentActivityItem
+                  key={activity.id}
+                  description={activity.description}
+                  time={activity.time}
+                  icon={activity.icon}
+                />
+              ))
             ) : (
- recentActivities.length > 0 ? (
- recentActivities.map(activity => (
- <RecentActivityItem key={activity.id} description={activity.description} time={activity.time} icon={activity.icon} />
- ))
-            ) : (
-              <p className="text-muted-foreground">Nenhuma atividade recente.</p>
+              <p className="text-muted-foreground">
+                Nenhuma atividade recente.
+              </p>
             )}
           </CardContent>
         </Card>

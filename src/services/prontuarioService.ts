@@ -7,6 +7,13 @@ export interface SessionNote {
   [key: string]: unknown;
 }
 
+/**
+ * Calls a GAS endpoint to generate a patient summary document.
+ *
+ * @param patientId - Identifier of the patient.
+ * @param notes - Notes to be included in the summary.
+ * @returns Success flag returned by the GAS script.
+ */
 export async function gerarProntuario(
   patientId: string,
   notes: SessionNote[],

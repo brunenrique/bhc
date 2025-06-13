@@ -11,6 +11,9 @@ export interface Notification {
   link?: string;
 }
 
+/**
+ * Registers the current browser's FCM token for a user.
+ */
 export async function registerFcmToken(userId: string): Promise<string | null> {
   if (!messaging) return null;
   try {
@@ -30,6 +33,9 @@ export async function registerFcmToken(userId: string): Promise<string | null> {
   }
 }
 
+/**
+ * Subscribes to real-time notifications for a user.
+ */
 export function listenToNotifications(userId: string, callback: (n: Notification[]) => void): Unsubscribe {
   const q = query(collection(db, 'users', userId, 'notifications'), orderBy('date', 'desc'));
   return onSnapshot(q, snap => {

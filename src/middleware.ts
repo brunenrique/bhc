@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { APP_ROUTES } from './lib/routes';
 
 export function middleware(request: NextRequest) {
   const sessionCookie = request.cookies.get('session')?.value;
   if (!sessionCookie) {
-    return NextResponse.redirect(new URL('/login', request.url));
+    return NextResponse.redirect(new URL(APP_ROUTES.login, request.url));
   }
 
   try {
@@ -14,7 +15,7 @@ export function middleware(request: NextRequest) {
       return NextResponse.rewrite(new URL('/403', request.url));
     }
   } catch {
-    return NextResponse.redirect(new URL('/login', request.url));
+    return NextResponse.redirect(new URL(APP_ROUTES.login, request.url));
   }
 
   return NextResponse.next();

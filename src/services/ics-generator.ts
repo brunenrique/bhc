@@ -3,7 +3,9 @@ import { type Appointment, type AppointmentsByDate } from '@/types/appointment';
 import { format } from 'date-fns';
 import { toDate } from 'date-fns-tz';
 
-// Function to format a date string (YYYY-MM-DD) and time string (HH:mm) into an ICS compatible UTC string (YYYYMMDDTHHMMSSZ)
+/**
+ * Formats a date and time in a given timezone into the UTC string used by ICS files.
+ */
 function formatToICSDateTime(dateString: string, timeString: string, timeZone: string = 'America/Sao_Paulo'): string {
   const dateTimeString = `${dateString}T${timeString}`; // e.g., "2024-08-15T10:00"
   
@@ -17,6 +19,9 @@ function formatToICSDateTime(dateString: string, timeString: string, timeZone: s
 }
 
 
+/**
+ * Generates a pseudo random UID for ICS events.
+ */
 function generateUID(length: number = 16): string {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
@@ -33,6 +38,9 @@ const psychologistNameMap: Record<string, string> = {
   // Add other known psychologist IDs and names here
 };
 
+/**
+ * Generates an iCalendar (.ics) string from the provided appointments.
+ */
 export function generateICS(appointmentsByDate: AppointmentsByDate, specificDate?: Date): string {
   let icsString = 'BEGIN:VCALENDAR\r\n';
   icsString += 'VERSION:2.0\r\n';

@@ -2,6 +2,7 @@
 import SignUpForm from "@/components/forms/auth/signup-form";
 import { Brain } from "lucide-react";
 import Link from "next/link";
+import { APP_ROUTES } from "@/lib/routes";
 
 export default function SignUpPage() {
   return (
@@ -23,7 +24,7 @@ export default function SignUpPage() {
         <p className="px-8 text-center text-sm text-muted-foreground">
           Já tem uma conta?{" "}
           <Link
-            href="/login"
+            href={APP_ROUTES.login}
             className="underline underline-offset-4 hover:text-primary"
           >
             Entrar

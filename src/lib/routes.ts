@@ -20,6 +20,11 @@ export const APP_ROUTES = {
   toolsAuditTrail: "/tools/audit-trail",
   adminMetrics: "/admin/metrics",
   settings: "/settings",
+  notifications: "/notifications",
+  profile: "/profile",
+  login: "/login",
+  signup: "/signup",
+  forgotPassword: "/forgot-password",
   help: "/help",
 };
 
