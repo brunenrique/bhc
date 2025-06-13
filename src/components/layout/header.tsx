@@ -17,6 +17,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search, Bell, UserCircle, Settings, LogOut, Moon, Sun } from "lucide-react";
 import Link from "next/link";
+import Breadcrumb from "@/components/layout/breadcrumb";
 // import { useTheme } from "next-themes"; // Assuming next-themes is installed for theme toggling
 
 export default function AppHeader() {
@@ -36,7 +37,8 @@ export default function AppHeader() {
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-6">
       <SidebarTrigger className="md:hidden" />
-      <div className="flex-1">
+      <div className="flex-1 overflow-hidden">
+        <Breadcrumb className="truncate" />
         {/* Optional: Global Search can go here */}
         {/* <form className="relative ml-auto flex-1 sm:flex-initial">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
