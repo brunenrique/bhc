@@ -51,29 +51,37 @@ export default function LoginForm() {
       await signInWithEmailAndPassword(auth, data.email, data.password);
       // Em caso de login bem-sucedido:
       router.push("/dashboard");
-    } catch (error: any) {
-      let errorMessage = "Ocorreu um erro desconhecido. Tente novamente.";
-      switch (error.code) {
-        case 'auth/user-not-found':
-        case 'auth/wrong-password':
-        case 'auth/invalid-credential': // This code is often used by Firebase for both user-not-found and wrong-password
-          errorMessage = 'E-mail ou senha inválidos. Verifique suas credenciais.';
-          break;
-        case 'auth/invalid-email':
-          errorMessage = 'O formato do e-mail é inválido.';
-          break;
-        case 'auth/user-disabled':
-          errorMessage = 'Esta conta de usuário foi desabilitada.';
-          break;
-        case 'auth/too-many-requests':
-          errorMessage = 'Muitas tentativas de login malsucedidas. Tente novamente mais tarde.';
-          break;
-        case 'auth/network-request-failed':
-          errorMessage = 'Erro de rede. Verifique sua conexão com a internet.';
-          break;
-        default:
-          errorMessage = error.message || errorMessage;
+    } catch (error) {
+      console.error("DEBUG: Erro detalhado do Firebase Auth:", error);
+
+      let errorMessage =
+        "Ocorreu um erro inesperado. Tente novamente ou contate o suporte.";
+
+      if (error instanceof Error && "code" in error) {
+        const errorCode = (error as { code: string }).code;
+
+        switch (errorCode) {
+          case "auth/invalid-credential":
+            errorMessage =
+              "E-mail ou senha incorretos. Verifique seus dados e tente novamente.";
+            break;
+          case "auth/user-disabled":
+            errorMessage =
+              "Este usuário foi desabilitado. Entre em contato com o suporte.";
+            break;
+          case "auth/too-many-requests":
+            errorMessage =
+              "Acesso bloqueado temporariamente devido a muitas tentativas. Tente novamente mais tarde.";
+            break;
+          default:
+            errorMessage =
+              "Ocorreu um erro inesperado ao fazer login. Tente novamente.";
+        }
+      } else {
+        errorMessage =
+          "Ocorreu um erro desconhecido. Por favor, contate o suporte.";
       }
+
       toast({
         title: "Erro ao fazer login",
         description: errorMessage,
