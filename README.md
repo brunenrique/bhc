@@ -1,5 +1,5 @@
 
- p# PsiGuard
+# PsiGuard
 
 Plataforma web para gestão de clínicas de psicologia, com agenda integrada, prontuários seguros e funcionalidades auxiliadas por IA. O projeto é baseado em **Next.js** e **Firebase**, utilizando **TypeScript** e **Tailwind CSS** no frontend e **Cloud Functions** no backend. Fluxos de IA são implementados com **Genkit** e Google AI.
 
@@ -41,7 +41,7 @@ Plataforma web para gestão de clínicas de psicologia, com agenda integrada, pr
 
 - `npm run dev` &mdash; inicia o servidor Next.js em modo desenvolvimento (geralmente com Turbopack).
 - `npm run genkit:dev` &mdash; executa os fluxos de IA em modo de desenvolvimento.
-- `npm run genkit:dev` &mdash; verifica os tipos TypeScript.
+- `npm run typecheck` &mdash; verifica os tipos TypeScript.
 - `npm run lint` &mdash; executa o ESLint.
 - `npm test` &mdash; roda a suíte de testes (pode precisar dos emuladores Firebase em execução).
 - `npm run build` &mdash; gera o build de produção.
