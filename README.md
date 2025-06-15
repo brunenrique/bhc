@@ -45,6 +45,18 @@ Plataforma web para gestão de clínicas de psicologia, com agenda integrada, pr
 - `npm run lint` &mdash; executa o ESLint.
 - `npm test` &mdash; roda a suíte de testes (pode precisar dos emuladores Firebase em execução).
 - `npm run build` &mdash; gera o build de produção.
+- `npm start` &mdash; inicia o servidor Next.js em modo produção (execute `npm run build` antes).
+
+## Execução em Modo Produção
+
+Para rodar localmente com as otimizações de produção:
+
+```bash
+npm run build
+npm start
+```
+
+O comando `npm start` executa `next start`, definindo `NODE_ENV=production` e servindo o build gerado. Certifique-se de que as variáveis de ambiente estejam configuradas de acordo com o seu ambiente de produção.
 
 ## Variáveis de Ambiente
 
