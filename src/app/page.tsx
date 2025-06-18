@@ -68,8 +68,10 @@ export default function LandingPage() {
             <div className="flex flex-col sm:flex-row gap-4">
               <Button size="lg" asChild className="bg-accent hover:bg-accent/90 text-accent-foreground text-lg px-8 py-6">
                 <Link href="/signup">
-                  Comece Agora (Grátis por 14 dias)
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                  <span>
+                    Comece Agora (Grátis por 14 dias)
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </span>
                 </Link>
               </Button>
               {/* <Button size="lg" variant="outline" className="text-lg px-8 py-6">
@@ -133,8 +135,10 @@ export default function LandingPage() {
             </p>
             <Button size="lg" asChild className="bg-accent hover:bg-accent/90 text-accent-foreground text-lg px-8 py-6">
               <Link href="/signup">
-                Experimente o Thalamus Gratuitamente
-                <ArrowRight className="ml-2 h-5 w-5" />
+                <span>
+                  Experimente o Thalamus Gratuitamente
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </span>
               </Link>
             </Button>
           </div>

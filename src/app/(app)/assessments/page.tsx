@@ -24,12 +24,16 @@ export default function AssessmentsPage() {
         <div className="flex gap-2">
           <Button variant="outline" asChild className="bg-accent hover:bg-accent/90 text-accent-foreground">
             <Link href="/assessments/templates/new">
-              <PlusCircle className="mr-2 h-4 w-4" /> Criar Novo Modelo
+              <span>
+                <PlusCircle className="mr-2 h-4 w-4" /> Criar Novo Modelo
+              </span>
             </Link>
           </Button>
           <Button asChild className="bg-accent hover:bg-accent/90 text-accent-foreground">
             <Link href="/assessments/assign">
-              <ClipboardList className="mr-2 h-4 w-4" /> Atribuir Avaliação
+              <span>
+                <ClipboardList className="mr-2 h-4 w-4" /> Atribuir Avaliação
+              </span>
             </Link>
           </Button>
         </div>

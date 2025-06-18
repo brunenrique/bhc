@@ -38,7 +38,9 @@ export default function TasksPage() {
         </div>
         <Button asChild className="bg-accent hover:bg-accent/90 text-accent-foreground">
           <Link href="/tasks/new">
-            <PlusCircle className="mr-2 h-4 w-4" /> Nova Tarefa
+            <span>
+              <PlusCircle className="mr-2 h-4 w-4" /> Nova Tarefa
+            </span>
           </Link>
         </Button>
       </div>

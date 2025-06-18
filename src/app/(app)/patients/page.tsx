@@ -41,7 +41,9 @@ export default function PatientsPage() {
         </div>
         <Button asChild className="bg-accent hover:bg-accent/90 text-accent-foreground">
           <Link href="/patients/new">
-            <UserPlus className="mr-2 h-4 w-4" /> Adicionar Novo Paciente
+            <span>
+              <UserPlus className="mr-2 h-4 w-4" /> Adicionar Novo Paciente
+            </span>
           </Link>
         </Button>
       </div>
@@ -81,7 +83,9 @@ export default function PatientsPage() {
               action={
                 <Button asChild className="bg-accent hover:bg-accent/90 text-accent-foreground">
                   <Link href={APP_ROUTES.newPatient}>
-                    <UserPlus className="mr-2 h-4 w-4" /> Adicionar Novo Paciente
+                    <span>
+                      <UserPlus className="mr-2 h-4 w-4" /> Adicionar Novo Paciente
+                    </span>
                   </Link>
                 </Button>
               }

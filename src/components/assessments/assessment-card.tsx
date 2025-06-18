@@ -89,7 +89,9 @@ function AssessmentCardComponent({ assessment, showPatientInfo = false }: Assess
           {assessment.status === "Completed" && (
             <Button variant="outline" size="sm" asChild>
               <Link href={`/inventories-scales/${assessment.id}/results`}>
-                <BarChart2 className="mr-2 h-4 w-4" /> Ver Resultados
+                <span>
+                  <BarChart2 className="mr-2 h-4 w-4" /> Ver Resultados
+                </span>
               </Link>
             </Button>
           )}
