@@ -26,7 +26,7 @@ export default function LandingPage() {
         <h2 className="text-5xl md:text-6xl font-headline font-bold mb-6 text-foreground">
           Capacitando Profissionais de Saúde Mental
         </h2>
-        <p className="text-xl text-muted-foreground max-w-2xl mb-10">
+        <p className="text-xl text-muted-foreground max-w-2xl mb-10 leading-relaxed">
           Thalamus oferece uma plataforma segura, intuitiva e aprimorada por IA para gerenciar seu consultório de psicologia, para que você possa focar no que mais importa: seus pacientes.
         </p>
         <Button size="lg" asChild className="bg-accent hover:bg-accent/90 text-accent-foreground">

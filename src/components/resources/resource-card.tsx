@@ -54,7 +54,7 @@ function ResourceCardComponent({ resource, isGlobalList = false }: ResourceCardP
         )}
       </CardHeader>
       <CardContent className="flex-grow text-xs text-muted-foreground space-y-1">
-        <p>Tipo: <Badge variant="outline" className="uppercase">{resource.type}</Badge></p>
+        <p>Tipo: <Badge variant="outline" className="uppercase tracking-wide">{resource.type}</Badge></p>
         <p>Tamanho: {resource.size}</p>
         {dateToDisplay && <p>{dateLabel}: {format(new Date(dateToDisplay), "P", { locale: ptBR })}</p>}
         {isGlobalList && resource.sharedWith !== undefined && (

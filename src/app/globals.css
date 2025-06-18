@@ -98,6 +98,9 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+  h3, h4 {
+    @apply tracking-wide;
+  }
 }
 
 /* Custom React Flow Handle Styles */
