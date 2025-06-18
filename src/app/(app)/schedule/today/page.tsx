@@ -243,7 +243,9 @@ export default function TodaySchedulePage() {
         </div>
         <Button asChild className="bg-accent hover:bg-accent/90 text-accent-foreground">
           <Link href="/schedule/new">
-            <PlusCircle className="mr-2 h-4 w-4" /> Novo Agendamento
+            <span>
+              <PlusCircle className="mr-2 h-4 w-4" /> Novo Agendamento
+            </span>
           </Link>
         </Button>
       </div>

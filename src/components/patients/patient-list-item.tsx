@@ -88,9 +88,11 @@ function PatientListItemComponent({ patient }: PatientListItemProps) {
           <div className="flex items-center gap-1 sm:gap-2">
             <Button variant="outline" size="sm" asChild className="h-8 px-2 sm:px-3" aria-label={`Editar perfil de ${patient.name}`}>
               <Link href={`/patients/${patient.id}/edit`}>
-                <Edit3 className="h-3.5 w-3.5 sm:mr-1" />
-                <span className="hidden sm:inline">Editar</span>
-                <span className="sr-only sm:hidden">Editar perfil de {patient.name}</span>
+                <span>
+                  <Edit3 className="h-3.5 w-3.5 sm:mr-1" />
+                  <span className="hidden sm:inline">Editar</span>
+                  <span className="sr-only sm:hidden">Editar perfil de {patient.name}</span>
+                </span>
               </Link>
             </Button>
             <AlertDialog>
@@ -126,7 +128,9 @@ function PatientListItemComponent({ patient }: PatientListItemProps) {
               aria-label={`Ver detalhes de ${patient.name}`}
             >
               <Link href={`/patients/${patient.id}`} className="flex items-center gap-2">
-                <ChevronRight className="h-5 w-5" /> Abrir
+                <span>
+                  <ChevronRight className="h-5 w-5" /> Abrir
+                </span>
               </Link>
             </Button>
           </div>

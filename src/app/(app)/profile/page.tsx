@@ -161,17 +161,23 @@ export default function ProfilePage() {
         <CardFooter className="flex flex-col sm:flex-row justify-center gap-3 p-6 border-t">
           <Button variant="default" asChild className="w-full sm:w-auto bg-accent hover:bg-accent/90 text-accent-foreground">
             <Link href="/settings?tab=account">
-              <Edit className="mr-2 h-4 w-4" /> Editar Perfil
+              <span>
+                <Edit className="mr-2 h-4 w-4" /> Editar Perfil
+              </span>
             </Link>
           </Button>
           <Button variant="outline" asChild className="w-full sm:w-auto">
             <Link href="/settings?tab=account"> {/* Placeholder: eventually /profile/change-password */}
-              <Lock className="mr-2 h-4 w-4" /> Alterar Senha
+              <span>
+                <Lock className="mr-2 h-4 w-4" /> Alterar Senha
+              </span>
             </Link>
           </Button>
            <Button variant="outline" asChild className="w-full sm:w-auto">
             <Link href="/settings?tab=notifications">
-              <Bell className="mr-2 h-4 w-4" /> Preferências de Notificação
+              <span>
+                <Bell className="mr-2 h-4 w-4" /> Preferências de Notificação
+              </span>
             </Link>
           </Button>
         </CardFooter>

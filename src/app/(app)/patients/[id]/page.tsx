@@ -16,7 +16,9 @@ export default function PatientDetailPagePlaceholder() {
       </p>
       <Button variant="outline" asChild>
         <Link href="/patients">
-          <ArrowLeft className="mr-2 h-4 w-4" /> Voltar para Pacientes
+          <span>
+            <ArrowLeft className="mr-2 h-4 w-4" /> Voltar para Pacientes
+          </span>
         </Link>
       </Button>
     </div>
