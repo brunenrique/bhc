@@ -46,13 +46,9 @@ export function UserNav() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem asChild><Link href="/settings"><UserIconLucide className="mr-2 h-4 w-4" />
-              <span>Perfil</span></Link></DropdownMenuItem>
-          <DropdownMenuItem asChild><Link href="/settings"><Settings className="mr-2 h-4 w-4" />
-                <span>Configurações</span>
-            </Link></DropdownMenuItem>
-          <DropdownMenuItem asChild><Link href="/guide"><BookOpenText className="mr-2 h-4 w-4" />
-              <span>Guia de Uso</span></Link></DropdownMenuItem>
+          <DropdownMenuItem asChild><Link href="/settings"><UserIconLucide className="mr-2 h-4 w-4" /><span>Perfil</span></Link></DropdownMenuItem>
+          <DropdownMenuItem asChild><Link href="/settings"><Settings className="mr-2 h-4 w-4" /><span>Configurações</span></Link></DropdownMenuItem>
+          <DropdownMenuItem asChild><Link href="/guide"><BookOpenText className="mr-2 h-4 w-4" /><span>Guia de Uso</span></Link></DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={logout}>
