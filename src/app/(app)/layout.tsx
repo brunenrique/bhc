@@ -17,7 +17,8 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Button } from '@/components/ui/button';
-import { Moon, Sun } from 'lucide-react'; 
+import { Moon, Sun } from 'lucide-react';
+import PropTypes from 'prop-types';
 import { useTheme } from 'next-themes'; 
 import { FloatingChatButton } from '@/features/chat/components/FloatingChatButton';
 import { SimulatedNotificationManager } from '@/features/notifications/components/SimulatedNotificationManager';
@@ -103,8 +104,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
           <UserNav />
         </header>
-        <main className="flex-1 p-4 md:p-6 lg:p-8 pt-12 md:pt-6 lg:pt-8"> 
-          {children}
+        <main className="flex-1 p-4 md:p-6 lg:p-8 pt-12 md:pt-6 lg:pt-8">
+          {children || <div>Conteúdo não disponível</div>}
         </main>
         <footer className="p-4 text-center text-xs text-muted-foreground border-t border-border">
           Desenvolvido por Bruno Henrique Cordeiro
@@ -115,3 +116,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     </SidebarProvider>
   );
 }
+
+AppLayout.propTypes = {
+  children: PropTypes.element.isRequired,
+};

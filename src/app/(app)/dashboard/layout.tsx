@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import { LayoutDashboard, UserCircle, Activity, TrendingUp, ShieldAlert } from 'lucide-react'; 
 import type { UserRole } from '@/types';
 import { Button } from '@/components/ui/button'; // Import Button
+import PropTypes from 'prop-types';
 
 interface TabConfig {
   value: string;
@@ -124,8 +125,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </Tabs>
       )}
       <main className="flex-1 overflow-auto p-4 sm:px-6 sm:py-0 md:gap-8 mt-4">
-        {children}
+        {children || <div>Conteúdo não disponível</div>}
       </main>
     </div>
   );
 }
+
+DashboardLayout.propTypes = {
+  children: PropTypes.element.isRequired,
+};

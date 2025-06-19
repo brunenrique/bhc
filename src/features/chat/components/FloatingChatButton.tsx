@@ -62,12 +62,16 @@ export function FloatingChatButton() {
 
   return (
     <>
-      <Popover open={isChatSelectorOpen} onOpenChange={(isOpen) => {
-        if (!isOpen && isChatSelectorOpen) {
-            useAppStore.setState({ isChatSelectorOpen: false });
-        }
-      }}>
-        <PopoverTrigger asChild><div className="fixed bottom-6 right-6 z-[60]"> {/* Ensure button is above chat window if they overlap initially */}
+      <div className="fixed bottom-6 right-6 z-[60]"> {/* Ensure button is above chat window if they overlap initially */}
+        <Popover
+          open={isChatSelectorOpen}
+          onOpenChange={(isOpen) => {
+            if (!isOpen && isChatSelectorOpen) {
+              useAppStore.setState({ isChatSelectorOpen: false })
+            }
+          }}
+        >
+          <PopoverTrigger asChild>
             <Button
               ref={refs.setReference} // Set this button as the reference for the ChatWindow
               size="icon"
@@ -77,7 +81,7 @@ export function FloatingChatButton() {
             >
               <MessageSquare className="h-7 w-7" />
             </Button>
-          </div></PopoverTrigger>
+          </PopoverTrigger>
         <PopoverContent 
             className="w-72 p-2 mb-2 mr-1" 
             side="top" 
@@ -122,7 +126,8 @@ export function FloatingChatButton() {
             )}
           </div>
         </PopoverContent>
-      </Popover>
+        </Popover>
+      </div>
       
       {activeChat && (
         <FloatingPortal> {/* Ensures ChatWindow is rendered at the root for correct positioning */}

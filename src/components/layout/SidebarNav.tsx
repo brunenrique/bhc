@@ -87,17 +87,9 @@ export function SidebarNav() {
         };
         
         const menuItemContent = (
-          <SidebarMenuButton
-            asChild
-            isActive={isActive}
-            tooltip={item.label}
-            className={cn("w-full justify-start")}
-          ><Link
-              href={item.href}
-              onClick={item.anchor ? scrollHandler : undefined}
-              target={item.external ? "_blank" : undefined}
-              rel={item.external ? "noopener noreferrer" : undefined}
-            ><item.icon className="mr-2 h-5 w-5 flex-shrink-0" /><span className="truncate font-body">{item.label}</span></Link></SidebarMenuButton>
+            <SidebarMenuButton asChild isActive={isActive} tooltip={item.label} className={cn("w-full justify-start")}>
+              <Link href={item.href} onClick={item.anchor ? scrollHandler : undefined} target={item.external ? "_blank" : undefined} rel={item.external ? "noopener noreferrer" : undefined}><tab.icon className="mr-2 h-5 w-5 flex-shrink-0" /><span className="truncate font-body">{item.label}</span></Link>
+            </SidebarMenuButton>
         );
 
         if (item.roles) {
