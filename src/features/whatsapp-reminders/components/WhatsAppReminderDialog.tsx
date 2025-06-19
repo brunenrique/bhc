@@ -251,11 +251,7 @@ export function WhatsAppReminderDialog({
             {whatsAppUrl ? "Atualizar Link WhatsApp" : "Gerar Link WhatsApp"}
           </Button>
           {whatsAppUrl && (
-            <Button asChild className="w-full sm:w-auto">
-              <a href={whatsAppUrl} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="mr-2 h-4 w-4" /> Abrir no WhatsApp
-              </a>
-            </Button>
+            <Button asChild className="w-full sm:w-auto"><a href={whatsAppUrl} target="_blank" rel="noopener noreferrer"><ExternalLink className="mr-2 h-4 w-4" /> Abrir no WhatsApp</a></Button>
           )}
         </DialogFooter>
       </DialogContent>
