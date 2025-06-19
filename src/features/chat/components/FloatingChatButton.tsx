@@ -67,17 +67,17 @@ export function FloatingChatButton() {
             useAppStore.setState({ isChatSelectorOpen: false });
         }
       }}>
-        <PopoverTrigger asChild><div className="fixed bottom-6 right-6 z-[60]"> {/* Ensure button is above chat window if they overlap initially */}
-            <Button
-              ref={refs.setReference} // Set this button as the reference for the ChatWindow
-              size="icon"
-              className="rounded-full h-14 w-14 shadow-xl hover:shadow-2xl transition-all"
-              onClick={toggleChatSelector}
-              aria-label="Abrir seletor de chat"
-            >
-              <MessageSquare className="h-7 w-7" />
-            </Button>
-          </div></PopoverTrigger>
+        <PopoverTrigger asChild>
+          <Button
+            ref={refs.setReference} // Set this button as the reference for the ChatWindow
+            size="icon"
+            className="fixed bottom-6 right-6 z-[60] rounded-full h-14 w-14 shadow-xl hover:shadow-2xl transition-all"
+            onClick={toggleChatSelector}
+            aria-label="Abrir seletor de chat"
+          >
+            <MessageSquare className="h-7 w-7" />
+          </Button>
+        </PopoverTrigger>
         <PopoverContent 
             className="w-72 p-2 mb-2 mr-1" 
             side="top" 
