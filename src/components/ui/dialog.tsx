@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
+import PropTypes from 'prop-types';
 import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -52,6 +53,9 @@ const DialogContent = React.forwardRef<
   </DialogPortal>
 ))
 DialogContent.displayName = DialogPrimitive.Content.displayName
+DialogContent.propTypes = {
+  children: PropTypes.element.isRequired,
+};
 
 const DialogHeader = ({
   className,

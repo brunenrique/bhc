@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import * as RechartsPrimitive from "recharts"
+import PropTypes from 'prop-types';
 
 import { cn } from "@/lib/utils"
 
@@ -66,6 +67,9 @@ const ChartContainer = React.forwardRef<
   )
 })
 ChartContainer.displayName = "Chart"
+ChartContainer.propTypes = {
+  children: PropTypes.element.isRequired,
+};
 
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
   const colorConfig = Object.entries(config).filter(

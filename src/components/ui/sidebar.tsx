@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet" // Added SheetHeader, SheetTitle
 import { Skeleton } from "@/components/ui/skeleton"
+import PropTypes from 'prop-types';
 import {
   Tooltip,
   TooltipContent,
@@ -156,6 +157,9 @@ const SidebarProvider = React.forwardRef<
   }
 )
 SidebarProvider.displayName = "SidebarProvider"
+SidebarProvider.propTypes = {
+  children: PropTypes.element.isRequired,
+};
 
 const Sidebar = React.forwardRef<
   HTMLDivElement,

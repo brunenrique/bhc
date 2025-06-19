@@ -5,6 +5,7 @@ import * as MenubarPrimitive from "@radix-ui/react-menubar"
 import { Check, ChevronRight, Circle } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import PropTypes from 'prop-types';
 
 function MenubarMenu({
   ...props
@@ -86,6 +87,9 @@ const MenubarSubTrigger = React.forwardRef<
   </MenubarPrimitive.SubTrigger>
 ))
 MenubarSubTrigger.displayName = MenubarPrimitive.SubTrigger.displayName
+MenubarSubTrigger.propTypes = {
+  children: PropTypes.element.isRequired,
+};
 
 const MenubarSubContent = React.forwardRef<
   React.ElementRef<typeof MenubarPrimitive.SubContent>,
@@ -167,6 +171,9 @@ const MenubarCheckboxItem = React.forwardRef<
   </MenubarPrimitive.CheckboxItem>
 ))
 MenubarCheckboxItem.displayName = MenubarPrimitive.CheckboxItem.displayName
+MenubarCheckboxItem.propTypes = {
+  children: PropTypes.element.isRequired,
+};
 
 const MenubarRadioItem = React.forwardRef<
   React.ElementRef<typeof MenubarPrimitive.RadioItem>,
@@ -189,6 +196,9 @@ const MenubarRadioItem = React.forwardRef<
   </MenubarPrimitive.RadioItem>
 ))
 MenubarRadioItem.displayName = MenubarPrimitive.RadioItem.displayName
+MenubarRadioItem.propTypes = {
+  children: PropTypes.element.isRequired,
+};
 
 const MenubarLabel = React.forwardRef<
   React.ElementRef<typeof MenubarPrimitive.Label>,

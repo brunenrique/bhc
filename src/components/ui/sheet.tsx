@@ -6,6 +6,7 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import PropTypes from 'prop-types';
 
 const Sheet = SheetPrimitive.Root
 
@@ -73,6 +74,9 @@ const SheetContent = React.forwardRef<
   </SheetPortal>
 ))
 SheetContent.displayName = SheetPrimitive.Content.displayName
+SheetContent.propTypes = {
+  children: PropTypes.element.isRequired,
+};
 
 const SheetHeader = ({
   className,
