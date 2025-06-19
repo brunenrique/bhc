@@ -40,7 +40,8 @@ export default function TasksPage() {
         <Button asChild className="bg-accent hover:bg-accent/90 text-accent-foreground">
           <Link href="/tasks/new">
             <span className="inline-flex items-center gap-2">
-              <PlusCircle className="mr-2 h-4 w-4" /> Nova Tarefa
+              <PlusCircle className="h-4 w-4" />
+              Nova Tarefa
             </span>
           </Link>
         </Button>

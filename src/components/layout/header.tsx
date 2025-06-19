@@ -64,17 +64,17 @@ export default function AppHeader() {
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <Link href="/profile">
-                <span>
-                  <UserCircle className="mr-2 h-4 w-4" />
-                  <span>Perfil</span>
+                <span className="inline-flex items-center gap-2">
+                  <UserCircle className="h-4 w-4" />
+                  Perfil
                 </span>
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link href="/settings">
-                <span>
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Configurações</span>
+                <span className="inline-flex items-center gap-2">
+                  <Settings className="h-4 w-4" />
+                  Configurações
                 </span>
               </Link>
             </DropdownMenuItem>

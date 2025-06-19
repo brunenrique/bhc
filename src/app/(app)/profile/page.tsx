@@ -163,21 +163,24 @@ export default function ProfilePage() {
           <Button variant="default" asChild className="w-full sm:w-auto bg-accent hover:bg-accent/90 text-accent-foreground">
             <Link href="/settings?tab=account">
               <span className="inline-flex items-center gap-2">
-                <Edit className="mr-2 h-4 w-4" /> Editar Perfil
+                <Edit className="h-4 w-4" />
+                Editar Perfil
               </span>
             </Link>
           </Button>
           <Button variant="outline" asChild className="w-full sm:w-auto">
             <Link href="/settings?tab=account">
               <span className="inline-flex items-center gap-2">
-                <Lock className="mr-2 h-4 w-4" /> Alterar Senha
+                <Lock className="h-4 w-4" />
+                Alterar Senha
               </span>
             </Link>
           </Button>
            <Button variant="outline" asChild className="w-full sm:w-auto">
             <Link href="/settings?tab=notifications">
               <span className="inline-flex items-center gap-2">
-                <Bell className="mr-2 h-4 w-4" /> Preferências de Notificação
+                <Bell className="h-4 w-4" />
+                Preferências de Notificação
               </span>
             </Link>
           </Button>
