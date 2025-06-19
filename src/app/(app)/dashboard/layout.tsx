@@ -117,7 +117,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </Tabs>
       )}
       <main className="flex-1 overflow-auto p-4 sm:px-6 sm:py-0 md:gap-8 mt-4">
-        {children}
+        {children || <div>Conteúdo não disponível</div>}
       </main>
     </div>
   );

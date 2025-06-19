@@ -31,8 +31,8 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <CustomThemeInitializer /> 
-          {children}
+          <CustomThemeInitializer />
+          {children || <div>Conteúdo não disponível</div>}
           <Toaster />
         </ThemeProvider>
       </body>

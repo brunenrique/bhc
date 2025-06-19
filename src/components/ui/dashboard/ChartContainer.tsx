@@ -7,7 +7,7 @@ import type { ReactNode } from "react";
 interface ChartContainerProps {
   title: string;
   description?: string;
-  children: ReactNode;
+  children?: ReactNode;
   className?: string;
   footer?: ReactNode;
 }
@@ -20,7 +20,7 @@ export function ChartContainer({ title, description, children, className, footer
         {description && <CardDescription>{description}</CardDescription>}
       </CardHeader>
       <CardContent>
-        {children}
+        {children || <div>Nenhum conteúdo disponível</div>}
       </CardContent>
       {footer && <div className="p-6 pt-0">{footer}</div>}
     </Card>
