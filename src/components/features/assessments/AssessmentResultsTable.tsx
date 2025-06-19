@@ -67,11 +67,25 @@ export function AssessmentResultsTable({ assessments, onEdit, onDelete }: Assess
                 </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild><Button variant="ghost" className="h-8 w-8 p-0"><span className="sr-only">Abrir menu</span><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 p-0">
+                        <span className="inline-flex items-center gap-2">
+                          <span className="sr-only">Abrir menu</span>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </span>
+                      </Button>
+                    </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Ações</DropdownMenuLabel>
                        {assessment.formLink && (
-                        <DropdownMenuItem asChild><a href={assessment.formLink} target="_blank" rel="noopener noreferrer"><ExternalLink className="mr-2 h-4 w-4" /> Ver Link</a></DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <a href={assessment.formLink} target="_blank" rel="noopener noreferrer">
+                            <span className="inline-flex items-center gap-2">
+                              <ExternalLink className="h-4 w-4" />
+                              <span>Ver Link</span>
+                            </span>
+                          </a>
+                        </DropdownMenuItem>
                       )}
                       <DropdownMenuItem onClick={() => onEdit(assessment)}>
                         <Edit className="mr-2 h-4 w-4" /> Editar

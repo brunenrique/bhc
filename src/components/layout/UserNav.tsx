@@ -46,13 +46,30 @@ export function UserNav() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem asChild><Link href="/settings"><UserIconLucide className="mr-2 h-4 w-4" />
-              <span>Perfil</span></Link></DropdownMenuItem>
-          <DropdownMenuItem asChild><Link href="/settings"><Settings className="mr-2 h-4 w-4" />
+          <DropdownMenuItem asChild>
+            <Link href="/settings">
+              <span className="inline-flex items-center gap-2">
+                <UserIconLucide className="h-4 w-4" />
+                <span>Perfil</span>
+              </span>
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/settings">
+              <span className="inline-flex items-center gap-2">
+                <Settings className="h-4 w-4" />
                 <span>Configurações</span>
-            </Link></DropdownMenuItem>
-          <DropdownMenuItem asChild><Link href="/guide"><BookOpenText className="mr-2 h-4 w-4" />
-              <span>Guia de Uso</span></Link></DropdownMenuItem>
+              </span>
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/guide">
+              <span className="inline-flex items-center gap-2">
+                <BookOpenText className="h-4 w-4" />
+                <span>Guia de Uso</span>
+              </span>
+            </Link>
+          </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={logout}>

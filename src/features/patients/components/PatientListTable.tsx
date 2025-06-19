@@ -59,7 +59,14 @@ export const PatientListTable = React.memo(function PatientListTable({ patients,
               </TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild><Button variant="ghost" className="h-8 w-8 p-0"><span className="sr-only">Abrir menu</span><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-8 w-8 p-0">
+                    <span className="inline-flex items-center gap-2">
+                      <span className="sr-only">Abrir menu</span>
+                      <MoreHorizontal className="h-4 w-4" />
+                    </span>
+                  </Button>
+                </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Ações</DropdownMenuLabel>
                     <DropdownMenuItem onClick={() => router.push(`/patients/${patient.id}`)}>
