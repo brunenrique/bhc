@@ -87,9 +87,24 @@ export function SidebarNav() {
         };
         
         const menuItemContent = (
-            <SidebarMenuButton asChild isActive={isActive} tooltip={item.label} className={cn("w-full justify-start")}>
-              <Link href={item.href} onClick={item.anchor ? scrollHandler : undefined} target={item.external ? "_blank" : undefined} rel={item.external ? "noopener noreferrer" : undefined}><tab.icon className="mr-2 h-5 w-5 flex-shrink-0" /><span className="truncate font-body">{item.label}</span></Link>
-            </SidebarMenuButton>
+          <SidebarMenuButton
+            asChild
+            isActive={isActive}
+            tooltip={item.label}
+            className={cn("w-full justify-start")}
+          >
+            <Link
+              href={item.href}
+              onClick={item.anchor ? scrollHandler : undefined}
+              target={item.external ? "_blank" : undefined}
+              rel={item.external ? "noopener noreferrer" : undefined}
+            >
+              <span className="inline-flex items-center gap-2">
+                <tab.icon className="h-5 w-5 flex-shrink-0" />
+                <span className="truncate font-body">{item.label}</span>
+              </span>
+            </Link>
+          </SidebarMenuButton>
         );
 
         if (item.roles) {
@@ -110,7 +125,14 @@ export function SidebarNav() {
             isActive={checkIsActive("/admin/metrics", pathname)}
             tooltip="Métricas Admin"
             className={cn("w-full justify-start")}
-          ><Link href="/admin/metrics"><AreaChart className="mr-2 h-5 w-5 flex-shrink-0" /><span className="truncate font-body">Métricas Admin</span></Link></SidebarMenuButton>
+          >
+            <Link href="/admin/metrics">
+              <span className="inline-flex items-center gap-2">
+                <AreaChart className="h-5 w-5 flex-shrink-0" />
+                <span className="truncate font-body">Métricas Admin</span>
+              </span>
+            </Link>
+          </SidebarMenuButton>
         </WithRole>
       </SidebarMenuItem>
     </SidebarMenu>
