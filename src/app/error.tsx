@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 
 export default function GlobalError({
   error,
@@ -21,7 +21,9 @@ export default function GlobalError({
       <p className="text-muted-foreground">Ocorreu um erro inesperado. Tente novamente mais tarde.</p>
       <div className="flex gap-2">
         <Button onClick={() => reset()}>Tentar novamente</Button>
-        <Button asChild variant="ghost"><Link href="/">Voltar para o início</Link></Button>
+        <Link className={buttonVariants({ variant: "ghost" })} href="/">
+          Voltar para o início
+        </Link>
       </div>
     </div>
   );
