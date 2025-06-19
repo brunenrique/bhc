@@ -2,7 +2,7 @@
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import type { ReactNode } from "react";
+import React, { type ReactNode } from "react";
 
 interface ChartContainerProps {
   title: string;
@@ -13,6 +13,7 @@ interface ChartContainerProps {
 }
 
 export function ChartContainer({ title, description, children, className, footer }: ChartContainerProps) {
+  const child = React.Children.only(children);
   return (
     <Card className={className}>
       <CardHeader>
@@ -20,7 +21,7 @@ export function ChartContainer({ title, description, children, className, footer
         {description && <CardDescription>{description}</CardDescription>}
       </CardHeader>
       <CardContent>
-        {children}
+        {child}
       </CardContent>
       {footer && <div className="p-6 pt-0">{footer}</div>}
     </Card>

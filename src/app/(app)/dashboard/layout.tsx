@@ -3,7 +3,7 @@
 
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter, usePathname } from 'next/navigation';
-import { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -28,6 +28,7 @@ const allTabs: TabConfig[] = [
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, isLoading: authLoading } = useAuth();
+  const child = React.Children.only(children);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -117,7 +118,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </Tabs>
       )}
       <main className="flex-1 overflow-auto p-4 sm:px-6 sm:py-0 md:gap-8 mt-4">
-        {children}
+        {child}
       </main>
     </div>
   );

@@ -1,6 +1,6 @@
 
 "use client";
-import type { ReactNode } from 'react';
+import React, { type ReactNode } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import type { UserRole } from '@/types';
 
@@ -12,6 +12,7 @@ interface WithRoleProps {
 
 export function WithRole({ role, children, fallback = null }: WithRoleProps) {
   const { user, isLoading } = useAuth();
+  const child = React.Children.only(children);
 
   if (isLoading) {
     // Optionally return a loader, or null to render nothing during load
@@ -24,7 +25,7 @@ export function WithRole({ role, children, fallback = null }: WithRoleProps) {
 
   const rolesToCheck = Array.isArray(role) ? role : [role];
   if (rolesToCheck.includes(user.role)) {
-    return <>{children}</>;
+    return <>{child}</>;
   }
 
   return <>{fallback}</>;

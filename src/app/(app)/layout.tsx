@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { Logo } from '@/components/shared/Logo';
@@ -50,6 +50,7 @@ function ThemeToggle() {
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
+  const child = React.Children.only(children);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -103,8 +104,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
           <UserNav />
         </header>
-        <main className="flex-1 p-4 md:p-6 lg:p-8 pt-12 md:pt-6 lg:pt-8"> 
-          {children}
+        <main className="flex-1 p-4 md:p-6 lg:p-8 pt-12 md:pt-6 lg:pt-8">
+          {child}
         </main>
         <footer className="p-4 text-center text-xs text-muted-foreground border-t border-border">
           Desenvolvido por Bruno Henrique Cordeiro

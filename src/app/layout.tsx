@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import React from 'react';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "next-themes"; 
@@ -14,6 +15,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const child = React.Children.only(children);
   return (
     // Aplicando 'theme-modern' como classe padrão inicial.
     // CustomThemeInitializer cuidará de aplicar a preferência do usuário do localStorage.
@@ -31,8 +33,8 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <CustomThemeInitializer /> 
-          {children}
+          <CustomThemeInitializer />
+          {child}
           <Toaster />
         </ThemeProvider>
       </body>
