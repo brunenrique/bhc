@@ -158,19 +158,10 @@ const DocumentTable = React.memo(({
                   className="hidden"
                 />
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0">
-                      <span className="sr-only">Abrir menu</span>
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
+                  <DropdownMenuTrigger asChild><Button variant="ghost" className="h-8 w-8 p-0"><span className="sr-only">Abrir menu</span><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Ações do Documento</DropdownMenuLabel>
-                    <DropdownMenuItem asChild>
-                       <a href={doc.url} download={doc.name} target="_blank" rel="noopener noreferrer">
-                         <Download className="mr-2 h-4 w-4" /> Download Original
-                       </a>
-                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild><a href={doc.url} download={doc.name} target="_blank" rel="noopener noreferrer"><Download className="mr-2 h-4 w-4" /> Download Original</a></DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuLabel>Assinatura GOV.BR (Simulado)</DropdownMenuLabel>
                     {doc.signatureStatus === 'none' && (

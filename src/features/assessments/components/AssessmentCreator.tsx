@@ -163,9 +163,7 @@ export function AssessmentCreator({ onSave, existingAssessment, onCancel }: Asse
           <div className="flex items-center gap-2">
             <Input type="text" value={currentFormLink} readOnly className="bg-background"/>
             <Button type="button" variant="outline" size="sm" onClick={() => navigator.clipboard.writeText(window.location.origin + currentFormLink)}>Copiar Link</Button>
-            <Button asChild variant="secondary" size="sm">
-              <Link href={currentFormLink} target="_blank">Abrir Link <ExternalLink className="ml-2 h-3 w-3" /></Link>
-            </Button>
+            <Button asChild variant="secondary" size="sm"><Link href={currentFormLink} target="_blank">Abrir Link <ExternalLink className="ml-2 h-3 w-3" /></Link></Button>
           </div>
            <p className="text-xs text-muted-foreground">Salve a avaliação para gerar ou atualizar o link. O link será "enviado" ao paciente (simulado).</p>
         </div>

@@ -121,9 +121,7 @@ export default function MyPanelPage() {
             </CardHeader>
             <CardContent className="text-center">
                 <p className="text-muted-foreground">Esta seção é destinada apenas a psicólogos e administradores.</p>
-                <Button asChild className="mt-4">
-                    <Link href="/dashboard">Voltar para Visão Geral</Link>
-                </Button>
+                <Button asChild className="mt-4"><Link href="/dashboard">Voltar para Visão Geral</Link></Button>
             </CardContent>
         </Card>
     );
@@ -240,11 +238,7 @@ export default function MyPanelPage() {
                         Enviada em: {format(parseISO(assessment.createdAt), "dd/MM/yyyy", { locale: ptBR })}
                       </p>
                     </div>
-                    <Button variant="outline" size="sm" asChild>
-                      <Link href={`/patients/${assessment.patientId}`}>
-                        Ver Paciente <ExternalLink className="ml-2 h-3 w-3" />
-                      </Link>
-                    </Button>
+                    <Button variant="outline" size="sm" asChild><Link href={`/patients/${assessment.patientId}`}>Ver Paciente <ExternalLink className="ml-2 h-3 w-3" /></Link></Button>
                   </div>
                 ))}
               </div>

@@ -304,18 +304,10 @@ export function PatientAttachmentManager({ patientId, patientName, currentUser }
                     <TableCell className="hidden lg:table-cell">{format(parseISO(att.uploadedAt), "dd/MM/yy HH:mm", { locale: ptBR })}</TableCell>
                     <TableCell className="hidden lg:table-cell text-xs">{att.uploadedBy === currentUser?.id ? 'Você' : att.uploadedBy}</TableCell>
                     <TableCell className="text-right space-x-1">
-                      <Button variant="ghost" size="icon" asChild className="h-8 w-8" title="Baixar">
-                        <a href={att.url} target="_blank" rel="noopener noreferrer" download={att.filename}>
-                          <Download className="h-4 w-4" />
-                        </a>
-                      </Button>
+                      <Button variant="ghost" size="icon" asChild className="h-8 w-8" title="Baixar"><a href={att.url} target="_blank" rel="noopener noreferrer" download={att.filename}><Download className="h-4 w-4" /></a></Button>
                       {canManageAttachments && (
                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" title="Excluir">
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </AlertDialogTrigger>
+                            <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" title="Excluir"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
                             <AlertDialogContent>
                                 <AlertDialogHeader>
                                 <AlertDialogTitle className="flex items-center"><AlertTriangle className="mr-2 h-5 w-5 text-destructive"/>Confirmar Exclusão</AlertDialogTitle>
