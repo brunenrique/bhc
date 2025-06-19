@@ -96,9 +96,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <h1 className="text-2xl font-headline font-semibold mb-2">Acesso Restrito</h1>
         <p className="text-muted-foreground">Sua função ({user.role}) não tem permissão para acessar nenhuma seção deste painel.</p>
         <p className="text-muted-foreground mt-1">Por favor, contate um administrador se você acredita que isso é um erro.</p>
-         <Link href="/login" passHref>
-            <Button variant="outline" className="mt-6">Voltar para Login</Button>
-        </Link>
+         <Button asChild variant="outline" className="mt-6">
+            <Link href="/login">Voltar para Login</Link>
+         </Button>
       </div>
     );
   }
