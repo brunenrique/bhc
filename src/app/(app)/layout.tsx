@@ -17,7 +17,8 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Button } from '@/components/ui/button';
-import { Moon, Sun } from 'lucide-react'; 
+import { Moon, Sun } from 'lucide-react';
+import PropTypes from 'prop-types';
 import { useTheme } from 'next-themes'; 
 import { FloatingChatButton } from '@/features/chat/components/FloatingChatButton';
 import { SimulatedNotificationManager } from '@/features/notifications/components/SimulatedNotificationManager';
@@ -115,3 +116,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     </SidebarProvider>
   );
 }
+
+AppLayout.propTypes = {
+  children: PropTypes.element.isRequired,
+};

@@ -3,6 +3,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ReactNode } from "react";
+import PropTypes from 'prop-types';
 
 interface ChartContainerProps {
   title: string;
@@ -26,3 +27,7 @@ export function ChartContainer({ title, description, children, className, footer
     </Card>
   );
 }
+
+ChartContainer.propTypes = {
+  children: PropTypes.element.isRequired,
+};

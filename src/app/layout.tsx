@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
-import { ThemeProvider } from "next-themes"; 
+import { ThemeProvider } from "next-themes";
+import PropTypes from 'prop-types';
 import { CustomThemeInitializer } from '@/components/layout/CustomThemeInitializer'; // Importado
 
 export const metadata: Metadata = {
@@ -39,3 +40,7 @@ export default function RootLayout({
     </html>
   );
 }
+
+RootLayout.propTypes = {
+  children: PropTypes.element.isRequired,
+};

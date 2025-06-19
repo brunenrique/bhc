@@ -1,6 +1,7 @@
 
 "use client";
 import type { ReactNode } from 'react';
+import PropTypes from 'prop-types';
 import { useAuth } from '@/hooks/useAuth';
 import type { UserRole } from '@/types';
 
@@ -29,3 +30,7 @@ export function WithRole({ role, children, fallback = null }: WithRoleProps) {
 
   return <>{fallback}</>;
 }
+
+WithRole.propTypes = {
+  children: PropTypes.element.isRequired,
+};
