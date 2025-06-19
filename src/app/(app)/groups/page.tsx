@@ -86,8 +86,9 @@ export default function TherapeuticGroupsPage() {
         </div>
         <Button asChild className="bg-accent hover:bg-accent/90 text-accent-foreground">
           <Link href="/groups/new">
-            <span>
-              <PlusCircle className="mr-2 h-4 w-4" /> Criar Novo Grupo
+            <span className="inline-flex items-center gap-2">
+              <PlusCircle className="h-4 w-4" />
+              Criar Novo Grupo
             </span>
           </Link>
         </Button>
@@ -146,15 +147,17 @@ export default function TherapeuticGroupsPage() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem asChild>
                               <Link href={`/schedule/new?groupId=${group.id}&type=group`}>
-                                <span>
-                                  <CalendarPlus className="mr-2 h-4 w-4" /> Agendar Sessão Avulsa
+                                <span className="inline-flex items-center gap-2">
+                                  <CalendarPlus className="h-4 w-4" />
+                                  Agendar Sessão Avulsa
                                 </span>
                               </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
                               <Link href={`/groups/edit/${group.id}`}>
-                                <span>
-                                  <Edit className="mr-2 h-4 w-4" /> Editar Grupo
+                                <span className="inline-flex items-center gap-2">
+                                  <Edit className="h-4 w-4" />
+                                  Editar Grupo
                                 </span>
                               </Link>
                             </DropdownMenuItem>
@@ -176,11 +179,12 @@ export default function TherapeuticGroupsPage() {
               <p className="mt-1 text-sm text-muted-foreground">Comece criando um novo grupo.</p>
                <Button asChild className="mt-4 bg-accent hover:bg-accent/90 text-accent-foreground">
                   <Link href="/groups/new">
-                    <span>
-                      <PlusCircle className="mr-2 h-4 w-4" /> Criar Novo Grupo
+                    <span className="inline-flex items-center gap-2">
+                      <PlusCircle className="h-4 w-4" />
+                      Criar Novo Grupo
                     </span>
                   </Link>
-                </Button>
+               </Button>
             </div>
            )}
         </CardContent>

@@ -25,7 +25,8 @@ export default function ResourcesPage() {
         <Button asChild className="bg-accent hover:bg-accent/90 text-accent-foreground">
           <Link href="/resources/upload">
             <span className="inline-flex items-center gap-2">
-              <UploadCloud className="mr-2 h-4 w-4" /> Carregar Novo Recurso
+              <UploadCloud className="h-4 w-4" />
+              Carregar Novo Recurso
             </span>
           </Link>
         </Button>

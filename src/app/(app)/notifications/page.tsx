@@ -44,8 +44,11 @@ export default function NotificationsPage() {
                 <CheckCheck className="mr-2 h-4 w-4" /> Marcar Todas como Lidas
             </Button>
             <Button variant="outline" asChild>
-                <Link href="/settings?tab=notifications"> 
-                    <Settings className="mr-2 h-4 w-4" /> Config. de Notificações
+                <Link href="/settings?tab=notifications">
+                    <span className="inline-flex items-center gap-2">
+                        <Settings className="h-4 w-4" />
+                        Config. de Notificações
+                    </span>
                 </Link>
             </Button>
         </div>

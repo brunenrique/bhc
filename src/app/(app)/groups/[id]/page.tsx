@@ -178,7 +178,10 @@ export default function GroupDetailPage({ params }: { params: { id: string } }) 
         <div className="flex gap-2">
             <Button variant="outline" asChild>
                 <Link href={`/groups/edit/${currentGroup.id}`}>
-                    <Edit className="mr-2 h-4 w-4"/> Editar Grupo
+                    <span className="inline-flex items-center gap-2">
+                        <Edit className="h-4 w-4" />
+                        Editar Grupo
+                    </span>
                 </Link>
             </Button>
              <AlertDialog>
@@ -253,7 +256,10 @@ export default function GroupDetailPage({ params }: { params: { id: string } }) 
         <CardFooter>
             <Button variant="outline" asChild>
                 <Link href={`/groups/edit/${currentGroup.id}?tab=participants`}>
-                    <Settings className="mr-2 h-4 w-4"/> Gerenciar Participantes
+                    <span className="inline-flex items-center gap-2">
+                        <Settings className="h-4 w-4" />
+                        Gerenciar Participantes
+                    </span>
                 </Link>
             </Button>
         </CardFooter>
@@ -273,7 +279,10 @@ export default function GroupDetailPage({ params }: { params: { id: string } }) 
          <CardFooter>
             <Button variant="outline" asChild>
                 <Link href={`/groups/edit/${currentGroup.id}?tab=details`}>
-                    <Edit className="mr-2 h-4 w-4"/> Editar Descrição
+                    <span className="inline-flex items-center gap-2">
+                        <Edit className="h-4 w-4" />
+                        Editar Descrição
+                    </span>
                 </Link>
             </Button>
         </CardFooter>
@@ -294,7 +303,10 @@ export default function GroupDetailPage({ params }: { params: { id: string } }) 
          <CardFooter>
             <Button variant="outline" asChild>
                 <Link href={`/groups/edit/${currentGroup.id}?tab=agenda`}>
-                    <Edit className="mr-2 h-4 w-4"/> Editar Roteiro
+                    <span className="inline-flex items-center gap-2">
+                        <Edit className="h-4 w-4" />
+                        Editar Roteiro
+                    </span>
                 </Link>
             </Button>
         </CardFooter>
@@ -368,7 +380,10 @@ export default function GroupDetailPage({ params }: { params: { id: string } }) 
                     {resource.type === "link" && resource.url ? (
                          <Button variant="outline" size="sm" asChild>
                             <a href={resource.url} target="_blank" rel="noopener noreferrer">
-                                <LinkIcon className="mr-1.5 h-3.5 w-3.5" /> Acessar Link
+                                <span className="inline-flex items-center gap-2">
+                                    <LinkIcon className="h-3.5 w-3.5" />
+                                    Acessar Link
+                                </span>
                             </a>
                         </Button>
                     ) : (

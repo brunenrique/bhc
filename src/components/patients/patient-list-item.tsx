@@ -88,8 +88,8 @@ function PatientListItemComponent({ patient }: PatientListItemProps) {
           <div className="flex items-center gap-1 sm:gap-2">
             <Button variant="outline" size="sm" asChild className="h-8 px-2 sm:px-3" aria-label={`Editar perfil de ${patient.name}`}>
               <Link href={`/patients/${patient.id}/edit`}>
-                <span>
-                  <Edit3 className="h-3.5 w-3.5 sm:mr-1" />
+                <span className="inline-flex items-center gap-2">
+                  <Edit3 className="h-3.5 w-3.5" />
                   <span className="hidden sm:inline">Editar</span>
                   <span className="sr-only sm:hidden">Editar perfil de {patient.name}</span>
                 </span>
@@ -102,8 +102,9 @@ function PatientListItemComponent({ patient }: PatientListItemProps) {
                   className="flex items-center gap-2 text-sm font-medium text-destructive hover:text-destructive hover:bg-destructive/10 h-8"
                   aria-label={`Excluir paciente ${patient.name}`}
                 >
-                  <span>
-                    <Trash2 className="h-4 w-4" /> Excluir
+                  <span className="inline-flex items-center gap-2">
+                    <Trash2 className="h-4 w-4" />
+                    Excluir
                   </span>
                 </Button>
             </AlertDialogTrigger>
@@ -130,8 +131,9 @@ function PatientListItemComponent({ patient }: PatientListItemProps) {
               aria-label={`Ver detalhes de ${patient.name}`}
             >
               <Link href={`/patients/${patient.id}`} className="flex items-center gap-2">
-                <span>
-                  <ChevronRight className="h-5 w-5" /> Abrir
+                <span className="inline-flex items-center gap-2">
+                  <ChevronRight className="h-5 w-5" />
+                  Abrir
                 </span>
               </Link>
             </Button>
