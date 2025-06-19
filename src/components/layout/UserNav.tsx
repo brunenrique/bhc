@@ -31,14 +31,7 @@ export function UserNav() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-9 w-9 rounded-full">
-          <Avatar className="h-9 w-9">
-            <AvatarImage src={user.avatarUrl || ''} alt={user.name || "User"} data-ai-hint="person avatar" />
-            <AvatarFallback>{user.name ? getInitials(user.name) : <UserCircle />}</AvatarFallback>
-          </Avatar>
-        </Button>
-      </DropdownMenuTrigger>
+      <DropdownMenuTrigger asChild><Button variant="ghost" className="relative h-9 w-9 rounded-full"><Avatar className="h-9 w-9"><AvatarImage src={user.avatarUrl || ''} alt={user.name || "User"} data-ai-hint="person avatar" /><AvatarFallback>{user.name ? getInitials(user.name) : <UserCircle />}</AvatarFallback></Avatar></Button></DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
@@ -53,24 +46,13 @@ export function UserNav() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem asChild>
-            <Link href="/settings">
-              <UserIconLucide className="mr-2 h-4 w-4" />
-              <span>Perfil</span>
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-             <Link href="/settings"> 
-                <Settings className="mr-2 h-4 w-4" />
+          <DropdownMenuItem asChild><Link href="/settings"><UserIconLucide className="mr-2 h-4 w-4" />
+              <span>Perfil</span></Link></DropdownMenuItem>
+          <DropdownMenuItem asChild><Link href="/settings"><Settings className="mr-2 h-4 w-4" />
                 <span>Configurações</span>
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild> 
-            <Link href="/guide">
-              <BookOpenText className="mr-2 h-4 w-4" />
-              <span>Guia de Uso</span>
-            </Link>
-          </DropdownMenuItem>
+            </Link></DropdownMenuItem>
+          <DropdownMenuItem asChild><Link href="/guide"><BookOpenText className="mr-2 h-4 w-4" />
+              <span>Guia de Uso</span></Link></DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={logout}>

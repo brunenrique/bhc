@@ -141,20 +141,11 @@ export const AssessmentResultsTable = React.memo(function AssessmentResultsTable
                   </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Abrir menu</span>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
+                      <DropdownMenuTrigger asChild><Button variant="ghost" className="h-8 w-8 p-0"><span className="sr-only">Abrir menu</span><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Ações</DropdownMenuLabel>
                          {assessment.formLink && assessment.formLink !== '#' && (
-                          <DropdownMenuItem asChild>
-                            <Link href={assessment.formLink} target="_blank" rel="noopener noreferrer">
-                              <ExternalLink className="mr-2 h-4 w-4" /> Abrir Link do Formulário
-                            </Link>
-                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild><Link href={assessment.formLink} target="_blank" rel="noopener noreferrer"><ExternalLink className="mr-2 h-4 w-4" /> Abrir Link do Formulário</Link></DropdownMenuItem>
                         )}
                         <DropdownMenuItem onClick={() => onEdit(assessment)}>
                           <Edit className="mr-2 h-4 w-4" /> Editar Detalhes
