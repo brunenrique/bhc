@@ -44,19 +44,21 @@ export function DatePickerWithRange({
               !date && "text-muted-foreground"
             )}
           >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {date?.from ? (
-              date.to ? (
-                <>
-                  {format(date.from, "dd/MM/yy", { locale: ptBR })} -{" "}
-                  {format(date.to, "dd/MM/yy", { locale: ptBR })}
-                </>
+            <span className="inline-flex items-center gap-2">
+              <CalendarIcon className="h-4 w-4" />
+              {date?.from ? (
+                date.to ? (
+                  <>
+                    {format(date.from, "dd/MM/yy", { locale: ptBR })} -{" "}
+                    {format(date.to, "dd/MM/yy", { locale: ptBR })}
+                  </>
               ) : (
                 format(date.from, "dd/MM/yy", { locale: ptBR })
               )
-            ) : (
-              <span>{placeholder}</span>
-            )}
+              ) : (
+                <span>{placeholder}</span>
+              )}
+            </span>
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">

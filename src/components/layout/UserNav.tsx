@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -13,29 +12,51 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
-import { LogOut, Settings, UserCircle, User as UserIconLucide, BookOpenText } from "lucide-react"; // Added BookOpenText
+import {
+  LogOut,
+  Settings,
+  UserCircle,
+  User as UserIconLucide,
+  BookOpenText,
+} from "lucide-react";
 import Link from "next/link";
 
 export function UserNav() {
   const { user, logout } = useAuth();
 
   if (!user) {
-    return null; 
+    return null;
   }
 
   const getInitials = (name: string) => {
-    const names = name.split(' ');
-    if (names.length === 1) return names[0][0]?.toUpperCase() || '';
-    return (names[0][0] + (names[names.length - 1][0] || '')).toUpperCase();
-  }
+    const names = name.split(" ");
+    if (names.length === 1) return names[0][0]?.toUpperCase() || "";
+    return (names[0][0] + (names[names.length - 1][0] || "")).toUpperCase();
+  };
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild><Button variant="ghost" className="relative h-9 w-9 rounded-full"><Avatar className="h-9 w-9"><AvatarImage src={user.avatarUrl || ''} alt={user.name || "User"} data-ai-hint="person avatar" /><AvatarFallback>{user.name ? getInitials(user.name) : <UserCircle />}</AvatarFallback></Avatar></Button></DropdownMenuTrigger>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+          <Avatar className="h-9 w-9">
+            <AvatarImage
+              src={user.avatarUrl || ""}
+              alt={user.name || "User"}
+              data-ai-hint="person avatar"
+            />
+            <AvatarFallback>
+              {user.name ? getInitials(user.name) : <UserCircle />}
+            </AvatarFallback>
+          </Avatar>
+        </Button>
+      </DropdownMenuTrigger>
+
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none font-headline">{user.name}</p>
+            <p className="text-sm font-medium leading-none font-headline">
+              {user.name}
+            </p>
             <p className="text-xs leading-none text-muted-foreground">
               {user.email}
             </p>
@@ -44,13 +65,40 @@ export function UserNav() {
             </p>
           </div>
         </DropdownMenuLabel>
+
         <DropdownMenuSeparator />
+
         <DropdownMenuGroup>
-          <DropdownMenuItem asChild><Link href="/settings"><UserIconLucide className="mr-2 h-4 w-4" /><span>Perfil</span></Link></DropdownMenuItem>
-          <DropdownMenuItem asChild><Link href="/settings"><Settings className="mr-2 h-4 w-4" /><span>Configurações</span></Link></DropdownMenuItem>
-          <DropdownMenuItem asChild><Link href="/guide"><BookOpenText className="mr-2 h-4 w-4" /><span>Guia de Uso</span></Link></DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/settings">
+              <span className="inline-flex items-center gap-2">
+                <UserIconLucide className="h-4 w-4" />
+                <span>Perfil</span>
+              </span>
+            </Link>
+          </DropdownMenuItem>
+
+          <DropdownMenuItem asChild>
+            <Link href="/settings">
+              <span className="inline-flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                <span>Configurações</span>
+              </span>
+            </Link>
+          </DropdownMenuItem>
+
+          <DropdownMenuItem asChild>
+            <Link href="/guide">
+              <span className="inline-flex items-center gap-2">
+                <BookOpenText className="h-4 w-4" />
+                <span>Guia de Uso</span>
+              </span>
+            </Link>
+          </DropdownMenuItem>
         </DropdownMenuGroup>
+
         <DropdownMenuSeparator />
+
         <DropdownMenuItem onClick={logout}>
           <LogOut className="mr-2 h-4 w-4" />
           <span>Sair</span>
@@ -59,4 +107,3 @@ export function UserNav() {
     </DropdownMenu>
   );
 }
-

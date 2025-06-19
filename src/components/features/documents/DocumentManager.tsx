@@ -102,10 +102,24 @@ export function DocumentManager({ documents, onUpload, onDelete }: DocumentManag
                     <TableCell className="hidden md:table-cell">{format(parseISO(doc.uploadedAt), "dd/MM/yyyy HH:mm", { locale: ptBR })}</TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
-                        <DropdownMenuTrigger asChild><Button variant="ghost" className="h-8 w-8 p-0"><span className="sr-only">Abrir menu</span><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="inline-flex items-center gap-2">
+                              <span className="sr-only">Abrir menu</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </span>
+                          </Button>
+                        </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                          <DropdownMenuItem asChild><a href={doc.url} download={doc.name} target="_blank" rel="noopener noreferrer"><Download className="mr-2 h-4 w-4" /> Download</a></DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <a href={doc.url} download={doc.name} target="_blank" rel="noopener noreferrer">
+                              <span className="inline-flex items-center gap-2">
+                                <Download className="h-4 w-4" />
+                                <span>Download</span>
+                              </span>
+                            </a>
+                          </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => onDelete(doc.id)} className="text-destructive focus:text-destructive focus:bg-destructive/10">
                             <Trash2 className="mr-2 h-4 w-4" /> Excluir
