@@ -36,8 +36,7 @@ export function UserNav() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+      <DropdownMenuTrigger asChild><Button variant="ghost" className="relative h-9 w-9 rounded-full">
           <Avatar className="h-9 w-9">
             <AvatarImage
               src={user.avatarUrl || ""}
@@ -48,8 +47,7 @@ export function UserNav() {
               {user.name ? getInitials(user.name) : <UserCircle />}
             </AvatarFallback>
           </Avatar>
-        </Button>
-      </DropdownMenuTrigger>
+        </Button></DropdownMenuTrigger>
 
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
@@ -69,32 +67,20 @@ export function UserNav() {
         <DropdownMenuSeparator />
 
         <DropdownMenuGroup>
-          <DropdownMenuItem asChild>
-            <Link href="/settings">
-              <span className="inline-flex items-center gap-2">
-                <UserIconLucide className="h-4 w-4" />
-                <span>Perfil</span>
-              </span>
-            </Link>
-          </DropdownMenuItem>
+          <DropdownMenuItem asChild><Link href="/settings" className="inline-flex items-center gap-2">
+              <UserIconLucide className="h-4 w-4" />
+              <span>Perfil</span>
+            </Link></DropdownMenuItem>
 
-          <DropdownMenuItem asChild>
-            <Link href="/settings">
-              <span className="inline-flex items-center gap-2">
-                <Settings className="h-4 w-4" />
-                <span>Configurações</span>
-              </span>
-            </Link>
-          </DropdownMenuItem>
+          <DropdownMenuItem asChild><Link href="/settings" className="inline-flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              <span>Configurações</span>
+            </Link></DropdownMenuItem>
 
-          <DropdownMenuItem asChild>
-            <Link href="/guide">
-              <span className="inline-flex items-center gap-2">
-                <BookOpenText className="h-4 w-4" />
-                <span>Guia de Uso</span>
-              </span>
-            </Link>
-          </DropdownMenuItem>
+          <DropdownMenuItem asChild><Link href="/guide" className="inline-flex items-center gap-2">
+              <BookOpenText className="h-4 w-4" />
+              <span>Guia de Uso</span>
+            </Link></DropdownMenuItem>
         </DropdownMenuGroup>
 
         <DropdownMenuSeparator />

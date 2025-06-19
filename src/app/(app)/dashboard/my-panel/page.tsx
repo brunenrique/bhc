@@ -238,13 +238,11 @@ export default function MyPanelPage() {
                         Enviada em: {format(parseISO(assessment.createdAt), "dd/MM/yyyy", { locale: ptBR })}
                       </p>
                     </div>
-                    <Button variant="outline" size="sm" asChild>
-                      <Link href={`/patients/${assessment.patientId}`}>
-                        <span className="inline-flex items-center gap-2">
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/patients/${assessment.patientId}`} className="inline-flex items-center gap-2">
                           Ver Paciente <ExternalLink className="h-3 w-3" />
-                        </span>
-                      </Link>
-                    </Button>
+                        </Link>
+                      </Button>
                   </div>
                 ))}
               </div>
