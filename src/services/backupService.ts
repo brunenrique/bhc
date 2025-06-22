@@ -43,7 +43,9 @@ export async function saveBackupSettings(settings: BackupSettings): Promise<void
   });
 }
 
-export function listenBackupHistory(callbackFn: (_: BackupHistoryEntry[]) => void): Unsubscribe {
+export function listenBackupHistory(
+  callbackFn: (_history: BackupHistoryEntry[]) => void
+): Unsubscribe {
   const q = query(collection(db, FIRESTORE_COLLECTIONS.BACKUPS), orderBy('timestamp', 'desc'));
   return onSnapshot(q, (snap) => {
     const data = snap.docs.map((d) => ({
