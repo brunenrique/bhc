@@ -170,6 +170,14 @@ service cloud.firestore {
       allow create, delete: if isAdmin();
     }
 
+    match /backupSettings/{id} {
+      allow read, write: if isAdmin();
+    }
+
+    match /backups/{id} {
+      allow read, create: if isAdmin();
+    }
+
     // Catch-all
     match /{document=**} {
       allow read, write: if false;
