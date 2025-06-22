@@ -170,6 +170,11 @@ service cloud.firestore {
       allow create, delete: if isAdmin();
     }
 
+    match /waitingList/{id} {
+      allow read, update: if isStaff();
+      allow create, delete: if isAdmin();
+    }
+
     // Catch-all
     match /{document=**} {
       allow read, write: if false;

@@ -1,33 +1,58 @@
+'use client';
 
-"use client"; 
-
-import React from 'react'; 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ListChecks, UserPlus, Search, Filter, MoreHorizontal, CalendarPlus, Trash2, Edit } from "lucide-react";
-import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
+import React, { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  ListChecks,
+  UserPlus,
+  Search,
+  Filter,
+  MoreHorizontal,
+  CalendarPlus,
+  Trash2,
+  Edit,
+} from 'lucide-react';
+import Link from 'next/link';
+import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-
-export const mockWaitingList = [
-  { id: "wl1", name: "Edward Mãos de Tesoura", requestedPsychologist: "Qualquer", requestedPsychologistId: "any", dateAdded: "2024-06-01", priority: "Alta" as "Alta" | "Média" | "Baixa", notes: "Prefere agendamentos pela manhã.", contactPhone: "111-222-3333", contactEmail:"edward@example.com" },
-  { id: "wl2", name: "Fiona Gallagher", requestedPsychologist: "Dr. Silva", requestedPsychologistId: "psy1", dateAdded: "2024-06-15", priority: "Média" as "Alta" | "Média" | "Baixa", notes: "Precisa de horários à noite.", contactPhone: "444-555-6666", contactEmail:"fiona@example.com" },
-  { id: "wl3", name: "George Jetson", requestedPsychologist: "Dra. Jones", requestedPsychologistId: "psy2", dateAdded: "2024-07-01", priority: "Baixa" as "Alta" | "Média" | "Baixa", notes: "Flexível com horários.", contactPhone: "777-888-9999", contactEmail:"george@example.com" },
-  { id: "wl4", name: "Harry Potter", requestedPsychologist: "Qualquer", requestedPsychologistId: "any", dateAdded: "2024-07-10", priority: "Alta" as "Alta" | "Média" | "Baixa", notes: "Encaminhamento urgente.", contactPhone: "000-111-2222", contactEmail:"harry@example.com" },
-];
+import { getWaitingList } from '@/services/waitingListService';
+import type { WaitingListEntry } from '@/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const priorityLabels: Record<string, string> = {
-    Alta: "Alta",
-    Média: "Média",
-    Baixa: "Baixa",
+  Alta: 'Alta',
+  Média: 'Média',
+  Baixa: 'Baixa',
 };
 
-
 export default function WaitingListPage() {
+  const [list, setList] = useState<WaitingListEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getWaitingList().then((l) => {
+      setList(l);
+      setLoading(false);
+    });
+  }, []);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -57,7 +82,9 @@ export default function WaitingListPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {mockWaitingList.length > 0 ? (
+          {loading ? (
+            <Skeleton className="h-40 w-full" />
+          ) : list.length > 0 ? (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -71,21 +98,36 @@ export default function WaitingListPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {mockWaitingList.map(item => (
+                  {list.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell className="font-medium">
-                         <Link href={`/schedule/new?patientName=${encodeURIComponent(item.name)}&psychologistId=${item.requestedPsychologistId || 'any'}`} className="hover:underline text-accent">
+                        <Link
+                          href={`/schedule/new?patientName=${encodeURIComponent(item.name)}&psychologistId=${item.requestedPsychologistId || 'any'}`}
+                          className="hover:underline text-accent"
+                        >
                           {item.name}
                         </Link>
                       </TableCell>
-                      <TableCell>{item.requestedPsychologist}</TableCell>
-                      <TableCell>{format(new Date(item.dateAdded), "P", { locale: ptBR })}</TableCell>
+                      <TableCell>{item.requestedPsychologist || '-'}</TableCell>
                       <TableCell>
-                        <Badge variant={item.priority === "Alta" ? "destructive" : item.priority === "Média" ? "secondary" : "outline"}>
+                        {format(new Date(item.dateAdded), 'P', { locale: ptBR })}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            item.priority === 'Alta'
+                              ? 'destructive'
+                              : item.priority === 'Média'
+                                ? 'secondary'
+                                : 'outline'
+                          }
+                        >
                           {priorityLabels[item.priority] || item.priority}
                         </Badge>
                       </TableCell>
-                      <TableCell className="max-w-xs truncate" title={item.notes}>{item.notes}</TableCell>
+                      <TableCell className="max-w-xs truncate" title={item.notes}>
+                        {item.notes}
+                      </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -95,7 +137,9 @@ export default function WaitingListPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem asChild>
-                              <Link href={`/schedule/new?patientName=${encodeURIComponent(item.name)}&psychologistId=${item.requestedPsychologistId || 'any'}`}>
+                              <Link
+                                href={`/schedule/new?patientName=${encodeURIComponent(item.name)}&psychologistId=${item.requestedPsychologistId || 'any'}`}
+                              >
                                 <span className="inline-flex items-center gap-2 w-full">
                                   <CalendarPlus className="mr-2 h-4 w-4" /> Alocar Horário
                                 </span>
@@ -121,12 +165,14 @@ export default function WaitingListPage() {
               </Table>
             </div>
           ) : (
-             <div className="text-center py-10">
+            <div className="text-center py-10">
               <ListChecks className="mx-auto h-12 w-12 text-muted-foreground" />
               <h3 className="mt-2 text-sm font-medium text-foreground">Lista de espera vazia</h3>
-              <p className="mt-1 text-sm text-muted-foreground">Nenhum paciente está atualmente na lista de espera.</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Nenhum paciente está atualmente na lista de espera.
+              </p>
             </div>
-           )}
+          )}
         </CardContent>
       </Card>
     </div>

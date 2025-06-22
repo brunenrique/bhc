@@ -4,6 +4,7 @@ export const FIRESTORE_COLLECTIONS = {
   APPOINTMENTS: 'appointments',
   ASSESSMENTS: 'assessments',
   TASKS: 'tasks',
+  WAITING_LIST: 'waitingList',
   CHATS: 'chats',
   NOTIFICATIONS: 'notifications',
   FCM_TOKENS: 'fcmTokens',
