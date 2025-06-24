@@ -12,7 +12,7 @@ export default defineConfig({
   },
   webServer: process.env.CI
     ? {
-        command: 'npm run start',
+        command: 'pnpm run start',
         port: 3000,
         timeout: 120 * 1000,
       }

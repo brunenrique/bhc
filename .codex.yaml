@@ -2,10 +2,10 @@ version: 1
 setup:
   - run: curl https://get.volta.sh | bash
   - run: volta install node@20.11.0
-  - run: volta install npm@10.2.4
+  - run: volta install pnpm@9.15.4
   - run: volta install firebase-tools@13.0.0
 tasks:
-  - run: npm ci
-  - run: npm run lint
-  - run: npm run typecheck
-  - run: npm run dev
+  - run: pnpm install --frozen-lockfile
+  - run: pnpm run lint
+  - run: pnpm run typecheck
+  - run: pnpm run dev

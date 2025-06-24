@@ -17,7 +17,7 @@ cd bhc
 2. Instale as dependências:
 
 ```bash
-npm ci
+pnpm install
 ```
 
 3. Copie `env.example` para `.env.local` e preencha as chaves.
@@ -33,9 +33,9 @@ firebase emulators:start --project=demo-project
 2. Execute as verificações locais:
 
 ```bash
-npm run lint
-npm run typecheck
-npm run test:all
+pnpm run lint
+pnpm run typecheck
+pnpm run test:all
 ```
 
 O script `./run-tests.sh` também executa a bateria completa de testes.
@@ -44,6 +44,6 @@ O script `./run-tests.sh` também executa a bateria completa de testes.
 
 - Crie um branch a partir de `main`, por exemplo `feat/nome-do-recurso`.
 - Siga o padrão **Conventional Commits** nas mensagens de commit.
-- Garanta que `npm run lint`, `npm run typecheck` e `npm run test:all` estejam passando antes de abrir o PR.
+- Garanta que `pnpm run lint`, `pnpm run typecheck` e `pnpm run test:all` estejam passando antes de abrir o PR.
 - Descreva claramente o que foi feito e vincule as issues relacionadas.
 - Prefira PRs pequenas e focadas.
