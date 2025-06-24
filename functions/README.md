@@ -10,7 +10,7 @@ This directory contains Firebase Cloud Functions for PsiGuard.
 Run the TypeScript build inside `functions/` and deploy:
 
 ```bash
-cd functions && npm run build
+cd functions && pnpm run build
 firebase deploy --only functions
 ```
 

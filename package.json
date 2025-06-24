@@ -39,7 +39,7 @@
     "emulators": "firebase emulators:start --project=thalamus-dev",
     "emulators:export": "firebase emulators:export ./emulator-data",
     "emulators:clear": "rm -rf ./emulator-data",
-    "snapshot": "npm run emulators:export",
+    "snapshot": "pnpm run emulators:export",
     "docker:build": "docker build -t meu-app-web .",
     "docker:functions:build": "docker build -t meu-app-func functions/ -f functions/Dockerfile.functions",
     "docker:up": "docker-compose up --build",
