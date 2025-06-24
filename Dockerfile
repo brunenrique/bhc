@@ -3,17 +3,17 @@ FROM node:20-alpine AS build
 WORKDIR /app
 
 # Install dependencies
-COPY package.json yarn.lock* package-lock.json* ./
-RUN if [ -f yarn.lock ]; then yarn install --frozen-lockfile; else npm ci; fi
+COPY package.json pnpm-lock.yaml* ./
+RUN corepack enable && pnpm install --frozen-lockfile
 
 # Copy source code
 COPY . .
 
 # Build Next.js app
-RUN npm run build
+RUN pnpm run build
 
 # Remove dev dependencies to reduce size
-RUN npm prune --production && yarn cache clean || true
+RUN pnpm prune --prod && pnpm store prune || true
 
 # ---- Runtime Stage ----
 FROM node:20-alpine AS runtime
