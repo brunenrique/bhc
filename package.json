@@ -44,7 +44,9 @@
     "docker:up": "docker-compose up --build",
     "docker:down": "docker-compose down",
     "sentry:release": "./scripts/sentry-release.sh",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@genkit-ai/core": "^1.13.0",
@@ -143,7 +145,12 @@
     "ts-jest": "^29.4.0",
     "ts-node": "^10.9.2",
     "tsx": "^4.20.3",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "storybook": "^9.0.12",
+    "@storybook/nextjs": "^9.0.12",
+    "@chromatic-com/storybook": "^4.0.1",
+    "@storybook/addon-docs": "^9.0.12",
+    "eslint-plugin-storybook": "^9.0.12"
   },
   "overrides": {
     "swagger-ui-react": {
