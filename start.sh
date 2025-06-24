@@ -14,7 +14,7 @@ if ! command -v volta >/dev/null 2>&1; then
   export PATH="$VOLTA_HOME/bin:$PATH"
 fi
 # Instala as versoes definidas (se houver)
-volta install node npm >/dev/null 2>&1 || true
+volta install node npm pnpm >/dev/null 2>&1 || true
 
 cd "$PROJECT_DIR"
 
