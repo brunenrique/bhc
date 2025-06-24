@@ -27,7 +27,7 @@ Este guia resume como executar o projeto via Docker e como publicá-lo na Vercel
 3. Utilize o comando de build padrão:
 
    ```bash
-   npm run build
+   pnpm run build
    ```
 
    A Vercel irá executar `next start` automaticamente após o build.

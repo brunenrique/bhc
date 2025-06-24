@@ -12,6 +12,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm ci
-      - run: npm run build
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 9
+          run_install: true
+      - run: pnpm run build
       - run: npx lhci autorun
