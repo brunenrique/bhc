@@ -19,10 +19,10 @@ volta install node npm >/dev/null 2>&1 || true
 cd "$PROJECT_DIR"
 
 echo "Node $(node -v)"
-echo "NPM $(npm -v)"
+echo "PNPM $(pnpm -v)"
 echo "Firebase CLI $(npx firebase --version)"
 
-npm ci
+pnpm install
 
 DATA_DIR="./emulator-data"
 mkdir -p "$DATA_DIR"
@@ -39,4 +39,4 @@ trap cleanup EXIT
 
 sleep 5
 
-npm run dev
+pnpm run dev

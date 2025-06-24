@@ -23,9 +23,9 @@ Plataforma web para gestão de clínicas de psicologia, com agenda integrada, pr
     ```
 2.  **Instale as dependências:**
     ```bash
-    npm install
+    pnpm install
     ```
-    > **Dica:** execute `npm install` ou `npm ci` sempre antes de rodar `npm run prepare:commit` ou realizar `git commit`. Os hooks do Husky utilizam o ESLint e outras dependências que exigem a pasta `node_modules` presente, caso contrário o commit será abortado.
+    > **Dica:** execute `pnpm install` sempre antes de rodar `pnpm run prepare:commit` ou realizar `git commit`. Os hooks do Husky utilizam o ESLint e outras dependências que exigem a pasta `node_modules` presente, caso contrário o commit será abortado.
 3.  **Configure as Variáveis de Ambiente:**
     - Copie o arquivo `env.example` (na raiz do projeto) para um novo arquivo chamado `.env.local`:
       ```bash
@@ -47,7 +47,7 @@ Plataforma web para gestão de clínicas de psicologia, com agenda integrada, pr
 7.  **Inicie o Servidor de Desenvolvimento Next.js (em outro terminal):**
 
     ```bash
-    npm run dev
+    pnpm run dev
     ```
 
     O aplicativo ficará disponível em `http://localhost:9003`.
@@ -57,15 +57,15 @@ Plataforma web para gestão de clínicas de psicologia, com agenda integrada, pr
 
 ### Comandos úteis
 
-- `npm run dev` &mdash; inicia o servidor Next.js em modo desenvolvimento na porta `9003` (geralmente com Turbopack).
-- `npm run dev -- --no-turbo -p 9004` &mdash; executa o servidor usando Webpack ao invés do Turbopack, na porta `9004`, para facilitar a exibição de erros no terminal.
-- `npm run genkit:dev` &mdash; executa os fluxos de IA em modo de desenvolvimento.
-- `npm run typecheck` &mdash; verifica os tipos TypeScript.
-- `npm run lint` &mdash; executa o ESLint.
-- `npm run test:all` &mdash; executa todos os testes com o Firebase Emulator em execução.
-- `./run-tests.sh` &mdash; script direto para rodar os testes (usado por `npm run test:all`).
+- `pnpm run dev` &mdash; inicia o servidor Next.js em modo desenvolvimento na porta `9003` (geralmente com Turbopack).
+- `pnpm run dev -- --no-turbo -p 9004` &mdash; executa o servidor usando Webpack ao invés do Turbopack, na porta `9004`, para facilitar a exibição de erros no terminal.
+- `pnpm run genkit:dev` &mdash; executa os fluxos de IA em modo de desenvolvimento.
+- `pnpm run typecheck` &mdash; verifica os tipos TypeScript.
+- `pnpm run lint` &mdash; executa o ESLint.
+- `pnpm run test:all` &mdash; executa todos os testes com o Firebase Emulator em execução.
+- `./run-tests.sh` &mdash; script direto para rodar os testes (usado por `pnpm run test:all`).
 - `git p` &mdash; alias opcional para o comando acima.
-- `npm run build` &mdash; gera o build de produção.
+- `pnpm run build` &mdash; gera o build de produção.
 
 ## Variáveis de Ambiente
 
@@ -150,20 +150,20 @@ Este repositório possui Dockerfiles e um `docker-compose.yml` para executar a a
 ### Construir as imagens
 
 ```bash
-npm run docker:build              # imagem do app Next.js
-npm run docker:functions:build    # imagem das Cloud Functions
+pnpm run docker:build              # imagem do app Next.js
+pnpm run docker:functions:build    # imagem das Cloud Functions
 ```
 
 ### Subir os serviços
 
 ```bash
-npm run docker:up
+pnpm run docker:up
 ```
 
 Para desligar:
 
 ```bash
-npm run docker:down
+pnpm run docker:down
 ```
 
 É possível levantar cada serviço isoladamente, por exemplo `docker-compose up web`.
@@ -196,12 +196,12 @@ Contribuições são bem-vindas! Consulte o [CONTRIBUTING.md](CONTRIBUTING.md) e
 
 ## Solucao de Problemas
 
-Erros genéricos como **"An unexpected Turbopack error occurred"** costumam estar relacionados a configurações de ambiente ou dependências ausentes. Caso se depare com essa mensagem ao rodar `npm run dev`, verifique os pontos abaixo:
+Erros genéricos como **"An unexpected Turbopack error occurred"** costumam estar relacionados a configurações de ambiente ou dependências ausentes. Caso se depare com essa mensagem ao rodar `pnpm run dev`, verifique os pontos abaixo:
 
-1. Execute `npm install` para garantir que todas as dependências estejam instaladas.
+1. Execute `pnpm install` para garantir que todas as dependências estejam instaladas.
 2. Utilize a versão **Node.js 20.11.0** (padronizada no projeto).
 3. Copie `env.example` para `.env.local` e preencha as variáveis necessárias.
-4. Apague a pasta `.next` (cache do Next.js) e tente novamente: `rm -rf .next && npm run dev`.
+4. Apague a pasta `.next` (cache do Next.js) e tente novamente: `rm -rf .next && pnpm run dev`.
 5. Observe o log completo gerado pelo `next dev` para identificar possíveis mensagens adicionais de erro.
 6. Se encontrar a mensagem **"React.Children.only expected to receive a single React element child"**, verifique se componentes como `Button`, `FormControl` ou `SidebarMenuButton` (quando usados com `asChild`) recebem **apenas um** elemento React filho. Envolva múltiplos elementos em uma tag `<div>` ou `<span>` caso necessário. O projeto inclui uma regra do **ESLint** (`local-rules/aschild-single-child`) que sinaliza esse problema durante o desenvolvimento.
 
@@ -209,4 +209,4 @@ Erros genéricos como **"An unexpected Turbopack error occurred"** costumam esta
 
 - Utilizamos o [Snyk](https://snyk.io/) para inspeções de vulnerabilidades (workflow `security.yml`).
 - O [Dependabot](https://github.com/dependabot) atualiza dependências semanalmente.
-- Há também o workflow `security-scan.yml` que roda `npm audit --audit-level=moderate` todo mês.
+- Há também o workflow `security-scan.yml` que roda `pnpm audit --audit-level=moderate` todo mês.

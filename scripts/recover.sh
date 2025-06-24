@@ -6,10 +6,10 @@ set -euo pipefail
 # It also demonstrates how to run Next.js using Webpack.
 
 # Step 1: clean install artifacts
-rm -rf node_modules package-lock.json .next
+rm -rf node_modules pnpm-lock.yaml .next
 
 # Step 2: reinstall dependencies
-npm install
+pnpm install
 
 # Step 3: run Next.js with Webpack for verification
 npx next dev -p 3000 &
