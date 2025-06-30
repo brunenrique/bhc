@@ -97,7 +97,7 @@
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.58.1",
     "reactflow": "^11.11.4",
-    "recharts": "^2.15.4",
+    "recharts": "^3.0.2",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-react": "^5.25.2",
     "cmdk": "^0.2.0",
