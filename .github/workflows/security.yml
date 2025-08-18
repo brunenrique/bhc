@@ -20,7 +20,7 @@ jobs:
       matrix:
         language: ['javascript','typescript']
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
@@ -31,7 +31,7 @@ jobs:
     name: Snyk Scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -46,7 +46,7 @@ jobs:
     name: NPM Audit
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -57,7 +57,7 @@ jobs:
     name: Gitleaks Scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: gitleaks/gitleaks-action@v2
         with:
           args: "--verbose --redact"
@@ -66,5 +66,5 @@ jobs:
     name: TruffleHog Scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: trufflesecurity/trufflehog@v3
